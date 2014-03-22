@@ -20,6 +20,7 @@ Import('env')
 Import('autobahn')
 
 tests = []
-tests.append(env.Program('test1.cpp', LIBS = [autobahn]))
+for i in range(2):
+   tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
 
 Return('tests')

@@ -20,6 +20,8 @@ import os
 
 env = Environment(ENV = os.environ)
 env.Append(CPPPATH = ['#/include'])
+env.Append(CPPPATH = [os.path.join(os.environ['HOME'], 'msgpack/include')])
+env.Append(LIBPATH = [os.path.join(os.environ['HOME'], 'msgpack/lib')])
 
 Export('env')
 
