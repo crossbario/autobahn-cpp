@@ -47,4 +47,26 @@ int add2(int a, int b);
 #define MSG_CODE_INTERRUPT 69
 #define MSG_CODE_YIELD 70
 
+#include <istream>
+#include <ostream>
+#include <string>
+
+#include <msgpack.hpp>
+
+
+class WampSession {
+   public:
+      WampSession(std::istream& in, std::ostream& out);
+
+      void send_hello(const std::string& realm);
+
+   private:
+
+      std::istream& m_in;
+      std::ostream& m_out;
+
+      msgpack::sbuffer m_buffer;
+      msgpack::packer<msgpack::sbuffer> m_packer;
+};
+
 #endif // AUTOBAHN_HPP

@@ -24,7 +24,10 @@
 
 
 int main () {
-   // serializes multiple objects using msgpack::packer.
+   WampSession session(std::cin, std::cout);
+   session.send_hello("realm2");
+
+/*   // serializes multiple objects using msgpack::packer.
    msgpack::sbuffer buffer;
 
    // [HELLO, Realm|uri, Details|dict]
@@ -36,7 +39,7 @@ int main () {
    pk.pack(std::string("x"));
    pk.pack(3);
    pk.pack(std::string("y"));
-   pk.pack(3.4321);   
+   pk.pack(3.4321);
 
    // deserializes these objects using msgpack::unpacker.
    msgpack::unpacker pac;
@@ -53,7 +56,7 @@ int main () {
       std::cout << obj.type << std::endl;
       std::cout << obj << std::endl;
    }
-
+*/
    // results:
    // $ g++ stream.cc -lmsgpack -o stream
    // $ ./stream

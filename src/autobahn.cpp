@@ -21,3 +21,37 @@
 int add2(int a, int b) {
    return a + b;
 }
+
+
+WampSession::WampSession(std::istream& in, std::ostream& out)
+   : m_in(in), m_out(out), m_packer(&m_buffer) {
+}
+
+
+void WampSession::send_hello(const std::string& realm) {
+   m_buffer.clear();
+
+   m_packer.pack_array(3);
+
+   m_packer.pack(MSG_CODE_HELLO);
+   m_packer.pack(realm);
+
+   m_packer.pack_map(1);
+   m_packer.pack(std::string("roles"));
+
+   m_packer.pack_map(4);
+
+   m_packer.pack(std::string("caller"));
+   m_packer.pack_map(0);
+
+   m_packer.pack(std::string("callee"));
+   m_packer.pack_map(0);
+
+   m_packer.pack(std::string("publisher"));
+   m_packer.pack_map(0);
+
+   m_packer.pack(std::string("subscriber"));
+   m_packer.pack_map(0);
+
+   m_out.write(m_buffer.data(), m_buffer.size());
+}
