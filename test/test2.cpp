@@ -26,6 +26,8 @@
 int main () {
    WampSession session(std::cin, std::cout);
    session.send_hello("realm2");
+   session.send_hello("crossbardemo.realm.test");
+   session.send_hello("foobar");
 
 /*   // serializes multiple objects using msgpack::packer.
    msgpack::sbuffer buffer;

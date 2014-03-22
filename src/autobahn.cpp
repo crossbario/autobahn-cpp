@@ -16,7 +16,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <stdint.h>
 #include "autobahn.hpp"
+
+
+#include <arpa/inet.h>
+
 
 int add2(int a, int b) {
    return a + b;
@@ -28,8 +33,15 @@ WampSession::WampSession(std::istream& in, std::ostream& out)
 }
 
 
-void WampSession::send_hello(const std::string& realm) {
+void WampSession::send() {
+   uint32_t len = htonl(m_buffer.size());
+   m_out.write((char*) &len, 4);
+   m_out.write(m_buffer.data(), m_buffer.size());
    m_buffer.clear();
+}
+
+
+void WampSession::send_hello(const std::string& realm) {
 
    m_packer.pack_array(3);
 
@@ -53,5 +65,5 @@ void WampSession::send_hello(const std::string& realm) {
    m_packer.pack(std::string("subscriber"));
    m_packer.pack_map(0);
 
-   m_out.write(m_buffer.data(), m_buffer.size());
+   send();
 }

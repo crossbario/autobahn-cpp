@@ -62,6 +62,8 @@ class WampSession {
 
    private:
 
+      void send();
+
       std::istream& m_in;
       std::ostream& m_out;
 
