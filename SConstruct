@@ -19,11 +19,26 @@
 import os
 
 env = Environment(ENV = os.environ)
-env.Append(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
+
+USE_SHIT_COMPILER = False
+
+if USE_SHIT_COMPILER:
+   env["CC"] = "gcc"
+   env["CXX"] = "g++"
+   env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wno-deprecated-declarations', '-Wl,--no-as-needed', '-pthread'])
+else:
+   env.Append(CXXFLAGS = ['-std=c++11', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
+   env.Append(LINKFLAGS = ['-stdlib=libc++', '-pthread'])
+   env["CC"] = "clang"
+   env["CXX"] = "clang++"
+
+# -std=c++11 -stdlib=libc++
+# 
+
 env.Append(CPPPATH = ['#/include'])
-env.Append(CPPPATH = [os.path.join(os.environ['HOME'], 'msgpack/include')])
-env.Append(LIBPATH = [os.path.join(os.environ['HOME'], 'msgpack/lib')])
-env.Append(LIBPATH = ['/usr/lib/x86_64-linux-gnu/'])
+env.Append(CPPPATH = [os.path.join(os.environ['HOME'], 'msgpack_clang/include')])
+env.Append(LIBPATH = [os.path.join(os.environ['HOME'], 'msgpack_clang/lib')])
+#env.Append(LIBPATH = ['/usr/lib/x86_64-linux-gnu/'])
 
 Export('env')
 

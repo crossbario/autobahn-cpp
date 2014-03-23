@@ -24,7 +24,9 @@ if True:
    for i in range(6):
       tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
 else:
-   i = 4
-   tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
+   i = 5
+   #tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
+   #tests.append(env.Program('test5.cpp'))
+   tests.append(env.Program('test6.cpp'))
 
 Return('tests')
