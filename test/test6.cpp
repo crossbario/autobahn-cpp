@@ -16,12 +16,20 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+
 #include <iostream>
+#include <thread>
 
-#include "autobahn.hpp"
+using namespace std;
 
+void func(void) {
+   cout << "test thread" << endl;
+}
 
-int main () {
-   autobahn::session session(std::cin, std::cout);
-   session.process();
+int main() {
+   cout << "start" << endl;
+   thread t1 (func);
+   t1.join();
+   cout << "end" << endl;
+   return 0;
 }

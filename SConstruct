@@ -19,7 +19,7 @@
 import os
 
 env = Environment(ENV = os.environ)
-env.Append(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wno-deprecated-declarations'])
+env.Append(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
 env.Append(CPPPATH = ['#/include'])
 env.Append(CPPPATH = [os.path.join(os.environ['HOME'], 'msgpack/include')])
 env.Append(LIBPATH = [os.path.join(os.environ['HOME'], 'msgpack/lib')])

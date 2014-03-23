@@ -20,11 +20,11 @@ Import('env')
 Import('autobahn')
 
 tests = []
-if False:
-   for i in range(3):
+if True:
+   for i in range(6):
       tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
 else:
    i = 4
-   tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack', 'boost_system', 'boost_thread']))
+   tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
 
 Return('tests')

@@ -84,14 +84,14 @@ int main () {
 
    //std::cout.write(buffer.data(), buffer.size());
 
-   anymap map;
+   autobahn::anymap map;
 
    map["a"] = 2;
    map["b"] = std::string("sdfsdfs");   
    map["c"] = v;
    //std::cerr << map << std::endl;
 
-   anyvec v2;
+   autobahn::anyvec v2;
    v2.push_back(23);
    v2.push_back(23.23424);
    v2.push_back(std::string("sdfsf"));
@@ -104,12 +104,11 @@ int main () {
    //std::cout << map["a"].type().hash_code() << std::endl;
    std::cout << (map["a"].type() == typeid(int)) << std::endl;
 
-   anyvec v3;
+   autobahn::anyvec v3;
    v3.push_back(v2);
    v3.push_back(23);
 
-   WampSession session(std::cin, std::cout);
+   //WampSession session(std::cin, std::cout);
    //session.publish("com.myapp.topic1", v3);
-
-   session.pack_any(v3);
+   //session.pack_any(v3);
 }
