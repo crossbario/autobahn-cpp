@@ -16,24 +16,27 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <msgpack.hpp>
 #include <iostream>
 #include <string>
 
 #include "autobahn.hpp"
 
-
-struct Person {
-   std::string m_str;
-   std::vector<int> m_vec;
-
-   MSGPACK_DEFINE(m_str, m_vec);
-};
+using namespace autobahn;
 
 
 int main () {
    WampSession session(std::cin, std::cout);
 
+   // event without any payload
+   //
+   session.publish("com.myapp.topic1");
+
+   // event with positional payload
+   //
+   session.publish("com.myapp.topic1", 23, true, std::string("hello"));
+
+   // event with complex positional payload
+   //
    anyvec v;
    v.push_back(1);
    v.push_back(3.123);
@@ -55,85 +58,17 @@ int main () {
 
    session.publish("com.myapp.topic1", v);
 
-/*   
-   session.send_hello("realm2");
-   session.send_hello("crossbardemo.realm.test");
-   session.send_hello("foobar");
 
-   WampSession::args args;
-//   args.push_back("foo");
-   args.push_back(msgpack::object(23));
-   args.push_back(msgpack::object(0.12345));
-   args.push_back(msgpack::object(false));
-   args.push_back(msgpack::object(std::string("dfsdfs")));
+   // event with keyword payload
+   //
+   anymap m2;
+   m2["a"] = 23;
+   m2["b"] = std::string("foobar");
 
-   session.publish("com.myapp.topic1", args);
-
-   Person person;
-   //args.push_back(msgpack::object(person));
-   //msgpack::sbuffer sbuf;
-   //msgpack::pack(sbuf, person);
-
-   Value value;
-   value.add(23);
-   value.add(0.12345);
-   value.add(false);
-   value.add(std::string("sdfsdfs"));
-   std::vector<int> v;
-   v.push_back(2);
-   v.push_back(3);
-   v.push_back(4);
-   //value.add(v);
-   //msgpack::object o(v);
-
-   msgpack::sbuffer sbuf;
-   msgpack::pack(sbuf, person);
-   msgpack::pack(sbuf, v);
-   msgpack::pack(sbuf, value._args);
-
-   //msgpack::object o;
-   //o << v;
+   session.publish("com.myapp.topic1", m2);
 
 
-
-   //msgpack::object o(person);
-
-   session.publish("com.myapp.topic1", value);
-*/
-/*   // serializes multiple objects using msgpack::packer.
-   msgpack::sbuffer buffer;
-
-   // [HELLO, Realm|uri, Details|dict]
-
-   msgpack::packer<msgpack::sbuffer> pk(&buffer);
-   pk.pack(MSG_CODE_HELLO);
-   pk.pack(std::string("realm1"));
-   pk.pack_map(2);
-   pk.pack(std::string("x"));
-   pk.pack(3);
-   pk.pack(std::string("y"));
-   pk.pack(3.4321);
-
-   // deserializes these objects using msgpack::unpacker.
-   msgpack::unpacker pac;
-
-   // feeds the buffer.
-   pac.reserve_buffer(buffer.size());
-   memcpy(pac.buffer(), buffer.data(), buffer.size());
-   pac.buffer_consumed(buffer.size());
-
-   // now starts streaming deserialization.
-   msgpack::unpacked result;
-   while (pac.next(&result)) {
-      msgpack::object obj = result.get();
-      std::cout << obj.type << std::endl;
-      std::cout << obj << std::endl;
-   }
-*/
-   // results:
-   // $ g++ stream.cc -lmsgpack -o stream
-   // $ ./stream
-   // "Log message ... 1"
-   // "Log message ... 2"
-   // "Log message ... 3"
+   // event with position and keyword payload
+   //
+   session.publish("com.myapp.topic1", v2, m2);
 }
