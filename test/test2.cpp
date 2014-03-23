@@ -23,12 +23,83 @@
 #include "autobahn.hpp"
 
 
+struct Person {
+   std::string m_str;
+   std::vector<int> m_vec;
+
+   MSGPACK_DEFINE(m_str, m_vec);
+};
+
+
 int main () {
    WampSession session(std::cin, std::cout);
+
+   anyvec v;
+   v.push_back(1);
+   v.push_back(3.123);
+   v.push_back(false);
+   v.push_back(std::string("hello"));
+
+   anyvec v2;
+   v2.push_back(std::string("foo"));
+   v2.push_back(std::string("bar"));
+
+   v.push_back(v2);
+
+   anymap m;
+   m["foo"] = 23;
+   m["bar"] = 1.23;
+   m["baz"] = std::string("awesome");
+
+   v.push_back(m);
+
+   session.publish("com.myapp.topic1", v);
+
+/*   
    session.send_hello("realm2");
    session.send_hello("crossbardemo.realm.test");
    session.send_hello("foobar");
 
+   WampSession::args args;
+//   args.push_back("foo");
+   args.push_back(msgpack::object(23));
+   args.push_back(msgpack::object(0.12345));
+   args.push_back(msgpack::object(false));
+   args.push_back(msgpack::object(std::string("dfsdfs")));
+
+   session.publish("com.myapp.topic1", args);
+
+   Person person;
+   //args.push_back(msgpack::object(person));
+   //msgpack::sbuffer sbuf;
+   //msgpack::pack(sbuf, person);
+
+   Value value;
+   value.add(23);
+   value.add(0.12345);
+   value.add(false);
+   value.add(std::string("sdfsdfs"));
+   std::vector<int> v;
+   v.push_back(2);
+   v.push_back(3);
+   v.push_back(4);
+   //value.add(v);
+   //msgpack::object o(v);
+
+   msgpack::sbuffer sbuf;
+   msgpack::pack(sbuf, person);
+   msgpack::pack(sbuf, v);
+   msgpack::pack(sbuf, value._args);
+
+   //msgpack::object o;
+   //o << v;
+
+
+
+   //msgpack::object o(person);
+
+   session.publish("com.myapp.topic1", value);
+*/
 /*   // serializes multiple objects using msgpack::packer.
    msgpack::sbuffer buffer;
 
