@@ -86,6 +86,13 @@ namespace autobahn {
    }
 
 
+   std::future<int> session::join(const std::string& realm) {
+      std::promise<int> p;
+      p.set_value(23);
+      return p.get_future();  
+   }
+
+
    void session::pack_any(const boost::any& value) {
 
       if (value.empty()) {
@@ -262,7 +269,7 @@ namespace autobahn {
                   throw ProtocolError("invalid message code type - not an integer");
                }
 
-               int code = msg[0].as<int>();
+               //int code = msg[0].as<int>();
 
                //throw Unimplemented("WAMP message", 23);
 

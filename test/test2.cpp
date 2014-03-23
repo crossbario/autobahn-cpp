@@ -22,17 +22,22 @@
 #include "autobahn.hpp"
 
 
-
 int main () {
+
+   // WAMP session running over stdio
+   //
    autobahn::session session(std::cin, std::cout);
+
 
    // event without any payload
    //
    session.publish("com.myapp.topic1");
 
+
    // event with positional payload
    //
    session.publish("com.myapp.topic1", 23, true, std::string("hello"));
+
 
    // event with complex positional payload
    //

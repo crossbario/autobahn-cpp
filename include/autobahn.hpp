@@ -28,8 +28,9 @@
 #include <map>
 
 #include <msgpack.hpp>
-#include <boost/any.hpp>
 
+#include <boost/any.hpp>
+#include <future>
 
 
 namespace autobahn {
@@ -44,6 +45,8 @@ namespace autobahn {
          session(std::istream& in, std::ostream& out);
 
          void process();
+
+         std::future<int> join(const std::string& realm);
 
          void publish(const std::string& topic);
 
