@@ -21,11 +21,10 @@
 
 #include "autobahn.hpp"
 
-using namespace autobahn;
 
 
 int main () {
-   WampSession session(std::cin, std::cout);
+   autobahn::session session(std::cin, std::cout);
 
    // event without any payload
    //
@@ -37,19 +36,19 @@ int main () {
 
    // event with complex positional payload
    //
-   anyvec v;
+   autobahn::anyvec v;
    v.push_back(1);
    v.push_back(3.123);
    v.push_back(false);
    v.push_back(std::string("hello"));
 
-   anyvec v2;
+   autobahn::anyvec v2;
    v2.push_back(std::string("foo"));
    v2.push_back(std::string("bar"));
 
    v.push_back(v2);
 
-   anymap m;
+   autobahn::anymap m;
    m["foo"] = 23;
    m["bar"] = 1.23;
    m["baz"] = std::string("awesome");
@@ -61,7 +60,7 @@ int main () {
 
    // event with keyword payload
    //
-   anymap m2;
+   autobahn::anymap m2;
    m2["a"] = 23;
    m2["b"] = std::string("foobar");
 

@@ -78,7 +78,7 @@ namespace autobahn {
 
 
 
-   WampSession::WampSession(std::istream& in, std::ostream& out)
+   session::session(std::istream& in, std::ostream& out)
       : m_in(in),
         m_out(out),
         m_packer(&m_buffer),
@@ -86,7 +86,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::pack_any(const boost::any& value) {
+   void session::pack_any(const boost::any& value) {
 
       if (value.empty()) {
 
@@ -148,7 +148,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::publish(const std::string& topic) {
+   void session::publish(const std::string& topic) {
 
       m_packer.pack_array(4);
       m_packer.pack(MSG_CODE_PUBLISH);
@@ -159,7 +159,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::publish(const std::string& topic, anyvec& args) {
+   void session::publish(const std::string& topic, anyvec& args) {
 
       if (args.size() > 0) {         
          m_packer.pack_array(5);
@@ -175,7 +175,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::publish(const std::string& topic, anyvec& args, anymap& kwargs) {
+   void session::publish(const std::string& topic, anyvec& args, anymap& kwargs) {
 
       if (kwargs.size() > 0) {
          m_packer.pack_array(6);
@@ -192,7 +192,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::publish(const std::string& topic, anymap& kwargs) {
+   void session::publish(const std::string& topic, anymap& kwargs) {
 
       if (kwargs.size() > 0) {
          m_packer.pack_array(6);
@@ -209,14 +209,14 @@ namespace autobahn {
    }
 
 
-   void WampSession::publish(const std::string& topic, boost::any arg1) {
+   void session::publish(const std::string& topic, boost::any arg1) {
       anyvec v;
       v.push_back(arg1);
       publish(topic, v);
    }
 
 
-   void WampSession::publish(const std::string& topic, boost::any arg1, boost::any arg2) {
+   void session::publish(const std::string& topic, boost::any arg1, boost::any arg2) {
       anyvec v;
       v.push_back(arg1);
       v.push_back(arg2);
@@ -224,7 +224,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::publish(const std::string& topic, boost::any arg1, boost::any arg2, boost::any arg3) {
+   void session::publish(const std::string& topic, boost::any arg1, boost::any arg2, boost::any arg3) {
       anyvec v;
       v.push_back(arg1);
       v.push_back(arg2);
@@ -233,7 +233,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::process() {
+   void session::process() {
       int i = 0;
       try {
 
@@ -299,7 +299,7 @@ namespace autobahn {
    }
 
 
-   bool WampSession::receive() {
+   bool session::receive() {
 
       char blen[4];
       m_in.read(blen, 4);
@@ -321,7 +321,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::send() {
+   void session::send() {
       uint32_t len = htonl(m_buffer.size());
       m_out.write((char*) &len, 4);
       m_out.write(m_buffer.data(), m_buffer.size());
@@ -329,7 +329,7 @@ namespace autobahn {
    }
 
 
-   void WampSession::send_hello(const std::string& realm) {
+   void session::send_hello(const std::string& realm) {
 
       m_packer.pack_array(3);
 

@@ -39,9 +39,9 @@ namespace autobahn {
    typedef std::vector<boost::any> anyvec;
 
 
-   class WampSession {
+   class session {
       public:
-         WampSession(std::istream& in, std::ostream& out);
+         session(std::istream& in, std::ostream& out);
 
          void process();
 
