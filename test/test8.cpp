@@ -9,11 +9,22 @@
 #include <boost/thread/future.hpp>
 
 
+#define PD
+
+
 struct Foo {
 
+#ifdef PD
+   boost::future<int> start() {
+      boost::future<int> f = p.get_future();
+      f.set_deferred();
+      return f;
+   }
+#else
    boost::future<int> start() {
       return p.get_future();
    }
+#endif
 
    void finish() {
       p.set_value(666);
@@ -22,7 +33,8 @@ struct Foo {
    boost::promise<int> p;
 };
 
-#define V1
+#define V0
+//#define V1
 //#define V2
 //#define V3
 
@@ -30,8 +42,17 @@ int main () {
 
    Foo foo;
 
+#ifdef V0
+   // does ONLY work with PD set
+
+   foo.start().then([](boost::future<int> f) {
+      std::cout << "done:" << std::endl;
+      std::cout << f.get() << std::endl;
+   });
+#endif
+
 #ifdef V1
-   // does NOT work
+   // this DOES work
 
    foo.start().then(boost::launch::deferred, [](boost::future<int> f) {
       std::cout << "done:" << std::endl;
@@ -59,4 +80,7 @@ int main () {
 #endif
 
    foo.finish();
+
+   //boost::chrono::milliseconds duration(1000);
+   //boost::this_thread::sleep_for(duration);
 }
