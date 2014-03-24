@@ -97,6 +97,7 @@ if __name__ == '__main__':
 
 
    executable = "/home/oberstet/scm/tavendo/autobahn/AutobahnCpp/build/test/test7"
+   executable = "/home/oberstet/scm/AutobahnCpp/build/test/test7"
 
    args = [executable]
 

@@ -90,6 +90,9 @@ cd AutobahnCpp
 scons
 ```
 
+## Futures
+
+* [Boost Thread](http://www.boost.org/doc/libs/1_55_0/doc/html/thread.html)
 
 ## Closures Cheetsheet
 

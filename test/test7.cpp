@@ -38,44 +38,11 @@ void registerproc(const std::string& procedure, callback endpoint) {
 
 #include <unistd.h>
 
-struct Foo {
-
-   boost::future<int> start() {
-      return p.get_future();
-   }
-
-   void finish() {
-      p.set_value(666);
-   }
-
-   boost::promise<int> p;
-};
 
 int main () {
 
    std::cerr << "C++ worker starting .." << std::endl;
    std::cerr.flush();
-
-   Foo foo;
-
-   foo.start().then([](boost::future<int> f) {
-      std::cerr << "done: " << f.get() << std::endl;
-   });
-
-   foo.finish();
-/*
-   boost::future<int> f = foo.start();
-
-   std::cerr << f.valid() << std::endl;
-   std::cerr << f.is_ready() << std::endl;
-   
-   foo.finish();
-
-   std::cerr << f.valid() << std::endl;
-   std::cerr << f.is_ready() << std::endl;
-   std::cerr << f.get() << std::endl;
-*/
-   return 0;
 
    // WAMP session running over stdio
    //
@@ -171,5 +138,5 @@ int main () {
       session.publish("com.myapp.topic1");
 
    });
-*/   
+*/
 }

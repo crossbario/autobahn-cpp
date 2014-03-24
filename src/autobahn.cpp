@@ -93,7 +93,9 @@ namespace autobahn {
       //m_session_join = new boost::promise<int>();
       send_hello(realm);
       //m_session_join.set_value(23);
-      return m_session_join.get_future();
+      boost::future<int> f = m_session_join.get_future();
+      f.set_deferred();
+      return f;
    }
 
 
