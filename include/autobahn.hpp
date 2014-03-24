@@ -44,12 +44,22 @@ namespace autobahn {
 
    typedef std::vector<boost::any> anyvec;
 
+   typedef boost::any (*callback) (autobahn::anyvec&);
+
+   typedef std::map<std::string, callback> endpoints;
+
+   struct call_t {
+      boost::promise<boost::any> m_res;
+   };
+
+   typedef std::map<uint64_t, call_t> calls_t;
+
 
    class session {
       public:
          session(std::istream& in, std::ostream& out);
 
-         void process();
+         void loop();
 
          boost::future<int> join(const std::string& realm);
 
@@ -66,6 +76,12 @@ namespace autobahn {
          void publish(const std::string& topic, boost::any arg1, boost::any arg2);
 
          void publish(const std::string& topic, boost::any arg1, boost::any arg2, boost::any arg3);
+
+         void registerproc(const std::string& procedure, callback endpoint);
+
+         boost::any invoke(const std::string& procedure, anyvec& args);
+
+         boost::future<boost::any> call(const std::string& procedure, anyvec& args);
 
       private:
 
@@ -85,6 +101,12 @@ namespace autobahn {
          msgpack::unpacker m_unpacker;
 
          uint64_t m_session_id;
+         uint64_t m_request_id;
+
+         boost::promise<int> m_session_join;
+
+         endpoints m_endpoints;
+         calls_t m_calls;
    };
 
 

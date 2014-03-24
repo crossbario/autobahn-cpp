@@ -82,14 +82,52 @@ namespace autobahn {
       : m_in(in),
         m_out(out),
         m_packer(&m_buffer),
-        m_session_id(0) {
+        m_session_id(0),
+        m_request_id(0) {
    }
 
 
    boost::future<int> session::join(const std::string& realm) {
-      boost::promise<int> p;
-      p.set_value(23);
-      return p.get_future();
+      //boost::promise<int> p;
+      //p.set_value(23);
+      //m_session_join = new boost::promise<int>();
+      send_hello(realm);
+      //m_session_join.set_value(23);
+      return m_session_join.get_future();
+   }
+
+
+   void session::registerproc(const std::string& procedure, callback endpoint) {
+      std::cerr << "registering procedure: " << procedure << std::endl;
+      m_endpoints[procedure] = endpoint;
+   }
+
+
+   boost::any session::invoke(const std::string& procedure, anyvec& args) {
+      endpoints::iterator ep = m_endpoints.find(procedure);
+      if (ep == m_endpoints.end()) {
+         std::cerr << "procedure not found" << std::endl;
+      } else {
+         std::cerr << "invoking: " << ep->first << std::endl;
+         return (*(ep->second)) (args);
+      }
+      return boost::any();
+   }
+
+   boost::future<boost::any> session::call(const std::string& procedure, anyvec& args) {
+      m_request_id += 1;
+
+      m_calls[m_request_id] = call_t();
+
+      m_packer.pack_array(5);
+      m_packer.pack(MSG_CODE_CALL);
+      m_packer.pack(m_request_id);
+      m_packer.pack_map(0);
+      m_packer.pack(procedure);
+      pack_any(args);
+      send();
+
+      return m_calls[m_request_id].m_res.get_future();
    }
 
 
@@ -150,7 +188,7 @@ namespace autobahn {
          m_packer.pack(val);
 
       } else {
-         //std::cout << "? ";
+         //std::cerr << "? ";
       }
    }
 
@@ -240,11 +278,14 @@ namespace autobahn {
    }
 
 
-   void session::process() {
+   void session::loop() {
       int i = 0;
       try {
 
          while (receive()) {
+
+            std::cerr << "Got mesg: " << std::endl;
+            std::cerr.flush();
 
             msgpack::unpacked result;
 
@@ -269,39 +310,54 @@ namespace autobahn {
                   throw ProtocolError("invalid message code type - not an integer");
                }
 
-               //int code = msg[0].as<int>();
+               int code = msg[0].as<int>();
+
+               if (code == MSG_CODE_WELCOME) {
+
+                  std::cerr << "firing welcome" << std::endl;
+                  std::cerr.flush();
+
+                  m_session_join.set_value(23);
+
+                  std::cerr << "welcome fired" << std::endl;
+                  std::cerr.flush();
+               }
 
                //throw Unimplemented("WAMP message", 23);
 
 
-               std::cout << (obj.type == msgpack::type::ARRAY) << " : " << obj << std::endl;
-
-                std::cout << msg.size() << std::endl;
+               std::cerr << (obj.type == msgpack::type::ARRAY) << " : " << obj << std::endl;
+               std::cerr.flush();
+/*
+                std::cerr << msg.size() << std::endl;
                 if (msg[0] == MSG_CODE_HELLO) {
-                  std::cout << "HELLO" << std::endl;
+                  std::cerr << "HELLO" << std::endl;
                   std::map<std::string, msgpack::object> details;
                   std::map<std::string, msgpack::object>::iterator details_it;
 
                   msg[2].convert(&details);
-                  std::cout << details.size() << std::endl;
+                  std::cerr << details.size() << std::endl;
 
                   details_it = details.find("roles");
-                  std::cout << details_it->second << std::endl;
+                  std::cerr << details_it->second << std::endl;
                 }
-
+*/
             }
             ++i;
          }
-         std::cout << "processed " << i << std::endl;
+         std::cerr << "processed " << i << std::endl;
       }
       catch (ProtocolError& e) {
          std::cerr << "ProtocolError: " << e.what() << std::endl;
+         std::cerr.flush();
       }
       catch (Unimplemented& e) {
          std::cerr << "Not implemented: " << e.what() << std::endl;
+         std::cerr.flush();
       }
       catch (...) {
          std::cerr << "Unknown problem" << std::endl;
+         std::cerr.flush();
       }
    }
 
@@ -332,7 +388,9 @@ namespace autobahn {
       uint32_t len = htonl(m_buffer.size());
       m_out.write((char*) &len, 4);
       m_out.write(m_buffer.data(), m_buffer.size());
+      //m_out.flush();
       m_buffer.clear();
+      //std::cerr << "SENT" << std::endl;
    }
 
 

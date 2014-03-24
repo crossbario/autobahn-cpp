@@ -24,10 +24,10 @@ and depends on
 
 ### Build tools
 
-Install some build tools:
+Install some libs and build tools:
 
 ```shell
-sudo apt-get install ruby libtool autoconf scons
+sudo apt-get install libbz2-dev libssl-dev ruby libtool autoconf scons
 ```
 
 ### clang

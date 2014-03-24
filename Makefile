@@ -3,7 +3,8 @@ build:
 
 test_unser:
 	scons
-	./build/test/test2 | python -u unserialize.py
+	./build/test/test7 | python -u unserialize.py
+#	./build/test/test2 | python -u unserialize.py
 
 test_ser:
 	scons
