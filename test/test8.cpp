@@ -22,9 +22,9 @@ struct Foo {
    boost::promise<int> p;
 };
 
-//#define V1
+#define V1
 //#define V2
-#define V3
+//#define V3
 
 int main () {
 
@@ -33,7 +33,7 @@ int main () {
 #ifdef V1
    // does NOT work
 
-   foo.start().then([](boost::future<int> f) {
+   foo.start().then(boost::launch::deferred, [](boost::future<int> f) {
       std::cout << "done:" << std::endl;
       std::cout << f.get() << std::endl;
    });
@@ -42,8 +42,8 @@ int main () {
 #ifdef V2
    // does NOT work
 
-   boost::future<int> f = foo.start();
-   f.then([](boost::future<int> f) {
+   boost::future<int> f0 = foo.start();
+   f0.then([](boost::future<int> f) {
       std::cout << "done:" << std::endl;
       std::cout << f.get() << std::endl;
    });
