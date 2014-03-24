@@ -1,10 +1,17 @@
 # **Autobahn**|Cpp
 
-**Autobahn**|Cpp is a C++ WAMP v2 implementation that is able to talk WAMP over `stdio` pipes.
+**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
 
-Dependencies:
+It implements version 2 of WAMP with the following roles:
 
- * a C++ 11 compiler
+ * Caller
+ * Callee
+ * Publisher
+ * Subscriber
+
+and depends on
+
+ * C++ 11 compiler
  * `boost::any`
  * `boost::future`
 
@@ -58,7 +65,8 @@ cd $HOME
 git clone https://github.com/msgpack/msgpack-c.git
 cd msgpack-c
 ./bootstrap
-CXX=`which clang++` CC=`which clang` CXXFLAGS="-std=c++11 -stdlib=libc++" LDFLAGS="-stdlib=libc++" ./configure --prefix=$HOME/msgpack_clang
+CXX=`which clang++` CC=`which clang` CXXFLAGS="-std=c++11 -stdlib=libc++" \
+   LDFLAGS="-stdlib=libc++" ./configure --prefix=$HOME/msgpack_clang
 make
 make install
 ```
