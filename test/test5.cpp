@@ -1,35 +1,40 @@
-///////////////////////////////////////////////////////////////////////////////
-//
-//  Copyright (C) 2014 Tavendo GmbH
-//
-//  Licensed under the Apache License, Version 2.0 (the "License");
-//  you may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
-//
-///////////////////////////////////////////////////////////////////////////////
-
-#include <iostream>
-#include <string>
-#include <future>
-
-
-std::future<int> join(const std::string& realm) {
-   std::promise<int> p;
+#if 0
+boost::future<int> join2(const std::string& realm) {
+   boost::promise<int> p;
    p.set_value(23);
    return p.get_future();
 }
 
-
 int main () {
-   std::future<int> f = join("realm1");
-   f.wait();
-   std::cout << f.get() << std::endl;
+   boost::future<int> f = join2("realm1");
+
+   f.then([](boost::future<int> f) {
+      // here .get() won't block
+      std::cout << f.get() << std::endl;
+   });
+
+   // here, I'd like to use f.then(..)
+   //f.wait();
+   //std::cout << f.get() << std::endl;
 }
+#else
+
+#include <iostream>
+#include <string>
+
+// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
+#define BOOST_THREAD_PROVIDES_FUTURE
+#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
+#include <boost/thread/future.hpp>
+
+using namespace boost;
+
+int main() {
+   future<int> f1 = async([]() { return 123; });
+   future<std::string> f2 = f1.then([](future<int> f) {
+      std::cout << f.get() << std::endl; // here .get() won't block
+      return std::string("sgfsdfs");
+   });
+}
+
+#endif

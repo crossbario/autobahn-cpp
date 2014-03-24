@@ -20,6 +20,8 @@
 #include <iostream>
 #include <thread>
 
+#include <boost/version.hpp>
+
 using namespace std;
 
 void func(void) {
@@ -27,6 +29,7 @@ void func(void) {
 }
 
 int main() {
+   cout << BOOST_VERSION << endl;
    cout << "start" << endl;
    thread t1 (func);
    t1.join();

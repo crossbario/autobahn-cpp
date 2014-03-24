@@ -28,51 +28,54 @@ int main () {
    //
    autobahn::session session(std::cin, std::cout);
 
+   session.join(std::string("realm1")).then([&](boost::future<int> res) {
 
-   // event without any payload
-   //
-   session.publish("com.myapp.topic1");
+      std::cerr << "session id: " << res.get() << std::endl;
 
+      // event without any payload
+      //
+      session.publish("com.myapp.topic1");
 
-   // event with positional payload
-   //
-   session.publish("com.myapp.topic1", 23, true, std::string("hello"));
-
-
-   // event with complex positional payload
-   //
-   autobahn::anyvec v;
-   v.push_back(1);
-   v.push_back(3.123);
-   v.push_back(false);
-   v.push_back(std::string("hello"));
-
-   autobahn::anyvec v2;
-   v2.push_back(std::string("foo"));
-   v2.push_back(std::string("bar"));
-
-   v.push_back(v2);
-
-   autobahn::anymap m;
-   m["foo"] = 23;
-   m["bar"] = 1.23;
-   m["baz"] = std::string("awesome");
-
-   v.push_back(m);
-
-   session.publish("com.myapp.topic1", v);
+      // event with positional payload
+      //
+      session.publish("com.myapp.topic1", 23, true, std::string("hello"));
 
 
-   // event with keyword payload
-   //
-   autobahn::anymap m2;
-   m2["a"] = 23;
-   m2["b"] = std::string("foobar");
+      // event with complex positional payload
+      //
+      autobahn::anyvec v;
+      v.push_back(1);
+      v.push_back(3.123);
+      v.push_back(false);
+      v.push_back(std::string("hello"));
 
-   session.publish("com.myapp.topic1", m2);
+      autobahn::anyvec v2;
+      v2.push_back(std::string("foo"));
+      v2.push_back(std::string("bar"));
+
+      v.push_back(v2);
+
+      autobahn::anymap m;
+      m["foo"] = 23;
+      m["bar"] = 1.23;
+      m["baz"] = std::string("awesome");
+
+      v.push_back(m);
+
+      session.publish("com.myapp.topic1", v);
 
 
-   // event with position and keyword payload
-   //
-   session.publish("com.myapp.topic1", v2, m2);
+      // event with keyword payload
+      //
+      autobahn::anymap m2;
+      m2["a"] = 23;
+      m2["b"] = std::string("foobar");
+
+      session.publish("com.myapp.topic1", m2);
+
+
+      // event with position and keyword payload
+      //
+      session.publish("com.myapp.topic1", v2, m2);
+   });
 }

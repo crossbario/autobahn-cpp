@@ -30,7 +30,12 @@
 #include <msgpack.hpp>
 
 #include <boost/any.hpp>
-#include <future>
+
+// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
+#define BOOST_THREAD_PROVIDES_FUTURE
+#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
+#include <boost/thread/future.hpp>
+//#include <future>
 
 
 namespace autobahn {
@@ -46,7 +51,7 @@ namespace autobahn {
 
          void process();
 
-         std::future<int> join(const std::string& realm);
+         boost::future<int> join(const std::string& realm);
 
          void publish(const std::string& topic);
 

@@ -28,12 +28,16 @@ if USE_SHIT_COMPILER:
    env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wno-deprecated-declarations', '-Wl,--no-as-needed', '-pthread'])
 else:
    env.Append(CXXFLAGS = ['-std=c++11', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
+#   env.Append(CXXFLAGS = ['-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
    env.Append(LINKFLAGS = ['-stdlib=libc++', '-pthread'])
    env["CC"] = "clang"
    env["CXX"] = "clang++"
 
 # -std=c++11 -stdlib=libc++
-# 
+#
+
+env.Append(CPPPATH = ['/home/oberstet/boost_1_55_0/'])
+env.Append(LIBPATH = ['/home/oberstet/boost_1_55_0/stage/lib'])
 
 env.Append(CPPPATH = ['#/include'])
 env.Append(CPPPATH = [os.path.join(os.environ['HOME'], 'msgpack_clang/include')])

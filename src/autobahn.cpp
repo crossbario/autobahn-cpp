@@ -86,10 +86,10 @@ namespace autobahn {
    }
 
 
-   std::future<int> session::join(const std::string& realm) {
-      std::promise<int> p;
+   boost::future<int> session::join(const std::string& realm) {
+      boost::promise<int> p;
       p.set_value(23);
-      return p.get_future();  
+      return p.get_future();
    }
 
 
@@ -168,7 +168,7 @@ namespace autobahn {
 
    void session::publish(const std::string& topic, anyvec& args) {
 
-      if (args.size() > 0) {         
+      if (args.size() > 0) {
          m_packer.pack_array(5);
          m_packer.pack(MSG_CODE_PUBLISH);
          m_packer.pack(1);
@@ -192,7 +192,7 @@ namespace autobahn {
          m_packer.pack(topic);
          pack_any(args);
          pack_any(kwargs);
-         send();         
+         send();
       } else {
          publish(topic, args);
       }
@@ -209,7 +209,7 @@ namespace autobahn {
          m_packer.pack(topic);
          m_packer.pack_array(0);
          pack_any(kwargs);
-         send();         
+         send();
       } else {
          publish(topic);
       }
