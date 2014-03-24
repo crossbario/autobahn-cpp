@@ -22,15 +22,41 @@ struct Foo {
    boost::promise<int> p;
 };
 
+//#define V1
+//#define V2
+#define V3
 
 int main () {
 
    Foo foo;
 
+#ifdef V1
+   // does NOT work
+
+   foo.start().then([](boost::future<int> f) {
+      std::cout << "done:" << std::endl;
+      std::cout << f.get() << std::endl;
+   });
+#endif
+
+#ifdef V2
+   // does NOT work
+
+   boost::future<int> f = foo.start();
+   f.then([](boost::future<int> f) {
+      std::cout << "done:" << std::endl;
+      std::cout << f.get() << std::endl;
+   });
+#endif
+
+#ifdef V3
+   // this DOES work
+
    boost::future<void> f2 = foo.start().then([](boost::future<int> f) {
       std::cout << "done:" << std::endl;
       std::cout << f.get() << std::endl;
    });
+#endif
 
    foo.finish();
 }
