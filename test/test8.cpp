@@ -27,7 +27,7 @@ int main () {
 
    Foo foo;
 
-   foo.start().then([](boost::future<int> f) {
+   boost::future<void> f2 = foo.start().then([](boost::future<int> f) {
       std::cout << "done:" << std::endl;
       std::cout << f.get() << std::endl;
    });

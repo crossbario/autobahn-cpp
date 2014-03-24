@@ -16,8 +16,9 @@ and depends on
  * `boost::future`
 
 
-> Note: While C++ 11 provides a `std::future`, that lacks continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf).
-
+> Note: While C++ 11 provides a `std::future`, that lacks continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015:
+* [C++ Standardisation Roadmap](http://isocpp.org/std/status)
+* [Boost C++ 1y](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/compliance.html#thread.compliance.cxx1y.async)
 
 
 ## Building
