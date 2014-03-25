@@ -119,7 +119,7 @@ namespace autobahn {
    boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args) {
 
       std::cerr << "0" << std::endl;
-      
+
       m_request_id += 1;
 
       m_calls[m_request_id] = call_t();
@@ -130,6 +130,29 @@ namespace autobahn {
       m_packer.pack_map(0);
       m_packer.pack(procedure);
       pack_any(args);
+      send();
+
+      boost::future<boost::any> f = m_calls[m_request_id].m_res.get_future();
+      f.set_deferred();
+      return f;
+   }
+
+
+   boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
+
+      std::cerr << "0b" << std::endl;
+
+      m_request_id += 1;
+
+      m_calls[m_request_id] = call_t();
+
+      m_packer.pack_array(6);
+      m_packer.pack(MSG_CODE_CALL);
+      m_packer.pack(m_request_id);
+      m_packer.pack_map(0);
+      m_packer.pack(procedure);
+      pack_any(args);
+      pack_any(kwargs);
       send();
 
       boost::future<boost::any> f = m_calls[m_request_id].m_res.get_future();
@@ -311,10 +334,45 @@ namespace autobahn {
 
 
    boost::any session::unpack_any(msgpack::object& obj) {
-      if (obj.type == msgpack::type::POSITIVE_INTEGER) {
-         return boost::any(obj.as<int>());
+      switch (obj.type) {
+
+         case msgpack::type::RAW:
+            return boost::any(obj.as<std::string>());
+
+         case msgpack::type::POSITIVE_INTEGER:
+            return boost::any(obj.as<uint64_t>());
+
+         case msgpack::type::NEGATIVE_INTEGER:
+            return boost::any(obj.as<int64_t>());
+
+         case msgpack::type::BOOLEAN:
+            return boost::any(obj.as<bool>());
+
+         case msgpack::type::DOUBLE:
+            return boost::any(obj.as<double>());
+
+         case msgpack::type::NIL:
+            return boost::any();
+
+         case msgpack::type::ARRAY:
+            // FIXME
+            {
+               anyvec out_vec;
+               std::vector<msgpack::object> in_vec;
+               obj.convert(&in_vec);
+               for (int i = 0; i < in_vec.size(); ++i) {
+                  out_vec.push_back(unpack_any(in_vec[i]));
+               }
+               return out_vec;
+               //std::cerr << "unprocess ARRAY" << std::endl;              
+            }
+
+         case msgpack::type::MAP:
+            // FIXME
+
+         default:
+            return boost::any();
       }
-      return boost::any();
    }
 
 

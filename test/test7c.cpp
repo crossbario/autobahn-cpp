@@ -28,7 +28,11 @@ int main () {
    // for talking WAMP with the master
    //
    std::cerr << "Worker starting .." << std::endl;
-
+/*
+   uint16_t x = 18;
+   boost::any hx = x;
+   std::cerr << "XXX " << boost::any_cast<int>(hx) << std::endl;
+*/
    // Setup WAMP session running over stdio
    //
    autobahn::session session(std::cin, std::cout);
@@ -47,6 +51,9 @@ int main () {
 
       std::cerr << "Joined with session ID " << session_id << std::endl;
 
+      autobahn::anyvec params1 = {2, "foobar"};
+      autobahn::anymap params2 = {{"a", 23}, {"b", 7}};
+
 
       // Variant A: positional args via generic vector, generic result
       //
@@ -55,11 +62,14 @@ int main () {
       args.push_back(777);
 
       session.call("com.mathservice.add2", args).then(lp, [](boost::future<boost::any> f) {
-         int res = boost::any_cast<int> (f.get());
+         boost::any a = f.get();
+         std::cerr << "::: " << a.type().name() << std::endl;
+         std::cerr << "::: " << (a.type() == typeid(uint64_t)) << std::endl;
+         uint64_t res = boost::any_cast<uint64_t> (a);
          std::cerr << "A - Got RPC result " << res << std::endl;
       });
 
-
+#if 0
       // Variant B: generic positional args, generic result
       //
       boost::any a = 23;
@@ -76,6 +86,38 @@ int main () {
       session.call("com.mathservice.add2", 23, 777).then(lp, [](boost::future<boost::any> f) {
          int res = boost::any_cast<int> (f.get());
          std::cerr << "C - Got RPC result " << res << std::endl;
+      });
+
+#endif
+      // Variant C: typed positional args, generic result
+      //
+      session.call("com.mathservice.add2", {23, 777}).then(lp, [](boost::future<boost::any> f) {
+         int res = boost::any_cast<int> (f.get());
+         std::cerr << "D - Got RPC result " << res << std::endl;
+      });
+
+
+      session.call("com.arguments.stars", {}, {{"stars", 10}}).then(lp, [](boost::future<boost::any> f) {
+         std::string res = boost::any_cast<std::string> (f.get());
+         std::cerr << "E - Got RPC result " << res << std::endl;
+      });
+
+/*
+      session.call<std::string>("com.arguments.stars", {}, {{"stars", 20}}).then(lp, [](boost::future<std::string> f) {
+         std::cerr << "F - Got RPC result " << f.get() << std::endl;
+      });
+*/
+
+//      session.call("com.arguments.numbers", {1, 7}, {{"prefix", "Hello number: "}}).then(lp, [](boost::future<boost::any> f) {
+      session.call("com.arguments.numbers", {1, 7}).then(lp, [](boost::future<boost::any> f) {
+         boost::any res = f.get();
+         std::cerr << "G - Got RPC result " << res.type().name() << std::endl;
+
+         autobahn::anyvec v = boost::any_cast<autobahn::anyvec>(res);
+         std::cerr << "G2 " << v.size() << std::endl;
+         for (int i = 0; i < v.size(); ++i) {
+            std::cerr << boost::any_cast<std::string>(v[i]) << std::endl;
+         }
       });
    });
 

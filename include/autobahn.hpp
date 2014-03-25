@@ -88,8 +88,20 @@ namespace autobahn {
          /**
           * Calls a remote procedure. Generic positional argument vector, generic return.
           */
+         //boost::future<boost::any> call(const std::string& procedure);
+
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args);
 
+         boost::future<boost::any> call(const std::string& procedure, const anyvec& args, const anymap& kwargs);
+
+         template <typename T>
+         boost::future<T> call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
+            return call(procedure, args, kwargs).then(boost::launch::deferred, [](boost::future<boost::any> f) {
+               return boost::any_cast<T> (f.get());
+            });
+         }
+
+#if 0
          /**
           * Calls a remote procedure. Typed positional arguments, generic return.
           */
@@ -124,7 +136,6 @@ namespace autobahn {
             return _call_2<T>(procedure, accumulated, args...);
          }
 
-      private:
 
          /// Entry point into template recursion for typed argument accumulation, generic return.
          template <typename Arg, typename... Args>
@@ -161,7 +172,9 @@ namespace autobahn {
             accumulated.push_back(arg);
             return call<T>(procedure, accumulated);
          }
+#endif
 
+      private:
 
          void process_welcome(wamp_msg_t& msg);
 

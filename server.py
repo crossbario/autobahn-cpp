@@ -46,6 +46,47 @@ class TestService(ApplicationSession):
 
       self.register(add2, 'com.mathservice.add2')
 
+      def ping():
+         return
+
+      def add2(a, b):
+         return a + b
+
+      def stars(nick = "somebody", stars = 0):
+         return "{} starred {}x".format(nick, stars)
+
+      def orders(product, limit = 5):
+         return ["Product {}".format(i) for i in range(50)][:limit]
+
+      def arglen(*args, **kwargs):
+         return [len(args), len(kwargs)]
+
+      self.register(ping, 'com.arguments.ping')
+      self.register(add2, 'com.arguments.add2')
+      self.register(stars, 'com.arguments.stars')
+      self.register(orders, 'com.arguments.orders')
+      self.register(arglen, 'com.arguments.arglen')
+
+
+      def add_complex(a, ai, b, bi):
+         return CallResult(c = a + b, ci = ai + bi)
+
+      self.register(add_complex, 'com.myapp.add_complex')
+
+      def split_name(fullname):
+         forename, surname = fullname.split()
+         return CallResult(forename, surname)
+
+      self.register(split_name, 'com.myapp.split_name')
+
+
+      def numbers(start, end, prefix = "Number: "):
+         res = []
+         for i in range(start, end):
+            res.append(prefix + str(i))
+         return res
+
+      self.register(numbers, 'com.arguments.numbers')
 
 
 if __name__ == '__main__':
