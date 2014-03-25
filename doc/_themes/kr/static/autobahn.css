@@ -1,0 +1,37 @@
+div.topnav.container {
+   font-size: 17px;
+   background-color: #eee;
+   padding: 0.4em 0.5em;
+   margin: 0 0 0.8em;
+   text-align: center;
+}
+
+div.topnav.container > a {
+   margin-right: 10px;
+
+}
+
+div.topnav.container > a:last-of-type {
+   margin-right: 0;
+}
+
+div.topnav.container > a > em {
+   font-style: normal;
+}
+
+
+
+
+/* fix code blocks shrinking to code width when using line numbers */
+/* -- still expanding instead of overflow -- */
+
+table.highlighttable {
+   width: 100%;
+}
+
+
+span.pre {
+   background-color: #eee;
+   border: 1px solid #e1e4e5;
+   padding: 0 3px;
+}
