@@ -21,6 +21,10 @@
 
 #include "autobahn.hpp"
 
+// Note: This example triggers a Boost bug which involving a future
+// being fired twice (fixed in Boost 1.56)
+// https://svn.boost.org/trac/boost/ticket/9711
+
 
 int main () {
 
