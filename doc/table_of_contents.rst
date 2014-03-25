@@ -8,4 +8,4 @@ Table of Contents
    gettingstarted
    examples
    reference
-   self
+
