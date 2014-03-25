@@ -35,7 +35,7 @@ int main () {
 
    // Launch policy to use
    //
-   //boost::launch lp = boost::launch::deferred;
+   boost::launch lp = boost::launch::deferred;
 
    // To establish a session, we join a "realm" ..
    //
@@ -47,16 +47,38 @@ int main () {
 
       std::cerr << "Joined with session ID " << session_id << std::endl;
 
-      // call a remote procedure ..
-      //
-      session.call("com.mathservice.add2", 23, 777).then([](boost::future<boost::any> f) {
 
-         // call result received
-         //
+      // Variant A: positional args via generic vector, generic result
+      //
+      autobahn::anyvec args;
+      args.push_back(23);
+      args.push_back(777);
+
+      session.call("com.mathservice.add2", args).then(lp, [](boost::future<boost::any> f) {
          int res = boost::any_cast<int> (f.get());
-         std::cerr << "Got RPC result " << res << std::endl;
+         std::cerr << "A - Got RPC result " << res << std::endl;
+      });
+
+
+      // Variant B: generic positional args, generic result
+      //
+      boost::any a = 23;
+      boost::any b = 777;
+
+      session.call("com.mathservice.add2", a, b).then(lp, [](boost::future<boost::any> f) {
+         int res = boost::any_cast<int> (f.get());
+         std::cerr << "B - Got RPC result " << res << std::endl;
+      });
+
+
+      // Variant C: typed positional args, generic result
+      //
+      session.call("com.mathservice.add2", 23, 777).then(lp, [](boost::future<boost::any> f) {
+         int res = boost::any_cast<int> (f.get());
+         std::cerr << "C - Got RPC result " << res << std::endl;
       });
    });
+
 
    // Enter event loop for session ..
    //

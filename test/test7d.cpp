@@ -49,7 +49,7 @@ int main () {
 
       // call a remote procedure ..
       //
-      session.call_static<int>("com.mathservice.add2", 23, 777).then(lp, [](boost::future<int> f) {
+      session.call<int>("com.mathservice.add2", 0, 23, 777).then(lp, [](boost::future<int> f) {
 
          // call result received
          //
