@@ -35,7 +35,7 @@ int main () {
 
    // Launch policy to use
    //
-   //boost::launch lp = boost::launch::deferred;
+   boost::launch lp = boost::launch::deferred;
 
    // To establish a session, we join a "realm" ..
    //
@@ -49,7 +49,7 @@ int main () {
 
       // call a remote procedure ..
       //
-      session.call<int>("com.mathservice.add2", 23, 777).then([](boost::future<int> f) {
+      session.call_static<int>("com.mathservice.add2", 23, 777).then(lp, [](boost::future<int> f) {
 
          // call result received
          //
