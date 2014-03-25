@@ -21,22 +21,6 @@
 
 #include "autobahn.hpp"
 
-boost::any add2(autobahn::anyvec& args) {
-   std::cout << "I am being called" << std::endl;
-   int a = boost::any_cast<int>(args[0]);
-   int b = boost::any_cast<int>(args[1]);
-   return a + b;
-}
-
-
-typedef boost::any (*callback) (autobahn::anyvec&);
-
-void registerproc(const std::string& procedure, callback endpoint) {
-   std::cout << "registering procedure" << std::endl;
-}
-
-
-
 
 int main () {
 
@@ -55,15 +39,22 @@ int main () {
    //
    session.join(std::string("realm1")).then([&](boost::future<int> f) {
 
+      // WAMP session is now established ..
+      //
       int session_id = f.get();
 
       std::cerr << "Joined with session ID " << session_id << std::endl;
 
+      // call a remote procedure ..
+      //
       autobahn::anyvec args;
       args.push_back(23);
       args.push_back(777);
 
       session.call("com.mathservice.add2", args).then([](boost::future<boost::any> f) {
+
+         // call result received
+         //
          int res = boost::any_cast<int> (f.get());
          std::cerr << "Got RPC result " << res << std::endl;
       });
