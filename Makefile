@@ -3,8 +3,8 @@ build:
 
 test_worker:
 	scons
-	python server.py --debug --worker ./build/test/test7d
-#	python server.py --debug --worker ./build/test/test7c
+#	python server.py --debug --worker ./build/test/test7d
+	python server.py --debug --worker ./build/test/test7c
 #	python server.py --debug --worker ./build/test/test7b
 #	python server.py --debug --worker ./build/test/test7
 

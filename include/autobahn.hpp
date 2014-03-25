@@ -95,6 +95,8 @@ namespace autobahn {
           */
          template <typename... Args>
          boost::future<boost::any> call(const std::string& procedure, const Args&... args) {
+            std::cerr << "1" << std::endl;
+
             anyvec accumulated;
             return _call_1(procedure, accumulated, args...);
          }
@@ -104,6 +106,8 @@ namespace autobahn {
           */
          template <typename T>
          boost::future<T> call(const std::string& procedure, const anyvec& args) {
+            std::cerr << "2" << std::endl;
+
             return call(procedure, args).then(boost::launch::deferred, [](boost::future<boost::any> f) {
                return boost::any_cast<T> (f.get());
             });
@@ -113,7 +117,9 @@ namespace autobahn {
           * Calls a remote procedure. Typed positional arguments, typed return.
           */
          template <typename T, typename... Args>
-         boost::future<T> call_static(const std::string& procedure, const Args&... args) {
+         boost::future<T> call_static(const std::string& procedure, const T& _default, const Args&... args) {
+            std::cerr << "3" << std::endl;
+
             anyvec accumulated;
             return _call_2<T>(procedure, accumulated, args...);
          }
@@ -123,6 +129,8 @@ namespace autobahn {
          /// Entry point into template recursion for typed argument accumulation, generic return.
          template <typename Arg, typename... Args>
          boost::future<boost::any> _call_1(const std::string& procedure, anyvec& accumulated, const Arg& arg, const Args&... args) {
+            std::cerr << "4" << std::endl;
+
             accumulated.push_back(arg);
             return _call_1(procedure, accumulated, args...);
          }
@@ -130,6 +138,8 @@ namespace autobahn {
          /// Terminal of template recursion for typed argument accumulation, generic return.
          template <typename Arg>
          boost::future<boost::any> _call_1(const std::string& procedure, anyvec& accumulated, const Arg& arg) {
+            std::cerr << "5" << std::endl;
+
             accumulated.push_back(arg);
             return call(procedure, accumulated);
          }
@@ -137,6 +147,8 @@ namespace autobahn {
          /// Entry point into template recursion for typed argument accumulation, typed return.
          template <typename T, typename Arg, typename... Args>
          boost::future<T> _call_2(const std::string& procedure, anyvec& accumulated, const Arg& arg, const Args&... args) {
+            std::cerr << "6" << std::endl;
+
             accumulated.push_back(arg);
             return _call_2<T>(procedure, accumulated, args...);
          }
@@ -144,6 +156,8 @@ namespace autobahn {
          /// Terminal of template recursion for typed argument accumulation, typed return.
          template <typename T, typename Arg>
          boost::future<T> _call_2(const std::string& procedure, anyvec& accumulated, const Arg& arg) {
+            std::cerr << "7" << std::endl;
+
             accumulated.push_back(arg);
             return call<T>(procedure, accumulated);
          }
@@ -182,7 +196,6 @@ namespace autobahn {
          endpoints m_endpoints;
          calls_t m_calls;
    };
-
 
    class ProtocolError : public std::runtime_error {
       public:
