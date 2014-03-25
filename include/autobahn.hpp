@@ -97,20 +97,20 @@ namespace autobahn {
          template <typename... Args>
          boost::future<boost::any> call(const std::string& procedure, const Args&... args) {
             anyvec accumulated;
-            return call(procedure, accumulated, args...);
+            return _call_1(procedure, accumulated, args...);
          }
 
          /// Entry point into template recursion for typed argument accumulation.
-         template <typename Arg1, typename... Args>
-         boost::future<boost::any> call(const std::string& procedure, anyvec& accumulated, const Arg1& arg1, const Args&... args) {
-            accumulated.push_back(arg1);
-            return call(procedure, accumulated, args...);
+         template <typename Arg, typename... Args>
+         boost::future<boost::any> _call_1(const std::string& procedure, anyvec& accumulated, const Arg& arg, const Args&... args) {
+            accumulated.push_back(arg);
+            return _call_1(procedure, accumulated, args...);
          }
 
          /// Terminal of template recursion for typed argument accumulation.
          template <typename Arg>
-         boost::future<boost::any> call(const std::string& procedure, anyvec& accumulated, const Arg& arg1) {
-            accumulated.push_back(arg1);
+         boost::future<boost::any> _call_1(const std::string& procedure, anyvec& accumulated, const Arg& arg) {
+            accumulated.push_back(arg);
             return call(procedure, accumulated);
          }
 
@@ -125,14 +125,25 @@ namespace autobahn {
             });
          }
 
-/*
+         /// Entry point into template recursion for typed argument accumulation.
          template <typename T, typename... Args>
          boost::future<T> call(const std::string& procedure, const Args&... args) {
-            return call(procedure, args...).then(boost::launch::deferred, [](boost::future<boost::any> f) {
-               return boost::any_cast<T> (f.get());
-            });
+            anyvec accumulated;
+            return _call_2<T>(procedure, accumulated, args...);
          }
-*/
+
+         template <typename T, typename Arg, typename... Args>
+         boost::future<T> _call_2(const std::string& procedure, anyvec& accumulated, const Arg& arg, const Args&... args) {
+            accumulated.push_back(arg);
+            return _call_2<T>(procedure, accumulated, args...);
+         }
+
+         template <typename T, typename Arg>
+         boost::future<T> _call_2(const std::string& procedure, anyvec& accumulated, const Arg& arg) {
+            accumulated.push_back(arg);
+            return call<T>(procedure, accumulated);
+         }
+
       private:
 
          void process_welcome(wamp_msg_t& msg);

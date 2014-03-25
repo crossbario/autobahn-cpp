@@ -28,7 +28,7 @@ else:
    #tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
    #tests.append(env.Program('test5.cpp', LIBS = ['boost_system', 'boost_thread']))
 #   tests.append(env.Program('test5.cpp', LIBS = ['boost_thread', 'boost_system']))
-   tests.append(env.Program('test7c.cpp', LIBS = ['boost_thread', 'boost_system', 'msgpack', autobahn]))
+   tests.append(env.Program('test7d.cpp', LIBS = ['boost_thread', 'boost_system', 'msgpack', autobahn]))
 #   tests.append(env.Program('test7.cpp', LIBS = ['boost_thread', 'boost_system', 'msgpack', autobahn]))
 #   tests.append(env.Program('test8.cpp', LIBS = ['boost_thread', 'boost_system']))
    #tests.append(env.Program('test6.cpp'))
