@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
 
 #include <msgpack.hpp>
 
@@ -83,8 +84,55 @@ namespace autobahn {
 
          boost::any invoke(const std::string& procedure, anyvec& args);
 
-         boost::future<boost::any> call(const std::string& procedure, anyvec& args);
 
+         /**
+          * Calls a remote procedure. Generic positional argument vector, generic return.
+          */
+         boost::future<boost::any> call(const std::string& procedure, const anyvec& args);
+
+
+         /**
+          * Calls a remote procedure. Typed positional arguments, generic return.
+          */
+         template <typename... Args>
+         boost::future<boost::any> call(const std::string& procedure, const Args&... args) {
+            anyvec accumulated;
+            return call(procedure, accumulated, args...);
+         }
+
+         /// Entry point into template recursion for typed argument accumulation.
+         template <typename Arg1, typename... Args>
+         boost::future<boost::any> call(const std::string& procedure, anyvec& accumulated, const Arg1& arg1, const Args&... args) {
+            accumulated.push_back(arg1);
+            return call(procedure, accumulated, args...);
+         }
+
+         /// Terminal of template recursion for typed argument accumulation.
+         template <typename Arg>
+         boost::future<boost::any> call(const std::string& procedure, anyvec& accumulated, const Arg& arg1) {
+            accumulated.push_back(arg1);
+            return call(procedure, accumulated);
+         }
+
+
+         /**
+          * Calls a remote procedure. Generic positional argument vector, typed return.
+          */
+         template <typename T>
+         boost::future<T> call(const std::string& procedure, const anyvec& args) {
+            return call(procedure, args).then(boost::launch::deferred, [](boost::future<boost::any> f) {
+               return boost::any_cast<T> (f.get());
+            });
+         }
+
+/*
+         template <typename T, typename... Args>
+         boost::future<T> call(const std::string& procedure, const Args&... args) {
+            return call(procedure, args...).then(boost::launch::deferred, [](boost::future<boost::any> f) {
+               return boost::any_cast<T> (f.get());
+            });
+         }
+*/
       private:
 
          void process_welcome(wamp_msg_t& msg);

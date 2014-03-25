@@ -116,7 +116,7 @@ namespace autobahn {
       return boost::any();
    }
 
-   boost::future<boost::any> session::call(const std::string& procedure, anyvec& args) {
+   boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args) {
       m_request_id += 1;
 
       m_calls[m_request_id] = call_t();
