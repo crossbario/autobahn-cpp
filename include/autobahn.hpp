@@ -54,6 +54,8 @@ namespace autobahn {
 
    typedef std::map<uint64_t, call_t> calls_t;
 
+   typedef std::vector<msgpack::object> wamp_msg_t;
+
 
    class session {
       public:
@@ -84,6 +86,16 @@ namespace autobahn {
          boost::future<boost::any> call(const std::string& procedure, anyvec& args);
 
       private:
+
+         void process_welcome(wamp_msg_t& msg);
+
+         void process_call_result(wamp_msg_t& msg);
+
+
+         boost::any unpack_any(msgpack::object& obj);
+
+         void unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args);
+
 
          void pack_any(const boost::any& value);
 

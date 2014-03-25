@@ -22,10 +22,7 @@ from autobahn.twisted.wamp import ApplicationSession
 
 
 
-class TimeService(ApplicationSession):
-   """
-   A simple time service application component.
-   """
+class TestService(ApplicationSession):
 
    def __init__(self, realm = "realm1"):
       ApplicationSession.__init__(self)
@@ -44,6 +41,11 @@ class TimeService(ApplicationSession):
 
       self.register(utcnow, 'com.timeservice.now')
 
+      def add2(a, b):
+         return a + b
+
+      self.register(add2, 'com.mathservice.add2')
+
 
 
 if __name__ == '__main__':
@@ -59,6 +61,9 @@ if __name__ == '__main__':
 
    parser.add_argument("-d", "--debug", action = "store_true",
                        help = "Enable debug output.")
+
+   parser.add_argument("-w", "--worker", type = str,
+                       help = "Path to worker program.")
 
    args = parser.parse_args()
 
@@ -86,18 +91,31 @@ if __name__ == '__main__':
    ##
    from autobahn.twisted.wamp import RouterSessionFactory
    session_factory = RouterSessionFactory(router_factory)
-   session_factory.add(TimeService())
+   session_factory.add(TestService())
 
 
    from autobahn.wamp.serializer import MsgPackSerializer
    serializer = MsgPackSerializer()
 
-   from autobahn.twisted.rawsocket import WampRawSocketClientFactory
+   from autobahn.twisted.rawsocket import WampRawSocketClientFactory, WampRawSocketClientProtocol
    transport_factory = WampRawSocketClientFactory(session_factory, serializer, debug = args.debug)
 
+   class WorkerClientProtocol(WampRawSocketClientProtocol):
 
-   executable = "/home/oberstet/scm/tavendo/autobahn/AutobahnCpp/build/test/test7"
-   executable = "/home/oberstet/scm/AutobahnCpp/build/test/test7"
+      def connectionMade(self):
+         WampRawSocketClientProtocol.connectionMade(self)
+
+
+      def connectionLost(self, reason):
+         print "X"*10
+         WampRawSocketClientProtocol.connectionLost(self, reason)
+         reactor.stop()
+
+   transport_factory.protocol = WorkerClientProtocol
+
+
+   executable = os.path.abspath(os.path.join(os.getcwd(), args.worker))
+   print("Starting worker {}".format(executable))
 
    args = [executable]
 

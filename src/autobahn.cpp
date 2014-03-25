@@ -129,7 +129,9 @@ namespace autobahn {
       pack_any(args);
       send();
 
-      return m_calls[m_request_id].m_res.get_future();
+      boost::future<boost::any> f = m_calls[m_request_id].m_res.get_future();
+      f.set_deferred();
+      return f;
    }
 
 
@@ -280,28 +282,110 @@ namespace autobahn {
    }
 
 
+
+/*
+#include <unistd.h>
+
+   std::cout.flush();
+   close(STDOUT_FILENO);
+   sleep(2);
+   std::cerr << "EXIT" << std::endl;
+
+
+*/
+
+   void session::process_welcome(wamp_msg_t& msg) {
+      m_session_id = msg[1].as<uint64_t>();
+      m_session_join.set_value(m_session_id);
+   }
+
+
+   void session::unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args) {
+      for (int i = 0; i < raw_args.size(); ++i) {
+         args.push_back(unpack_any(raw_args[i]));
+      }
+   }
+
+
+   boost::any session::unpack_any(msgpack::object& obj) {
+      if (obj.type == msgpack::type::POSITIVE_INTEGER) {
+         return boost::any(obj.as<int>());
+      }
+      return boost::any();
+   }
+
+
+   void session::process_call_result(wamp_msg_t& msg) {
+
+      // [RESULT, CALL.Request|id, Details|dict]
+      // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
+      // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+
+      if (msg.size() != 3 && msg.size() != 4 && msg.size() != 5) {
+         throw ProtocolError("invalid RESULT message structure - length must be 3, 4 or 5");
+      }
+
+      if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
+         throw ProtocolError("invalid RESULT message structure - CALL.Request must be an integer");
+      }
+
+      uint64_t request_id = msg[1].as<uint64_t>();
+
+      calls_t::iterator call = m_calls.find(request_id);
+
+      if (call != m_calls.end()) {
+
+         if (msg[2].type != msgpack::type::MAP) {
+            throw ProtocolError("invalid RESULT message structure - Details must be a dictionary");
+         }
+
+         if (msg.size() > 3) {
+
+            if (msg[3].type != msgpack::type::ARRAY) {
+               throw ProtocolError("invalid RESULT message structure - YIELD.Arguments must be a list");
+            }
+
+            std::vector<msgpack::object> raw_args;
+            msg[3].convert(&raw_args);
+
+            anyvec args;
+
+            unpack_anyvec(raw_args, args);
+
+            if (args.size() > 0) {
+               call->second.m_res.set_value(args[0]);
+            } else {
+               call->second.m_res.set_value(boost::any());
+            }
+
+         } else {
+            // empty result
+            call->second.m_res.set_value(boost::any());
+         }
+      } else {
+         throw ProtocolError("bogus RESULT message for non-pending request ID");
+      }
+   }
+
+
    void session::loop() {
       int i = 0;
       try {
 
          while (receive()) {
 
-            std::cerr << "Got mesg: " << std::endl;
-            std::cerr.flush();
-
             msgpack::unpacked result;
-
-            //m_unpacker.next(&result)
-
 
             while (m_unpacker.next(&result)) {
                msgpack::object obj(result.get());
+
+               std::cerr << "Received: " << obj << std::endl;
 
                if (obj.type != msgpack::type::ARRAY) {
                   throw ProtocolError("invalid message structure - message is not an array");
                }
 
-               std::vector<msgpack::object> msg;
+               wamp_msg_t msg;
                obj.convert(&msg);
 
                if (msg.size() < 1) {
@@ -314,22 +398,19 @@ namespace autobahn {
 
                int code = msg[0].as<int>();
 
-               if (code == MSG_CODE_WELCOME) {
+               switch (code) {
+                  case MSG_CODE_WELCOME:
+                     process_welcome(msg);
+                     break;
 
-                  std::cerr << "firing welcome" << std::endl;
-                  std::cerr.flush();
-
-                  m_session_join.set_value(23);
-
-                  std::cerr << "welcome fired" << std::endl;
-                  std::cerr.flush();
+                  case MSG_CODE_RESULT:
+                     process_call_result(msg);
+                     break;
                }
 
                //throw Unimplemented("WAMP message", 23);
 
 
-               std::cerr << (obj.type == msgpack::type::ARRAY) << " : " << obj << std::endl;
-               std::cerr.flush();
 /*
                 std::cerr << msg.size() << std::endl;
                 if (msg[0] == MSG_CODE_HELLO) {
@@ -390,9 +471,8 @@ namespace autobahn {
       uint32_t len = htonl(m_buffer.size());
       m_out.write((char*) &len, 4);
       m_out.write(m_buffer.data(), m_buffer.size());
-      //m_out.flush();
+      m_out.flush();
       m_buffer.clear();
-      //std::cerr << "SENT" << std::endl;
    }
 
 

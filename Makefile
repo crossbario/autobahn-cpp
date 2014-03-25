@@ -1,6 +1,10 @@
 build:
 	scons
 
+test_worker:
+	scons
+	python server.py --debug --worker ./build/test/test7
+
 test_unser:
 	scons
 	./build/test/test7 | python -u unserialize.py
