@@ -18,7 +18,12 @@
 
 import datetime
 
+from twisted.internet.defer import Deferred, \
+                                   inlineCallbacks, \
+                                   returnValue
+
 from autobahn.twisted.wamp import ApplicationSession
+from autobahn.twisted.util import sleep
 
 
 
@@ -40,6 +45,20 @@ class TestService(ApplicationSession):
          return now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
       self.register(utcnow, 'com.timeservice.now')
+
+      def square(x):
+         return x * x
+
+      self.register(square, 'com.math.square')
+
+
+      @inlineCallbacks
+      def slowsquare(x, delay = 1):
+         print("slowsquare with delay = {}".format(delay))
+         yield sleep(delay)
+         returnValue(x * x)
+
+      self.register(slowsquare, 'com.math.slowsquare')
 
       def add2(a, b):
          return a + b

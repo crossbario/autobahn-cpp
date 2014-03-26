@@ -18,6 +18,9 @@
 
 #include <stdint.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 
 #include <iostream>
 #include <vector>
@@ -79,11 +82,21 @@ namespace autobahn {
 
 
    session::session(std::istream& in, std::ostream& out)
-      : m_in(in),
+      : m_stopped(false),
+        m_in(in),
         m_out(out),
         m_packer(&m_buffer),
         m_session_id(0),
         m_request_id(0) {
+   }
+
+   void session::stop(int exit_code) {
+      std::cerr << "stopping .." << std::endl;
+      m_stopped = true;
+      close(STDIN_FILENO);
+      close(STDOUT_FILENO);
+      close(STDERR_FILENO);
+      exit(exit_code);
    }
 
 
@@ -93,9 +106,13 @@ namespace autobahn {
       //m_session_join = new boost::promise<int>();
       send_hello(realm);
       //m_session_join.set_value(23);
+#if 0
       boost::future<int> f = m_session_join.get_future();
       f.set_deferred();
       return f;
+#else
+      return m_session_join.get_future();
+#endif      
    }
 
 
@@ -132,9 +149,13 @@ namespace autobahn {
       pack_any(args);
       send();
 
+#if 0
       boost::future<boost::any> f = m_calls[m_request_id].m_res.get_future();
       f.set_deferred();
       return f;
+#else
+      return m_calls[m_request_id].m_res.get_future();      
+#endif
    }
 
 
@@ -155,9 +176,13 @@ namespace autobahn {
       pack_any(kwargs);
       send();
 
+#if 0
       boost::future<boost::any> f = m_calls[m_request_id].m_res.get_future();
       f.set_deferred();
       return f;
+#else
+      return m_calls[m_request_id].m_res.get_future();
+#endif      
    }
 
 
@@ -195,6 +220,11 @@ namespace autobahn {
       } else if (value.type() == typeid(int)) {
 
          int val = boost::any_cast<int>(value);
+         m_packer.pack(val);
+
+      } else if (value.type() == typeid(uint64_t)) {
+
+         uint64_t val = boost::any_cast<uint64_t>(value);
          m_packer.pack(val);
 
       } else if (value.type() == typeid(bool)) {
@@ -433,7 +463,7 @@ namespace autobahn {
       int i = 0;
       try {
 
-         while (receive()) {
+         while (!m_stopped && receive()) {
 
             msgpack::unpacked result;
 
@@ -510,6 +540,7 @@ namespace autobahn {
 
       char blen[4];
       m_in.read(blen, 4);
+
       if (m_in.eof() || m_in.fail()) {
          return false;
       }
@@ -518,6 +549,7 @@ namespace autobahn {
       uint32_t len = ntohl(*((uint32_t*) &blen));
       m_unpacker.reserve_buffer(len);
       m_in.read(m_unpacker.buffer(), len);
+
       if (m_in.eof() || m_in.fail()) {
          return false;
       }

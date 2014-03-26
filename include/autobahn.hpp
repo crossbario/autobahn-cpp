@@ -35,7 +35,7 @@
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
+//#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 #include <boost/thread/future.hpp>
 //#include <future>
 
@@ -64,6 +64,8 @@ namespace autobahn {
          session(std::istream& in, std::ostream& out);
 
          void loop();
+
+         void stop(int exit_code = 0);
 
          boost::future<int> join(const std::string& realm);
 
@@ -195,6 +197,8 @@ namespace autobahn {
 
          void send_hello(const std::string& realm);
 
+         bool m_stopped;
+
          std::istream& m_in;
          std::ostream& m_out;
 
@@ -226,5 +230,7 @@ namespace autobahn {
    };
 
 }
+
+//#include "../src/autobahn.cpp"
 
 #endif // AUTOBAHN_HPP

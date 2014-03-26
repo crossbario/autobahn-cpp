@@ -156,14 +156,14 @@ template<class Lhs, class Rhs>
 #if 1
       auto f1 = session.call("com.mathservice.add2", {7, 33});
 
-      auto f1done = f1.then(lp, [](decltype(f1) res) {
+      auto f1done = f1.then([](decltype(f1) res) {
          cerr << "Result 1: " << any_cast<uint64_t>(res.get()) << endl;
          return 10;
       });
 
       auto f2 = session.call("com.mathservice.add2", {60, 90});
 
-      auto f2done = f2.then(lp, [](decltype(f2) res) {
+      auto f2done = f2.then([](decltype(f2) res) {
          cerr << "Result 2: " << any_cast<uint64_t>(res.get()) << endl;
          return 20;
       });

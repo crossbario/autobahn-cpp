@@ -19,7 +19,12 @@
 #include <iostream>
 #include <string>
 
+#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 #include "autobahn.hpp"
+
+using namespace std;
+using namespace boost;
+
 
 
 int main () {
@@ -27,41 +32,72 @@ int main () {
    // A Worker MUST log to std::cerr, since std::cin/cout is used
    // for talking WAMP with the master
    //
-   std::cerr << "Worker starting .." << std::endl;
-
+   cerr << "Worker starting .." << endl;
 
    // Setup WAMP session running over stdio
    //
-   autobahn::session session(std::cin, std::cout);
+   autobahn::session session(cin, cout);
 
 
-   // To establish a session, we join a "realm" ..
-   //
-   session.join(std::string("realm1")).then([&](boost::future<int> f) {
+   auto s = session.join(std::string("realm1")).then([&session](future<int> s) {
 
       // WAMP session is now established ..
       //
-      int session_id = f.get();
+      cerr << "Joined with session ID " << s.get() << endl;
 
-      std::cerr << "Joined with session ID " << session_id << std::endl;
 
-      // call a remote procedure ..
+      // Issue some remote procedure calls ..
       //
-      autobahn::anyvec args;
-      args.push_back(23);
-      args.push_back(777);
 
-      session.call("com.mathservice.add2", args).then([](boost::future<boost::any> f) {
+      auto call1 = session.call("com.math.slowsquare", {3}).then([](future<any> f) {
 
-         // call result received
-         //
-         int res = boost::any_cast<int> (f.get());
-         std::cerr << "Got RPC result " << res << std::endl;
+         uint64_t res = any_cast<uint64_t> (f.get());
+         cerr << "Got result 1: " << res << endl;
       });
+
+
+      auto call2 = session.call("com.mathservice.add2", {23, 777})
+         .then([](future<any> f) {
+
+            uint64_t res = any_cast<uint64_t> (f.get());
+            cerr << "Got result 2: " << res << endl;
+            return res;
+         })
+         .then([](future<uint64_t> f) {
+
+            uint64_t res = f.get();
+            cerr << "Got result 2b: " << res << endl;
+         })
+      ;
+
+      auto call3 = session.call("com.mathservice.add2", {23, 7}).then([&session](future<any> f) {
+
+         uint64_t res = any_cast<uint64_t> (f.get());
+         cerr << "Got result 3: " << res << endl;
+
+         auto call4 = session.call("com.math.slowsquare", {res}, {{"delay", 3}}).then([](future<any> f) {
+
+            uint64_t res = any_cast<uint64_t> (f.get());
+            cerr << "Got result 4: " << res << endl;
+         });
+
+         // Wait for call4 to finish before returning ..
+         //
+         call4.get();
+      });
+
+
+      // Wait for all calls to finish ..
+      //
+      when_all(std::move(call1), std::move(call2), std::move(call3)).get();
+      cerr << "Done." << endl;
+
+      // Stop the event loop and exit the program.
+      //
+      session.stop();
    });
 
-
-   // Enter event loop for session ..
+   // Enter event loop for session. This will not return ..
    //
    session.loop();
 }
