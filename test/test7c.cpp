@@ -132,6 +132,16 @@ int main () {
          cerr << "A DONE " << f.get() << endl;
       });
 */
+/*
+template<class Lhs, class Rhs>
+  auto adding_func(const Lhs &lhs, const Rhs &rhs) -> decltype(lhs+rhs) {return lhs + rhs;}
+*/
+   auto xx = 33;
+
+   decltype(xx) yy;
+
+   yy = 2 * xx;
+
 
       auto f1 = session.call("com.mathservice.add2", {7, 33});
 
@@ -145,12 +155,13 @@ int main () {
          cerr << "Result 2: " << any_cast<uint64_t>(res.get()) << endl;
       });
 
+/*
       auto f3 = when_all(f1, f2);
 
       f3.then([](decltype(f3) res) {
          cerr << "Done." << endl;
       });
-
+*/
 /*
       wait_for_all(f1, f2);
       cerr << "Done." << endl;

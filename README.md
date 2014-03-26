@@ -99,8 +99,10 @@ scons
 
 ## Futures
 
+* [C++17: I See a Monad in Your Future! ](http://bartoszmilewski.com/2014/02/26/c17-i-see-a-monad-in-your-future/)
 * [Boost Thread](http://www.boost.org/doc/libs/1_55_0/doc/html/thread.html)
 * [Boost Issue: when_all](https://svn.boost.org/trac/boost/ticket/7447)
+* [Boost Issue. when_any](https://svn.boost.org/trac/boost/ticket/7446)
 * [Boost Issue: future fires twice](https://svn.boost.org/trac/boost/ticket/9711)
 
 ## Closures Cheetsheet
