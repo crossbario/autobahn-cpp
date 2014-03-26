@@ -40,6 +40,14 @@ class TestService(ApplicationSession):
 
    def onJoin(self, details):
 
+      def on_event(*args, **kwargs):
+         print "*"*80
+         print("Got event: {} {}".format(args, kwargs))
+         print "*"*80
+
+      self.subscribe(on_event, 'com.myapp.topic1')
+
+
       def utcnow():
          now = datetime.datetime.utcnow()
          return now.strftime("%Y-%m-%dT%H:%M:%SZ")

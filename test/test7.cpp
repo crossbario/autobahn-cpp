@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 #include "autobahn.hpp"
@@ -44,6 +45,11 @@ int main () {
       // WAMP session is now established ..
       //
       cerr << "Joined with session ID " << s.get() << endl;
+
+
+      // Publish an event
+      //
+      session.publish("com.myapp.topic1", {1, string("zwei"), false}, {{"foo", 23}, {"bar", string("baz")}});
 
 
       // Issue some remote procedure calls ..
@@ -73,8 +79,18 @@ int main () {
       auto call3 = session.call("com.mathservice.add2", {23, 7}).then([&session](future<any> f) {
 
          uint64_t res = any_cast<uint64_t> (f.get());
-         cerr << "Got result 3: " << res << endl;
 
+         stringstream s;
+         s << "Got result 3: " << res;
+
+         cerr << s.str() << endl;
+
+         // Publish an event
+         //
+         session.publish("com.myapp.topic1", {string("Event from C++")}, {{"msg", s.str()}});
+
+         // and issue another RPC ..
+         //
          auto call4 = session.call("com.math.slowsquare", {res}, {{"delay", 3}}).then([](future<any> f) {
 
             uint64_t res = any_cast<uint64_t> (f.get());

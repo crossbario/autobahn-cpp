@@ -264,7 +264,7 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, anyvec& args) {
+   void session::publish(const std::string& topic, const anyvec& args) {
 
       if (args.size() > 0) {
          m_packer.pack_array(5);
@@ -280,7 +280,7 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, anyvec& args, anymap& kwargs) {
+   void session::publish(const std::string& topic, const anyvec& args, const anymap& kwargs) {
 
       if (kwargs.size() > 0) {
          m_packer.pack_array(6);
@@ -297,7 +297,7 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, anymap& kwargs) {
+   void session::publish(const std::string& topic, const anymap& kwargs) {
 
       if (kwargs.size() > 0) {
          m_packer.pack_array(6);
@@ -314,14 +314,14 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, boost::any arg1) {
+   void session::publish(const std::string& topic, const boost::any& arg1) {
       anyvec v;
       v.push_back(arg1);
       publish(topic, v);
    }
 
 
-   void session::publish(const std::string& topic, boost::any arg1, boost::any arg2) {
+   void session::publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2) {
       anyvec v;
       v.push_back(arg1);
       v.push_back(arg2);
@@ -329,7 +329,7 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, boost::any arg1, boost::any arg2, boost::any arg3) {
+   void session::publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2, const boost::any& arg3) {
       anyvec v;
       v.push_back(arg1);
       v.push_back(arg2);

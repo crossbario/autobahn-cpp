@@ -71,17 +71,17 @@ namespace autobahn {
 
          void publish(const std::string& topic);
 
-         void publish(const std::string& topic, anyvec& args);
+         void publish(const std::string& topic, const anyvec& args);
 
-         void publish(const std::string& topic, anymap& kwargs);
+         void publish(const std::string& topic, const anymap& kwargs);
 
-         void publish(const std::string& topic, anyvec& args, anymap& kwargs);
+         void publish(const std::string& topic, const anyvec& args, const anymap& kwargs);
 
-         void publish(const std::string& topic, boost::any arg1);
+         void publish(const std::string& topic, const boost::any& arg1);
 
-         void publish(const std::string& topic, boost::any arg1, boost::any arg2);
+         void publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2);
 
-         void publish(const std::string& topic, boost::any arg1, boost::any arg2, boost::any arg3);
+         void publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2, const boost::any& arg3);
 
          void registerproc(const std::string& procedure, callback endpoint);
 
