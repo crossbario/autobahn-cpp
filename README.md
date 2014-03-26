@@ -54,6 +54,9 @@ cd boost_1_55_0/
 Get Boost trunk by doing:
 
 ```shell
+git clone --recursive git@github.com:boostorg/boost.git
+
+
 svn co  http://svn.boost.org/svn/boost/trunk boost-trunk
 ```
 

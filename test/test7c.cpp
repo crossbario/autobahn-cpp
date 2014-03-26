@@ -141,27 +141,47 @@ template<class Lhs, class Rhs>
    decltype(xx) yy;
 
    yy = 2 * xx;
+#if 0
+   shared_future<int> shared_future1 = async([] { return 125; });
 
+   future<std::string> future2 = async([]() { return std::string("hi"); });
 
+   future<tuple<shared_future<int>,future<std::string>>> all_f = when_all(shared_future1, future2);
+
+   future<int> result = all_f.then([](future<boost::tuple<shared_future<int>,future<std::string>>> f) {
+      std::cerr << f.get().type().name() << std::endl;
+   });
+#endif
+
+#if 1
       auto f1 = session.call("com.mathservice.add2", {7, 33});
 
-      f1.then([](decltype(f1) res) {
+      auto f1done = f1.then(lp, [](decltype(f1) res) {
          cerr << "Result 1: " << any_cast<uint64_t>(res.get()) << endl;
+         return 10;
       });
 
       auto f2 = session.call("com.mathservice.add2", {60, 90});
 
-      f2.then([](decltype(f2) res) {
+      auto f2done = f2.then(lp, [](decltype(f2) res) {
          cerr << "Result 2: " << any_cast<uint64_t>(res.get()) << endl;
+         return 20;
       });
 
-/*
-      auto f3 = when_all(f1, f2);
+      //future<tuple<shared_future<int>, future<int>>> f3 = when_all(f1done, f2done);
+#endif
+#if 0
+      auto f3 = when_all(f1done, f2done);
 
-      f3.then([](decltype(f3) res) {
+      f3.then(lp, [](decltype(f3) res) {
          cerr << "Done." << endl;
       });
-*/
+
+      when_all(f1done, f2done).then(lp, [](decltype(f3) res) {
+         cerr << "Done." << endl;
+      });
+#else
+#endif
 /*
       wait_for_all(f1, f2);
       cerr << "Done." << endl;

@@ -27,7 +27,7 @@ if USE_SHIT_COMPILER:
    env["CXX"] = "g++"
    env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wno-deprecated-declarations', '-Wl,--no-as-needed', '-pthread'])
 else:
-   env.Append(CXXFLAGS = ['-std=c++11', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
+   env.Append(CXXFLAGS = ['-std=c++11', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-Wno-unused-value', '-pthread'])
 #   env.Append(CXXFLAGS = ['-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
    env.Append(LINKFLAGS = ['-stdlib=libc++', '-pthread'])
    env["CC"] = "clang"
@@ -36,8 +36,12 @@ else:
 # -std=c++11 -stdlib=libc++
 #
 
-env.Append(CPPPATH = ['/home/oberstet/boost_1_55_0/'])
-env.Append(LIBPATH = ['/home/oberstet/boost_1_55_0/stage/lib'])
+if False:
+   env.Append(CPPPATH = ['/home/oberstet/boost_1_55_0/'])
+   env.Append(LIBPATH = ['/home/oberstet/boost_1_55_0/stage/lib'])
+else:
+   env.Append(CPPPATH = ['/home/oberstet/boost/'])
+   env.Append(LIBPATH = ['/home/oberstet/boost/stage/lib'])
 
 env.Append(CPPPATH = ['#/include'])
 env.Append(CPPPATH = [os.path.join(os.environ['HOME'], 'msgpack_clang/include')])
