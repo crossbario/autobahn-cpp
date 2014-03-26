@@ -51,6 +51,13 @@ cd boost_1_55_0/
 ./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++"
 ```
 
+Get Boost trunk by doing:
+
+```shell
+svn co  http://svn.boost.org/svn/boost/trunk boost-trunk
+```
+
+
 Add the following to `$HOME/.profile`
 
 ```shell
@@ -93,6 +100,8 @@ scons
 ## Futures
 
 * [Boost Thread](http://www.boost.org/doc/libs/1_55_0/doc/html/thread.html)
+* [Boost Issue: when_all](https://svn.boost.org/trac/boost/ticket/7447)
+* [Boost Issue: future fires twice](https://svn.boost.org/trac/boost/ticket/9711)
 
 ## Closures Cheetsheet
 

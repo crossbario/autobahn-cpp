@@ -21,6 +21,10 @@
 
 #include "autobahn.hpp"
 
+using namespace boost;
+using namespace std;
+using namespace autobahn;
+
 
 int main () {
 
@@ -28,11 +32,7 @@ int main () {
    // for talking WAMP with the master
    //
    std::cerr << "Worker starting .." << std::endl;
-/*
-   uint16_t x = 18;
-   boost::any hx = x;
-   std::cerr << "XXX " << boost::any_cast<int>(hx) << std::endl;
-*/
+
    // Setup WAMP session running over stdio
    //
    autobahn::session session(std::cin, std::cout);
@@ -43,11 +43,11 @@ int main () {
 
    // To establish a session, we join a "realm" ..
    //
-   session.join(std::string("realm1")).then([&](boost::future<int> f) {
+   session.join(std::string("realm1")).then([&](boost::future<int> fs) {
 
       // WAMP session is now established ..
       //
-      int session_id = f.get();
+      int session_id = fs.get();
 
       std::cerr << "Joined with session ID " << session_id << std::endl;
 
@@ -60,14 +60,12 @@ int main () {
       autobahn::anyvec args;
       args.push_back(23);
       args.push_back(777);
-
+/*
       session.call("com.mathservice.add2", args).then(lp, [](boost::future<boost::any> f) {
-         boost::any a = f.get();
-         std::cerr << "::: " << a.type().name() << std::endl;
-         std::cerr << "::: " << (a.type() == typeid(uint64_t)) << std::endl;
-         uint64_t res = boost::any_cast<uint64_t> (a);
+         uint64_t res = boost::any_cast<uint64_t> (f.get());
          std::cerr << "A - Got RPC result " << res << std::endl;
       });
+*/
 
 #if 0
       // Variant B: generic positional args, generic result
@@ -89,6 +87,7 @@ int main () {
       });
 
 #endif
+#if 0
       // Variant C: typed positional args, generic result
       //
       session.call("com.mathservice.add2", {23, 777}).then(lp, [](boost::future<boost::any> f) {
@@ -101,15 +100,15 @@ int main () {
          std::string res = boost::any_cast<std::string> (f.get());
          std::cerr << "E - Got RPC result " << res << std::endl;
       });
-
+#endif
 /*
       session.call<std::string>("com.arguments.stars", {}, {{"stars", 20}}).then(lp, [](boost::future<std::string> f) {
          std::cerr << "F - Got RPC result " << f.get() << std::endl;
       });
 */
-
-//      session.call("com.arguments.numbers", {1, 7}, {{"prefix", "Hello number: "}}).then(lp, [](boost::future<boost::any> f) {
-      session.call("com.arguments.numbers", {1, 7}).then(lp, [](boost::future<boost::any> f) {
+/*
+      session.call("com.arguments.numbers", {1, 7}, {{"prefix", std::string("Hello number: ")}}).then([](boost::future<boost::any> f) {
+//      session.call("com.arguments.numbers", {1, 7}).then([](boost::future<boost::any> f) {
          boost::any res = f.get();
          std::cerr << "G - Got RPC result " << res.type().name() << std::endl;
 
@@ -119,6 +118,97 @@ int main () {
             std::cerr << boost::any_cast<std::string>(v[i]) << std::endl;
          }
       });
+*/
+
+/*
+      auto f1 = session.call("com.mathservice.add2", {7, 33}).then(
+         [](future<any> f) {
+
+            uint64_t res = any_cast<uint64_t> (f.get());
+            cerr << "A - Got RPC result " << res << endl;
+            return res * 2;
+         }
+      ).then(lp, [](future<uint64_t> f) {
+         cerr << "A DONE " << f.get() << endl;
+      });
+*/
+
+      auto f1 = session.call("com.mathservice.add2", {7, 33});
+
+      f1.then([](decltype(f1) res) {
+         cerr << "Result 1: " << any_cast<uint64_t>(res.get()) << endl;
+      });
+
+      auto f2 = session.call("com.mathservice.add2", {60, 90});
+
+      f2.then([](decltype(f2) res) {
+         cerr << "Result 2: " << any_cast<uint64_t>(res.get()) << endl;
+      });
+
+      auto f3 = when_all(f1, f2);
+
+      f3.then([](decltype(f3) res) {
+         cerr << "Done." << endl;
+      });
+
+/*
+      wait_for_all(f1, f2);
+      cerr << "Done." << endl;
+*/
+      //decltype(some_int)
+/*
+      auto f1 = session.call("com.mathservice.add2", {7, 33}).then(
+         [](future<any> f) {
+
+            uint64_t res = any_cast<uint64_t> (f.get());
+            cerr << "Result 1: " << res << endl;
+         }
+      );
+
+      auto f2 = session.call("com.mathservice.add2", {10, 40}).then(
+         [](future<any> f) {
+
+            uint64_t res = any_cast<uint64_t> (f.get());
+            cerr << "Result 2: " << res << endl;
+         }
+      );
+
+      wait_for_all(f1, f2).then(lp,
+         [](boost::future<void>, boost::future<void>) {
+
+            cerr << "Done." << endl;
+         }
+      );
+*/
+/*
+//      boost::future<void> f2 = session.call("com.arguments.numbers", {1, 7}, {{"prefix", std::string("Hello number: ")}}).then(
+      auto f2 = session.call("com.arguments.numbers", {1, 7}, {{"prefix", std::string("Hello number: ")}}).then(
+         [](boost::future<boost::any> f) {
+
+            boost::any res = f.get();
+            std::cerr << "G - Got RPC result " << res.type().name() << std::endl;
+
+            autobahn::anyvec v = boost::any_cast<autobahn::anyvec>(res);
+            std::cerr << "G2 " << v.size() << std::endl;
+            for (int i = 0; i < v.size(); ++i) {
+               std::cerr << boost::any_cast<std::string>(v[i]) << std::endl;
+            }
+         }
+      );
+*/
+/*
+      f2.then(lp, [](boost::future<void>) {
+         std::cerr << "DONE F2" << std::endl;
+      });
+*/
+/*
+      boost::wait_for_all(f1, f2).then(lp, [](boost::future<void>, boost::future<void>) {
+         std::cerr << "DONE F2" << std::endl;
+      });
+*/
+//      boost::future< std::tuple< boost::future<void>, boost::future<void> > > f3 = boost::wait_for_all(f1, f2);
+      //auto f3 = boost::wait_for_all(f1, f2);
+
    });
 
 
