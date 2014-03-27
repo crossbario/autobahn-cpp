@@ -46,15 +46,36 @@ namespace autobahn {
 
    typedef std::vector<boost::any> anyvec;
 
-   typedef boost::any (*callback) (autobahn::anyvec&);
-
-   typedef std::map<std::string, callback> endpoints;
-
+   // Calls
+   //
    struct call_t {
       boost::promise<boost::any> m_res;
    };
 
    typedef std::map<uint64_t, call_t> calls_t;
+
+
+   // Registrations
+   //
+
+   typedef boost::any (*endpoint_t) (const anyvec&, const anymap&);
+
+   // WAMP registration ID -> endpoint
+   typedef std::map<uint64_t, endpoint_t> endpoints_t;
+
+
+   struct registration_t {
+      uint64_t m_id;
+   };
+
+   struct register_request_t {
+      register_request_t(endpoint_t endpoint = 0) : m_endpoint(endpoint) {};
+      endpoint_t m_endpoint;
+      boost::promise<registration_t> m_res;
+   };
+
+   typedef std::map<uint64_t, register_request_t> register_requests_t;
+
 
    typedef std::vector<msgpack::object> wamp_msg_t;
 
@@ -83,7 +104,7 @@ namespace autobahn {
 
          void publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2, const boost::any& arg3);
 
-         void registerproc(const std::string& procedure, callback endpoint);
+         boost::future<registration_t> provide(const std::string& procedure, endpoint_t endpoint);
 
          boost::any invoke(const std::string& procedure, anyvec& args);
 
@@ -179,9 +200,13 @@ namespace autobahn {
 
       private:
 
-         void process_welcome(wamp_msg_t& msg);
+         void process_welcome(const wamp_msg_t& msg);
 
-         void process_call_result(wamp_msg_t& msg);
+         void process_call_result(const wamp_msg_t& msg);
+
+         void process_registered(const wamp_msg_t& msg);
+
+         void process_invocation(const wamp_msg_t& msg);
 
 
          boost::any unpack_any(msgpack::object& obj);
@@ -211,8 +236,10 @@ namespace autobahn {
 
          boost::promise<int> m_session_join;
 
-         endpoints m_endpoints;
          calls_t m_calls;
+
+         register_requests_t m_register_requests;
+         endpoints_t m_endpoints;
    };
 
    class ProtocolError : public std::runtime_error {

@@ -48,6 +48,15 @@ class TestService(ApplicationSession):
       self.subscribe(on_event, 'com.myapp.topic1')
 
 
+      @inlineCallbacks
+      def on_event2(*args, **kwargs):
+         print "*"*80, "TRYME"
+         res = yield self.call("com.myapp.cpp.add2", 3, 9)
+         print "+"*40, res
+
+      self.subscribe(on_event2, 'com.myapp.tryme')
+
+
       def utcnow():
          now = datetime.datetime.utcnow()
          return now.strftime("%Y-%m-%dT%H:%M:%SZ")

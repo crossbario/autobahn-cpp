@@ -112,17 +112,30 @@ namespace autobahn {
       return f;
 #else
       return m_session_join.get_future();
-#endif      
+#endif
    }
 
 
-   void session::registerproc(const std::string& procedure, callback endpoint) {
-      std::cerr << "registering procedure: " << procedure << std::endl;
-      m_endpoints[procedure] = endpoint;
+   boost::future<registration_t> session::provide(const std::string& procedure, endpoint_t endpoint) {
+
+      // [REGISTER, Request|id, Options|dict, Procedure|uri]
+
+      m_request_id += 1;
+      m_register_requests[m_request_id] = register_request_t(endpoint);
+
+      m_packer.pack_array(4);
+      m_packer.pack(MSG_CODE_REGISTER);
+      m_packer.pack(m_request_id);
+      m_packer.pack_map(0);
+      m_packer.pack(procedure);
+      send();
+
+      return m_register_requests[m_request_id].m_res.get_future();
    }
 
 
    boost::any session::invoke(const std::string& procedure, anyvec& args) {
+/*
       endpoints::iterator ep = m_endpoints.find(procedure);
       if (ep == m_endpoints.end()) {
          std::cerr << "procedure not found" << std::endl;
@@ -130,12 +143,11 @@ namespace autobahn {
          std::cerr << "invoking: " << ep->first << std::endl;
          return (*(ep->second)) (args);
       }
+*/
       return boost::any();
    }
 
    boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args) {
-
-      std::cerr << "0" << std::endl;
 
       m_request_id += 1;
 
@@ -154,7 +166,7 @@ namespace autobahn {
       f.set_deferred();
       return f;
 #else
-      return m_calls[m_request_id].m_res.get_future();      
+      return m_calls[m_request_id].m_res.get_future();
 #endif
    }
 
@@ -182,7 +194,7 @@ namespace autobahn {
       return f;
 #else
       return m_calls[m_request_id].m_res.get_future();
-#endif      
+#endif
    }
 
 
@@ -350,7 +362,7 @@ namespace autobahn {
 
 */
 
-   void session::process_welcome(wamp_msg_t& msg) {
+   void session::process_welcome(const wamp_msg_t& msg) {
       m_session_id = msg[1].as<uint64_t>();
       m_session_join.set_value(m_session_id);
    }
@@ -394,7 +406,7 @@ namespace autobahn {
                   out_vec.push_back(unpack_any(in_vec[i]));
                }
                return out_vec;
-               //std::cerr << "unprocess ARRAY" << std::endl;              
+               //std::cerr << "unprocess ARRAY" << std::endl;
             }
 
          case msgpack::type::MAP:
@@ -406,7 +418,90 @@ namespace autobahn {
    }
 
 
-   void session::process_call_result(wamp_msg_t& msg) {
+   void session::process_invocation(const wamp_msg_t& msg) {
+
+      // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict]
+      // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
+      // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
+
+      std::cerr << "==> 1" << std::endl;
+
+      if (msg.size() != 4 && msg.size() != 5 && msg.size() != 6) {
+         throw ProtocolError("invalid INVOCATION message structure - length must be 4, 5 or 6");
+      }
+
+      if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
+         throw ProtocolError("invalid INVOCATION message structure - INVOCATION.Request must be an integer");
+      }
+      uint64_t request_id = msg[1].as<uint64_t>();
+
+      std::cerr << "==> 2" << std::endl;
+
+      if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
+         throw ProtocolError("invalid INVOCATION message structure - INVOCATION.Registration must be an integer");
+      }
+      uint64_t registration_id = msg[2].as<uint64_t>();
+
+      endpoints_t::iterator endpoint = m_endpoints.find(registration_id);
+
+      std::cerr << "==> 3" << std::endl;
+
+      if (endpoint != m_endpoints.end()) {
+
+         if (msg[3].type != msgpack::type::MAP) {
+            throw ProtocolError("invalid INVOCATION message structure - Details must be a dictionary");
+         }
+
+         anyvec args;
+         anymap kwargs;
+
+         std::cerr << "==> 4" << std::endl;
+
+         if (msg.size() > 4) {
+
+            if (msg[4].type != msgpack::type::ARRAY) {
+               throw ProtocolError("invalid INVOCATION message structure - INVOCATION.Arguments must be a list");
+            }
+
+            std::vector<msgpack::object> raw_args;
+            msg[4].convert(&raw_args);
+            unpack_anyvec(raw_args, args);
+
+            if (msg.size() > 5) {
+               // FIXME
+            }
+         }
+
+         std::cerr << "==> 5" << std::endl;
+         try {
+            std::cerr << endpoint->second << std::endl;
+            boost::any res = (*(endpoint->second))(args, kwargs);
+
+            // [YIELD, INVOCATION.Request|id, Options|dict]
+            // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
+            // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
+
+            m_packer.pack_array(4);
+            m_packer.pack(MSG_CODE_YIELD);
+            m_packer.pack(request_id);
+            m_packer.pack_map(0);
+            m_packer.pack_array(1);
+            pack_any(res);
+            send();
+         }
+         catch (...) {
+            std::cerr << "INVOCATION failed" << std::endl;
+         }
+
+         std::cerr << "==> 6" << std::endl;
+
+      } else {
+         throw ProtocolError("bogus INVOCATION message for non-registered registration ID");
+      }
+   }
+
+
+   void session::process_call_result(const wamp_msg_t& msg) {
 
       // [RESULT, CALL.Request|id, Details|dict]
       // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
@@ -459,6 +554,45 @@ namespace autobahn {
    }
 
 
+   void session::process_registered(const wamp_msg_t& msg) {
+
+      // [REGISTERED, REGISTER.Request|id, Registration|id]
+
+      if (msg.size() != 3) {
+         throw ProtocolError("invalid REGISTERED message structure - length must be 3");
+      }
+
+      if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
+         throw ProtocolError("invalid REGISTERED message structure - REGISTERED.Request must be an integer");
+      }
+
+      uint64_t request_id = msg[1].as<uint64_t>();
+
+      register_requests_t::iterator register_request = m_register_requests.find(request_id);
+
+      if (register_request != m_register_requests.end()) {
+
+         if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
+            throw ProtocolError("invalid REGISTERED message structure - REGISTERED.Registration must be an integer");
+         }
+
+         uint64_t registration_id = msg[2].as<uint64_t>();
+
+         std::cerr << "REGxx" << register_request->second.m_endpoint << std::endl;
+
+         m_endpoints[registration_id] = register_request->second.m_endpoint;
+
+         registration_t registration;
+         registration.m_id = registration_id;
+
+         register_request->second.m_res.set_value(registration);
+
+      } else {
+         throw ProtocolError("bogus REGISTERED message for non-pending request ID");
+      }
+   }
+
+
    void session::loop() {
       int i = 0;
       try {
@@ -496,6 +630,14 @@ namespace autobahn {
 
                   case MSG_CODE_RESULT:
                      process_call_result(msg);
+                     break;
+
+                  case MSG_CODE_REGISTERED:
+                     process_registered(msg);
+                     break;
+
+                  case MSG_CODE_INVOCATION:
+                     process_invocation(msg);
                      break;
                }
 
