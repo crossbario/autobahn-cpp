@@ -104,8 +104,6 @@ namespace autobahn {
 
       public:
 
-//         session() {};
-
          /*!
           * Create a new WAMP session.
           *
@@ -121,6 +119,8 @@ namespace autobahn {
           * \return A future that resolves when the realm was joined.
           */
          boost::future<int> join(const std::string& realm);
+
+         boost::future<void> leave();
 
          /*!
           * Enter the session event loop. This will not return until the
@@ -259,6 +259,9 @@ namespace autobahn {
          /// Process a WAMP INVOCATION message.
          void process_invocation(const wamp_msg_t& msg);
 
+         /// Process a WAMP GOODBYE message.
+         void process_goodbye(const wamp_msg_t& msg);
+
 
          /// Unpacks any MsgPack object into boost::any value.
          boost::any unpack_any(msgpack::object& obj);
@@ -278,6 +281,7 @@ namespace autobahn {
          /// Receive one message from istream in m_unpacker.
          bool receive();
 
+         bool m_debug;
 
          bool m_stopped;
 
@@ -301,6 +305,10 @@ namespace autobahn {
 
          /// Future to be fired when session was joined.
          boost::promise<int> m_session_join;
+
+         bool m_goodbye_sent;
+
+         boost::promise<std::string> m_session_leave;
 
          /// Last request ID of outgoing WAMP requests.
          uint64_t m_request_id;

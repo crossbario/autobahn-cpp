@@ -82,7 +82,8 @@ namespace autobahn {
 
 
    session::session(std::istream& in, std::ostream& out)
-      : m_stopped(false),
+      : m_debug(true),
+        m_stopped(false),
         m_in(in),
         m_out(out),
         m_packer(&m_buffer),
@@ -397,7 +398,7 @@ namespace autobahn {
 
       return m_register_requests[m_request_id].m_res.get_future();
    }
-*/   
+*/
 /*
    template
    boost::future<registration> session::provide<endpoint_t>(const std::string& procedure, endpoint_t endpoint);
@@ -410,6 +411,29 @@ namespace autobahn {
    void session::process_welcome(const wamp_msg_t& msg) {
       m_session_id = msg[1].as<uint64_t>();
       m_session_join.set_value(m_session_id);
+   }
+
+
+   void session::process_goodbye(const wamp_msg_t& msg) {
+      if (!m_goodbye_sent) {
+
+         // if we did not initiate closing, reply ..
+
+         // [GOODBYE, Details|dict, Reason|uri]
+
+         m_packer.pack_array(3);
+
+         m_packer.pack(MSG_CODE_GOODBYE);
+         m_packer.pack_map(0);
+         m_packer.pack(std::string("wamp.error.goodbye_and_out"));
+         send();
+
+      } else {
+         // we previously initiated closing, so this
+         // is the peer reply
+      }
+      std::string reason = msg[2].as<std::string>();
+      m_session_leave.set_value(reason);
    }
 
 
@@ -554,9 +578,9 @@ namespace autobahn {
 
                std::cerr << "++ 1" << std::endl;
 
-               f_res.then([&](decltype(f_res) f) {
+               auto done = f_res.then([&](decltype(f_res) f) {
 
-                  std::cerr << "++ 2" << std::endl;
+                  std::cerr << "++ 2 " << typeid(f).name() << std::endl;
 
                   anyvecmap res = f.get();
 
@@ -574,7 +598,7 @@ namespace autobahn {
                });
 
                std::cerr << "++ 5" << std::endl;
-               f_res.get();
+               done.get();
                std::cerr << "++ 6" << std::endl;
 
             } else {
@@ -786,6 +810,10 @@ namespace autobahn {
 
    bool session::receive() {
 
+      if (m_debug) {
+         std::cerr << "RX waiting .." << std::endl;
+      }
+
       // read message length prefix
       char blen[4];
       m_in.read(blen, 4);
@@ -793,6 +821,10 @@ namespace autobahn {
          return false;
       }
       uint32_t len = ntohl(*((uint32_t*) &blen));
+
+      if (m_debug) {
+         std::cerr << "RX message (" << len << " octets) ..." << std::endl;
+      }
 
       // read actual message
       m_unpacker.reserve_buffer(len);
@@ -803,11 +835,19 @@ namespace autobahn {
       }
       m_unpacker.buffer_consumed(len);
 
+      if (m_debug) {
+         std::cerr << "RX message received." << std::endl;
+      }
+
       return true;
    }
 
 
    void session::send() {
+
+      if (m_debug) {
+         std::cerr << "TX message (" << m_buffer.size() << " octets) ..." << std::endl;
+      }
 
       // write message length prefix
       uint32_t len = htonl(m_buffer.size());
@@ -819,5 +859,9 @@ namespace autobahn {
       // flush ostream and clear serialization buffer
       m_out.flush();
       m_buffer.clear();
+
+      if (m_debug) {
+         std::cerr << "TX message sent." << std::endl;
+      }
    }
 }

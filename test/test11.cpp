@@ -77,24 +77,35 @@ future<anyvecmap> add2e(const anyvec& args, const anymap& kwargs) {
    uint64_t x = any_cast<uint64_t> (args[0]);
    uint64_t y = any_cast<uint64_t> (args[1]);
 
+   promise<anyvecmap> p;
+
 
    // and issue another RPC ..
    //
-   auto call4 = gsess->call("com.math.slowsquare", {x + y}, {{"delay", 1}}).then([&](future<any> f) {
+   auto call4 = gsess->call("com.math.slowsquare", {x + y}, {{"delay", 1}});
+
+   auto call4f = call4.then([&](decltype(call4) f) {
+
+      cerr << "GOT RESULT 44" << endl;
 
       uint64_t res = any_cast<uint64_t> (f.get());
       cerr << "Got result 4: " << res << endl;
 
-      return std::make_pair(anyvec({x + y, 2 * x, res}), anymap({{"foo", 23}}));
+      p.set_value(std::make_pair(anyvec({x + y, 2 * x, res}), anymap({{"foo", 23}})));
+//      return std::make_pair(anyvec({x + y, 2 * x, res}), anymap({{"foo", 23}}));
 //      return make_ready_future(std::make_pair(anyvec({x + y, 2 * x, res}), anymap({{"foo", 23}})));
    });
 
    // Wait for call4 to finish before returning ..
    //
    cerr << "HERE 55" << endl;
+   return p.get_future();
+/*
+   return call4;
    call4.get();
    cerr << "HERE 66" << endl;
    return make_ready_future(std::make_pair(anyvec(), anymap()));
+*/
 }
 
 
