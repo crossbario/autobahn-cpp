@@ -65,7 +65,7 @@ int main () {
 
    any a = &add2b; 
    cerr << "1: " << (a.type() == typeid(endpoint_v_t)) << endl;
-   cerr << "1b: " << (a.type() == typeid(endpoint_f_t)) << endl;
+   cerr << "1b: " << (a.type() == typeid(endpointf_t)) << endl;
 
    cerr << "FPtr = " << reinterpret_cast<void*>(any_cast<endpoint_v_t>(a)) << endl;
    cerr << "FPtr = " << reinterpret_cast<void*>(&add2b) << endl;

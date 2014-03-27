@@ -379,16 +379,12 @@ namespace autobahn {
       }
    }
 
-
-
-
-   boost::future<registration> session::provide(const std::string& procedure, endpoint_v_t endpoint) {
-   }
-
-   boost::future<registration> session::provide(const std::string& procedure, endpoint_f_t endpoint) {
-   }
-
    boost::future<registration> session::provide(const std::string& procedure, endpoint_t endpoint) {
+      return _provide(procedure, endpoint);
+   }
+
+   template<typename E>
+   boost::future<registration> session::_provide(const std::string& procedure, E endpoint) {
 
       // [REGISTER, Request|id, Options|dict, Procedure|uri]
 
@@ -404,7 +400,6 @@ namespace autobahn {
 
       return m_register_requests[m_request_id].m_res.get_future();
    }
-
 
 
 
@@ -429,6 +424,9 @@ namespace autobahn {
       for (int i = 0; i < raw_args.size(); ++i) {
          args.push_back(unpack_any(raw_args[i]));
       }
+   }
+
+   void session::unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs) {
    }
 
 
@@ -525,7 +523,9 @@ namespace autobahn {
             unpack_anyvec(raw_args, args);
 
             if (msg.size() > 5) {
-               // FIXME
+               std::map<std::string, msgpack::object> raw_kwargs;
+               msg[5].convert(&raw_kwargs);
+               unpack_anymap(raw_kwargs, kwargs);
             }
          }
 
@@ -737,22 +737,21 @@ namespace autobahn {
 
    bool session::receive() {
 
+      // read message length prefix
       char blen[4];
       m_in.read(blen, 4);
-
       if (m_in.eof() || m_in.fail()) {
          return false;
       }
-
-
       uint32_t len = ntohl(*((uint32_t*) &blen));
+
+      // read actual message
       m_unpacker.reserve_buffer(len);
       m_in.read(m_unpacker.buffer(), len);
 
       if (m_in.eof() || m_in.fail()) {
          return false;
       }
-
       m_unpacker.buffer_consumed(len);
 
       return true;
@@ -760,39 +759,16 @@ namespace autobahn {
 
 
    void session::send() {
+
+      // write message length prefix
       uint32_t len = htonl(m_buffer.size());
       m_out.write((char*) &len, 4);
+
+      // write actual serialized message
       m_out.write(m_buffer.data(), m_buffer.size());
+
+      // flush ostream and clear serialization buffer
       m_out.flush();
       m_buffer.clear();
    }
-
-
-   void session::send_hello(const std::string& realm) {
-
-      m_packer.pack_array(3);
-
-      m_packer.pack(MSG_CODE_HELLO);
-      m_packer.pack(realm);
-
-      m_packer.pack_map(1);
-      m_packer.pack(std::string("roles"));
-
-      m_packer.pack_map(4);
-
-      m_packer.pack(std::string("caller"));
-      m_packer.pack_map(0);
-
-      m_packer.pack(std::string("callee"));
-      m_packer.pack_map(0);
-
-      m_packer.pack(std::string("publisher"));
-      m_packer.pack_map(0);
-
-      m_packer.pack(std::string("subscriber"));
-      m_packer.pack_map(0);
-
-      send();
-   }
-
 }

@@ -24,11 +24,9 @@
 #include <istream>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <map>
-#include <iostream>
-#include <utility>
-
 
 #include <msgpack.hpp>
 
@@ -60,15 +58,39 @@ namespace autobahn {
    /// Endpoint type for use with session::provide(const std::string&, endpoint_t)
    typedef boost::any (*endpoint_t) (const anyvec&, const anymap&);
 
-   typedef boost::future<boost::any> (*endpoint_f_t) (const anyvec&, const anymap&);
-
+   /// Endpoint type for use with session::provide(const std::string&, endpoint_v_t)
    typedef anyvec (*endpoint_v_t) (const anyvec&, const anymap&);
+
+   /// Endpoint type for use with session::provide(const std::string&, endpoint_m_t)
+   typedef anymap (*endpoint_m_t) (const anyvec&, const anymap&);
+
+   /// Endpoint type for use with session::provide(const std::string&, endpoint_vm_t)
+   typedef anyvecmap (*endpoint_vm_t) (const anyvec&, const anymap&);
+
+
+   /// Endpoint type for use with session::provide(const std::string&, endpointf_t)
+   typedef boost::future<boost::any> (*endpointf_t) (const anyvec&, const anymap&);
+
+   /// Endpoint type for use with session::provide(const std::string&, endpointf_v_t)
+   typedef boost::future<anyvec> (*endpointf_v_t) (const anyvec&, const anymap&);
+
+   /// Endpoint type for use with session::provide(const std::string&, endpointf_m_t)
+   typedef boost::future<anymap> (*endpointf_m_t) (const anyvec&, const anymap&);
+
+   /// Endpoint type for use with session::provide(const std::string&, endpointf_vm_t)
+   typedef boost::future<anyvecmap> (*endpointf_vm_t) (const anyvec&, const anymap&);
+
 
    /// Represents a procedure registration.
    struct registration {
       uint64_t m_id;
    };
 
+
+   /// Represents a topic subscription.
+   struct subscription {
+      uint64_t m_id;
+   };
 
 
    /*!
@@ -184,173 +206,106 @@ namespace autobahn {
           */
          boost::future<registration> provide(const std::string& procedure, endpoint_t endpoint);
 
-         /*!
-          *
-          */
-         boost::future<registration> provide(const std::string& procedure, endpoint_f_t endpoint);
-
-         /*!
-          *
-          */
-         boost::future<registration> provide(const std::string& procedure, endpoint_v_t endpoint);
-
-
-#if 0
-         /*!
-          *
-          */
-         template <typename T>
-         boost::future<T> call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
-            return call(procedure, args, kwargs).then(boost::launch::deferred, [](boost::future<boost::any> f) {
-               return boost::any_cast<T> (f.get());
-            });
-         }
-
-         /**
-          * Calls a remote procedure. Typed positional arguments, generic return.
-          */
-         template <typename... Args>
-         boost::future<boost::any> call(const std::string& procedure, const Args&... args) {
-            std::cerr << "1" << std::endl;
-
-            anyvec accumulated;
-            return _call_1(procedure, accumulated, args...);
-         }
-
-         /**
-          * Calls a remote procedure. Generic positional argument vector, typed return.
-          */
-         template <typename T>
-         boost::future<T> call(const std::string& procedure, const anyvec& args) {
-            std::cerr << "2" << std::endl;
-
-            return call(procedure, args).then(boost::launch::deferred, [](boost::future<boost::any> f) {
-               return boost::any_cast<T> (f.get());
-            });
-         }
-
-         /**
-          * Calls a remote procedure. Typed positional arguments, typed return.
-          */
-         template <typename T, typename... Args>
-         boost::future<T> call_static(const std::string& procedure, const T& _default, const Args&... args) {
-            std::cerr << "3" << std::endl;
-
-            anyvec accumulated;
-            return _call_2<T>(procedure, accumulated, args...);
-         }
-
-
-         /// Entry point into template recursion for typed argument accumulation, generic return.
-         template <typename Arg, typename... Args>
-         boost::future<boost::any> _call_1(const std::string& procedure, anyvec& accumulated, const Arg& arg, const Args&... args) {
-            std::cerr << "4" << std::endl;
-
-            accumulated.push_back(arg);
-            return _call_1(procedure, accumulated, args...);
-         }
-
-         /// Terminal of template recursion for typed argument accumulation, generic return.
-         template <typename Arg>
-         boost::future<boost::any> _call_1(const std::string& procedure, anyvec& accumulated, const Arg& arg) {
-            std::cerr << "5" << std::endl;
-
-            accumulated.push_back(arg);
-            return call(procedure, accumulated);
-         }
-
-         /// Entry point into template recursion for typed argument accumulation, typed return.
-         template <typename T, typename Arg, typename... Args>
-         boost::future<T> _call_2(const std::string& procedure, anyvec& accumulated, const Arg& arg, const Args&... args) {
-            std::cerr << "6" << std::endl;
-
-            accumulated.push_back(arg);
-            return _call_2<T>(procedure, accumulated, args...);
-         }
-
-         /// Terminal of template recursion for typed argument accumulation, typed return.
-         template <typename T, typename Arg>
-         boost::future<T> _call_2(const std::string& procedure, anyvec& accumulated, const Arg& arg) {
-            std::cerr << "7" << std::endl;
-
-            accumulated.push_back(arg);
-            return call<T>(procedure, accumulated);
-         }
-#endif
 
       private:
+         template<typename E>
+         boost::future<registration> _provide(const std::string& procedure, E endpoint);
 
-         // Calls
-         //
+         /// An outstanding WAMP call.
          struct call_t {
             boost::promise<boost::any> m_res;
          };
 
+         /// Map of outstanding WAMP calls (request ID -> call).
          typedef std::map<uint64_t, call_t> calls_t;
 
 
-         // Registrations
-         //
-
-
-
-         // WAMP registration ID -> endpoint
-         typedef std::map<uint64_t, endpoint_t> endpoints_t;
-
-
+         /// An outstanding WAMP register request.
          struct register_request_t {
             register_request_t(endpoint_t endpoint = 0) : m_endpoint(endpoint) {};
             endpoint_t m_endpoint;
             boost::promise<registration> m_res;
          };
 
+         /// Map of outstanding WAMP register requests (request ID -> register request).
          typedef std::map<uint64_t, register_request_t> register_requests_t;
 
+         /// Map of registered endpoints (registration ID -> endpoint)
+         typedef std::map<uint64_t, endpoint_t> endpoints_t;
 
+         /// An unserialized, raw WAMP message.
          typedef std::vector<msgpack::object> wamp_msg_t;
 
 
+         /// Process a WAMP HELLO message.
          void process_welcome(const wamp_msg_t& msg);
 
+         /// Process a WAMP RESULT message.
          void process_call_result(const wamp_msg_t& msg);
 
+         /// Process a WAMP REGISTERED message.
          void process_registered(const wamp_msg_t& msg);
 
+         /// Process a WAMP INVOCATION message.
          void process_invocation(const wamp_msg_t& msg);
 
 
+         /// Unpacks any MsgPack object into boost::any value.
          boost::any unpack_any(msgpack::object& obj);
 
+         /// Unpacks MsgPack array into anyvec.
          void unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args);
 
+         /// Unpacks MsgPack map into anymap.
+         void unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs);
 
+         /// Pack any value into serializion buffer.
          void pack_any(const boost::any& value);
 
+         /// Send out message serialized in serialization buffer to ostream.
          void send();
 
+         /// Receive one message from istream in m_unpacker.
          bool receive();
 
-         void send_hello(const std::string& realm);
 
          bool m_stopped;
 
+         /// Input stream this session runs on.
          std::istream& m_in;
+
+         /// Output stream this session runs on.
          std::ostream& m_out;
 
+         /// MsgPack serialization buffer.
          msgpack::sbuffer m_buffer;
+
+         /// MsgPacker serialization packer.
          msgpack::packer<msgpack::sbuffer> m_packer;
+
+         /// MsgPack unserialization unpacker.
          msgpack::unpacker m_unpacker;
 
+         /// WAMP session ID (if the session is joined to a realm).
          uint64_t m_session_id;
-         uint64_t m_request_id;
 
+         /// Future to be fired when session was joined.
          boost::promise<int> m_session_join;
 
+         /// Last request ID of outgoing WAMP requests.
+         uint64_t m_request_id;
+
+         /// Map of WAMP call ID -> call
          calls_t m_calls;
 
+         /// Map of WAMP register request ID -> register request
          register_requests_t m_register_requests;
+
+         /// Map of WAMP registration ID -> endpoint
          endpoints_t m_endpoints;
    };
+
+
 
    class ProtocolError : public std::runtime_error {
       public:
@@ -367,7 +322,5 @@ namespace autobahn {
    };
 
 }
-
-//#include "../src/autobahn.cpp"
 
 #endif // AUTOBAHN_HPP
