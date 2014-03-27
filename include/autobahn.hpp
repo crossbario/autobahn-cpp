@@ -19,7 +19,7 @@
 #ifndef AUTOBAHN_HPP
 #define AUTOBAHN_HPP
 
-#include <stdint.h>
+#include <cstdint>
 #include <stdexcept>
 #include <istream>
 #include <ostream>
@@ -27,6 +27,8 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <utility>
+
 
 #include <msgpack.hpp>
 
@@ -40,84 +42,163 @@
 //#include <future>
 
 
+/*!
+ * Autobahn namespace.
+ */
 namespace autobahn {
 
+   /// A map holding any values and string keys.
    typedef std::map<std::string, boost::any> anymap;
 
+   /// A vector holding any values.
    typedef std::vector<boost::any> anyvec;
 
-   // Calls
-   //
-   struct call_t {
-      boost::promise<boost::any> m_res;
-   };
-
-   typedef std::map<uint64_t, call_t> calls_t;
+   /// A pair of ::anyvec and ::anymap.
+   typedef std::pair<anyvec, anymap> anyvecmap;
 
 
-   // Registrations
-   //
-
+   /// Endpoint type for use with session::provide(const std::string&, endpoint_t)
    typedef boost::any (*endpoint_t) (const anyvec&, const anymap&);
 
-   // WAMP registration ID -> endpoint
-   typedef std::map<uint64_t, endpoint_t> endpoints_t;
+   typedef boost::future<boost::any> (*endpoint_f_t) (const anyvec&, const anymap&);
 
+   typedef anyvec (*endpoint_v_t) (const anyvec&, const anymap&);
 
-   struct registration_t {
+   /// Represents a procedure registration.
+   struct registration {
       uint64_t m_id;
    };
 
-   struct register_request_t {
-      register_request_t(endpoint_t endpoint = 0) : m_endpoint(endpoint) {};
-      endpoint_t m_endpoint;
-      boost::promise<registration_t> m_res;
-   };
-
-   typedef std::map<uint64_t, register_request_t> register_requests_t;
 
 
-   typedef std::vector<msgpack::object> wamp_msg_t;
-
-
+   /*!
+    * A WAMP session.
+    */
    class session {
+
       public:
+
+         /*!
+          * Create a new WAMP session.
+          *
+          * \param in The input stream to run this session on.
+          * \param out THe output stream to run this session on.
+          */
          session(std::istream& in, std::ostream& out);
 
-         void loop();
-
-         void stop(int exit_code = 0);
-
+         /*!
+          * Join a realm with this session.
+          *
+          * \param realm The realm to join on the WAMP router connected to.
+          * \return A future that resolves when the realm was joined.
+          */
          boost::future<int> join(const std::string& realm);
 
+         /*!
+          * Enter the session event loop. This will not return until the
+          * session ends.
+          */
+         void loop();
+
+         /*!
+          * Stop the whole program.
+          */
+         void stop(int exit_code = 0);
+
+         /*!
+          * Publish an event with empty payload to a topic.
+          *
+          * \param topic The URI of the topic to publish to.
+          */
          void publish(const std::string& topic);
 
+         /*!
+          * Publish an event with positional payload to a topic.
+          *
+          * \param topic The URI of the topic to publish to.
+          * \param args The positional payload for the event.
+          */
          void publish(const std::string& topic, const anyvec& args);
 
+         /*!
+          * Publish an event with keyword payload to a topic.
+          *
+          * \param topic The URI of the topic to publish to.
+          * \param kwargs The keyword payload for the event.
+          */
          void publish(const std::string& topic, const anymap& kwargs);
 
+         /*!
+          * Publish an event with both positional and keyword payload to a topic.
+          *
+          * \param topic The URI of the topic to publish to.
+          * \param args The positional payload for the event.
+          * \param kwargs The keyword payload for the event.
+          */
          void publish(const std::string& topic, const anyvec& args, const anymap& kwargs);
 
-         void publish(const std::string& topic, const boost::any& arg1);
-
-         void publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2);
-
-         void publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2, const boost::any& arg3);
-
-         boost::future<registration_t> provide(const std::string& procedure, endpoint_t endpoint);
-
-         boost::any invoke(const std::string& procedure, anyvec& args);
-
-
-         /**
-          * Calls a remote procedure. Generic positional argument vector, generic return.
+         /*!
+          * Calls a remote procedure with no arguments.
+          *
+          * \param procedure The URI of the remote procedure to call.
+          * \return A future that resolves to the result of the remote procedure call.
           */
-         //boost::future<boost::any> call(const std::string& procedure);
+         boost::future<boost::any> call(const std::string& procedure);
 
+         /*!
+          * Calls a remote procedure with positional arguments.
+          *
+          * \param procedure The URI of the remote procedure to call.
+          * \param args The positional arguments for the call.
+          * \return A future that resolves to the result of the remote procedure call.
+          */
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args);
 
+         /*!
+          * Calls a remote procedure with keyword arguments.
+          *
+          * \param procedure The URI of the remote procedure to call.
+          * \param kwargs The keyword arguments for the call.
+          * \return A future that resolves to the result of the remote procedure call.
+          */
+         boost::future<boost::any> call(const std::string& procedure, const anymap& kwargs);
+
+         /*!
+          * Calls a remote procedure with positional and keyword arguments.
+          *
+          * \param procedure The URI of the remote procedure to call.
+          * \param args The positional arguments for the call.
+          * \param kwargs The keyword arguments for the call.
+          * \return A future that resolves to the result of the remote procedure call.
+          */
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args, const anymap& kwargs);
 
+
+
+         /*!
+          * Register an endpoint as a procedure that can be called remotely.
+          *
+          * \param procedure The URI under which the procedure is to be exposed.
+          * \param endpoint The endpoint to be exposed as a remotely callable procedure.
+          * \return A future that resolves to a autobahn::registration
+          */
+         boost::future<registration> provide(const std::string& procedure, endpoint_t endpoint);
+
+         /*!
+          *
+          */
+         boost::future<registration> provide(const std::string& procedure, endpoint_f_t endpoint);
+
+         /*!
+          *
+          */
+         boost::future<registration> provide(const std::string& procedure, endpoint_v_t endpoint);
+
+
+#if 0
+         /*!
+          *
+          */
          template <typename T>
          boost::future<T> call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
             return call(procedure, args, kwargs).then(boost::launch::deferred, [](boost::future<boost::any> f) {
@@ -125,7 +206,6 @@ namespace autobahn {
             });
          }
 
-#if 0
          /**
           * Calls a remote procedure. Typed positional arguments, generic return.
           */
@@ -199,6 +279,36 @@ namespace autobahn {
 #endif
 
       private:
+
+         // Calls
+         //
+         struct call_t {
+            boost::promise<boost::any> m_res;
+         };
+
+         typedef std::map<uint64_t, call_t> calls_t;
+
+
+         // Registrations
+         //
+
+
+
+         // WAMP registration ID -> endpoint
+         typedef std::map<uint64_t, endpoint_t> endpoints_t;
+
+
+         struct register_request_t {
+            register_request_t(endpoint_t endpoint = 0) : m_endpoint(endpoint) {};
+            endpoint_t m_endpoint;
+            boost::promise<registration> m_res;
+         };
+
+         typedef std::map<uint64_t, register_request_t> register_requests_t;
+
+
+         typedef std::vector<msgpack::object> wamp_msg_t;
+
 
          void process_welcome(const wamp_msg_t& msg);
 

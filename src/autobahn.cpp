@@ -16,12 +16,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <stdint.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
 
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <map>
@@ -101,100 +101,215 @@ namespace autobahn {
 
 
    boost::future<int> session::join(const std::string& realm) {
-      //boost::promise<int> p;
-      //p.set_value(23);
-      //m_session_join = new boost::promise<int>();
-      send_hello(realm);
-      //m_session_join.set_value(23);
-#if 0
-      boost::future<int> f = m_session_join.get_future();
-      f.set_deferred();
-      return f;
-#else
-      return m_session_join.get_future();
-#endif
-   }
 
+      // [HELLO, Realm|uri, Details|dict]
 
-   boost::future<registration_t> session::provide(const std::string& procedure, endpoint_t endpoint) {
+      m_packer.pack_array(3);
 
-      // [REGISTER, Request|id, Options|dict, Procedure|uri]
+      m_packer.pack(MSG_CODE_HELLO);
+      m_packer.pack(realm);
 
-      m_request_id += 1;
-      m_register_requests[m_request_id] = register_request_t(endpoint);
+      m_packer.pack_map(1);
+      m_packer.pack(std::string("roles"));
 
-      m_packer.pack_array(4);
-      m_packer.pack(MSG_CODE_REGISTER);
-      m_packer.pack(m_request_id);
+      m_packer.pack_map(4);
+
+      m_packer.pack(std::string("caller"));
       m_packer.pack_map(0);
-      m_packer.pack(procedure);
+
+      m_packer.pack(std::string("callee"));
+      m_packer.pack_map(0);
+
+      m_packer.pack(std::string("publisher"));
+      m_packer.pack_map(0);
+
+      m_packer.pack(std::string("subscriber"));
+      m_packer.pack_map(0);
+
       send();
 
-      return m_register_requests[m_request_id].m_res.get_future();
+      return m_session_join.get_future();
    }
 
 
-   boost::any session::invoke(const std::string& procedure, anyvec& args) {
-/*
-      endpoints::iterator ep = m_endpoints.find(procedure);
-      if (ep == m_endpoints.end()) {
-         std::cerr << "procedure not found" << std::endl;
+   void session::publish(const std::string& topic) {
+
+      // [PUBLISH, Request|id, Options|dict, Topic|uri]
+
+      m_request_id += 1;
+
+      m_packer.pack_array(4);
+      m_packer.pack(MSG_CODE_PUBLISH);
+      m_packer.pack(m_request_id);
+      m_packer.pack_map(0);
+      m_packer.pack(topic);
+      send();
+   }
+
+
+   void session::publish(const std::string& topic, const anyvec& args) {
+
+      // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
+
+      if (args.size() > 0) {
+
+         m_request_id += 1;
+
+         m_packer.pack_array(5);
+         m_packer.pack(MSG_CODE_PUBLISH);
+         m_packer.pack(m_request_id);
+         m_packer.pack_map(0);
+         m_packer.pack(topic);
+         pack_any(args);
+         send();
       } else {
-         std::cerr << "invoking: " << ep->first << std::endl;
-         return (*(ep->second)) (args);
+
+         publish(topic);
       }
-*/
-      return boost::any();
    }
 
-   boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args) {
+
+   void session::publish(const std::string& topic, const anymap& kwargs) {
+
+      // [PUBLISH, Request|id, Options|dict, Topic|uri, [], ArgumentsKw|dict]
+
+      if (kwargs.size() > 0) {
+
+         m_request_id += 1;
+
+         m_packer.pack_array(6);
+         m_packer.pack(MSG_CODE_PUBLISH);
+         m_packer.pack(m_request_id);
+         m_packer.pack_map(0);
+         m_packer.pack(topic);
+         m_packer.pack_array(0);
+         pack_any(kwargs);
+         send();
+      } else {
+
+         publish(topic);
+      }
+   }
+
+
+   void session::publish(const std::string& topic, const anyvec& args, const anymap& kwargs) {
+
+      // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
+
+      if (kwargs.size() > 0) {
+
+         m_request_id += 1;
+
+         m_packer.pack_array(6);
+         m_packer.pack(MSG_CODE_PUBLISH);
+         m_packer.pack(m_request_id);
+         m_packer.pack_map(0);
+         m_packer.pack(topic);
+         pack_any(args);
+         pack_any(kwargs);
+         send();
+      } else {
+
+         publish(topic, args);
+      }
+   }
+
+
+   boost::future<boost::any> session::call(const std::string& procedure) {
+
+      // [CALL, Request|id, Options|dict, Procedure|uri]
 
       m_request_id += 1;
 
       m_calls[m_request_id] = call_t();
 
-      m_packer.pack_array(5);
+      m_packer.pack_array(4);
       m_packer.pack(MSG_CODE_CALL);
       m_packer.pack(m_request_id);
       m_packer.pack_map(0);
       m_packer.pack(procedure);
-      pack_any(args);
       send();
 
-#if 0
-      boost::future<boost::any> f = m_calls[m_request_id].m_res.get_future();
-      f.set_deferred();
-      return f;
-#else
       return m_calls[m_request_id].m_res.get_future();
-#endif
+   }
+
+
+   boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args) {
+
+      // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
+
+      if (args.size() > 0) {
+
+         m_request_id += 1;
+
+         m_calls[m_request_id] = call_t();
+
+         m_packer.pack_array(5);
+         m_packer.pack(MSG_CODE_CALL);
+         m_packer.pack(m_request_id);
+         m_packer.pack_map(0);
+         m_packer.pack(procedure);
+         pack_any(args);
+         send();
+
+         return m_calls[m_request_id].m_res.get_future();
+
+      } else {
+         return call(procedure);
+      }
+   }
+
+
+   boost::future<boost::any> session::call(const std::string& procedure, const anymap& kwargs) {
+
+      // [CALL, Request|id, Options|dict, Procedure|uri, [], ArgumentsKw|dict]
+
+      if (kwargs.size() > 0) {
+
+         m_request_id += 1;
+
+         m_calls[m_request_id] = call_t();
+
+         m_packer.pack_array(6);
+         m_packer.pack(MSG_CODE_CALL);
+         m_packer.pack(m_request_id);
+         m_packer.pack_map(0);
+         m_packer.pack(procedure);
+         m_packer.pack_array(0);
+         pack_any(kwargs);
+         send();
+
+         return m_calls[m_request_id].m_res.get_future();
+      } else {
+         return call(procedure);
+      }
    }
 
 
    boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
 
-      std::cerr << "0b" << std::endl;
+      // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
 
-      m_request_id += 1;
+      if (kwargs.size() > 0) {
 
-      m_calls[m_request_id] = call_t();
+         m_request_id += 1;
 
-      m_packer.pack_array(6);
-      m_packer.pack(MSG_CODE_CALL);
-      m_packer.pack(m_request_id);
-      m_packer.pack_map(0);
-      m_packer.pack(procedure);
-      pack_any(args);
-      pack_any(kwargs);
-      send();
+         m_calls[m_request_id] = call_t();
 
-#if 0
-      boost::future<boost::any> f = m_calls[m_request_id].m_res.get_future();
-      f.set_deferred();
-      return f;
-#else
-      return m_calls[m_request_id].m_res.get_future();
-#endif
+         m_packer.pack_array(6);
+         m_packer.pack(MSG_CODE_CALL);
+         m_packer.pack(m_request_id);
+         m_packer.pack_map(0);
+         m_packer.pack(procedure);
+         pack_any(args);
+         pack_any(kwargs);
+         send();
+
+         return m_calls[m_request_id].m_res.get_future();
+
+      } else {
+         return call(procedure, args);
+      }
    }
 
 
@@ -265,89 +380,31 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic) {
+
+
+   boost::future<registration> session::provide(const std::string& procedure, endpoint_v_t endpoint) {
+   }
+
+   boost::future<registration> session::provide(const std::string& procedure, endpoint_f_t endpoint) {
+   }
+
+   boost::future<registration> session::provide(const std::string& procedure, endpoint_t endpoint) {
+
+      // [REGISTER, Request|id, Options|dict, Procedure|uri]
+
+      m_request_id += 1;
+      m_register_requests[m_request_id] = register_request_t(endpoint);
 
       m_packer.pack_array(4);
-      m_packer.pack(MSG_CODE_PUBLISH);
-      m_packer.pack(1);
+      m_packer.pack(MSG_CODE_REGISTER);
+      m_packer.pack(m_request_id);
       m_packer.pack_map(0);
-      m_packer.pack(topic);
+      m_packer.pack(procedure);
       send();
+
+      return m_register_requests[m_request_id].m_res.get_future();
    }
 
-
-   void session::publish(const std::string& topic, const anyvec& args) {
-
-      if (args.size() > 0) {
-         m_packer.pack_array(5);
-         m_packer.pack(MSG_CODE_PUBLISH);
-         m_packer.pack(1);
-         m_packer.pack_map(0);
-         m_packer.pack(topic);
-         pack_any(args);
-         send();
-      } else {
-         publish(topic);
-      }
-   }
-
-
-   void session::publish(const std::string& topic, const anyvec& args, const anymap& kwargs) {
-
-      if (kwargs.size() > 0) {
-         m_packer.pack_array(6);
-         m_packer.pack(MSG_CODE_PUBLISH);
-         m_packer.pack(1);
-         m_packer.pack_map(0);
-         m_packer.pack(topic);
-         pack_any(args);
-         pack_any(kwargs);
-         send();
-      } else {
-         publish(topic, args);
-      }
-   }
-
-
-   void session::publish(const std::string& topic, const anymap& kwargs) {
-
-      if (kwargs.size() > 0) {
-         m_packer.pack_array(6);
-         m_packer.pack(MSG_CODE_PUBLISH);
-         m_packer.pack(1);
-         m_packer.pack_map(0);
-         m_packer.pack(topic);
-         m_packer.pack_array(0);
-         pack_any(kwargs);
-         send();
-      } else {
-         publish(topic);
-      }
-   }
-
-
-   void session::publish(const std::string& topic, const boost::any& arg1) {
-      anyvec v;
-      v.push_back(arg1);
-      publish(topic, v);
-   }
-
-
-   void session::publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2) {
-      anyvec v;
-      v.push_back(arg1);
-      v.push_back(arg2);
-      publish(topic, v);
-   }
-
-
-   void session::publish(const std::string& topic, const boost::any& arg1, const boost::any& arg2, const boost::any& arg3) {
-      anyvec v;
-      v.push_back(arg1);
-      v.push_back(arg2);
-      v.push_back(arg3);
-      publish(topic, v);
-   }
 
 
 
@@ -582,10 +639,10 @@ namespace autobahn {
 
          m_endpoints[registration_id] = register_request->second.m_endpoint;
 
-         registration_t registration;
-         registration.m_id = registration_id;
+         registration reg;
+         reg.m_id = registration_id;
 
-         register_request->second.m_res.set_value(registration);
+         register_request->second.m_res.set_value(reg);
 
       } else {
          throw ProtocolError("bogus REGISTERED message for non-pending request ID");

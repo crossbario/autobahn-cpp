@@ -38,12 +38,42 @@ any add2(const anyvec& args, const anymap& kwargs) {
 }
 
 
+anyvec add2b(const anyvec& args, const anymap& kwargs) {
+
+   cerr << "I am being called" << endl;
+
+   uint64_t x = any_cast<uint64_t> (args[0]);
+   uint64_t y = any_cast<uint64_t> (args[1]);
+   return {x + y, x - y};
+}
+
+anyvec add2c(const anyvec& args, const anymap& kwargs) {
+
+   cerr << "I am being called" << endl;
+
+   uint64_t x = any_cast<uint64_t> (args[0]);
+   uint64_t y = any_cast<uint64_t> (args[1]);
+   return {x + y, x - y};
+}
+
 int main () {
 
    // A Worker MUST log to std::cerr, since std::cin/cout is used
    // for talking WAMP with the master
    //
    cerr << "Worker starting .." << endl;
+
+   any a = &add2b; 
+   cerr << "1: " << (a.type() == typeid(endpoint_v_t)) << endl;
+   cerr << "1b: " << (a.type() == typeid(endpoint_f_t)) << endl;
+
+   cerr << "FPtr = " << reinterpret_cast<void*>(any_cast<endpoint_v_t>(a)) << endl;
+   cerr << "FPtr = " << reinterpret_cast<void*>(&add2b) << endl;
+
+   a = &add2c;
+   cerr << "2: " << (a.type() == typeid(endpoint_v_t)) << endl;
+   cerr << "FPtr = " << reinterpret_cast<void*>(any_cast<endpoint_v_t>(a)) << endl;
+
 
    // Setup WAMP session running over stdio
    //
