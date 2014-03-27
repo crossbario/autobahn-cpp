@@ -44,7 +44,7 @@ anyvec add2b(const anyvec& args, const anymap& kwargs) {
 
    uint64_t x = any_cast<uint64_t> (args[0]);
    uint64_t y = any_cast<uint64_t> (args[1]);
-   return {x + y, x - y};
+   return {x + y, x * 2};
 }
 
 anyvec add2c(const anyvec& args, const anymap& kwargs) {
@@ -53,8 +53,51 @@ anyvec add2c(const anyvec& args, const anymap& kwargs) {
 
    uint64_t x = any_cast<uint64_t> (args[0]);
    uint64_t y = any_cast<uint64_t> (args[1]);
-   return {x + y, x - y};
+   return {x + y, x};
 }
+
+
+future<anyvecmap> add2d(const anyvec& args, const anymap& kwargs) {
+
+   cerr << "I am being called" << endl;
+
+   uint64_t x = any_cast<uint64_t> (args[0]);
+   uint64_t y = any_cast<uint64_t> (args[1]);
+   return make_ready_future(std::make_pair(anyvec({x + y, 2 * x}), anymap({{"foo", 23}})));
+}
+
+
+autobahn::session* gsess;
+
+
+future<anyvecmap> add2e(const anyvec& args, const anymap& kwargs) {
+
+   cerr << "I am being called" << endl;
+
+   uint64_t x = any_cast<uint64_t> (args[0]);
+   uint64_t y = any_cast<uint64_t> (args[1]);
+
+
+   // and issue another RPC ..
+   //
+   auto call4 = gsess->call("com.math.slowsquare", {x + y}, {{"delay", 1}}).then([&](future<any> f) {
+
+      uint64_t res = any_cast<uint64_t> (f.get());
+      cerr << "Got result 4: " << res << endl;
+
+      return std::make_pair(anyvec({x + y, 2 * x, res}), anymap({{"foo", 23}}));
+//      return make_ready_future(std::make_pair(anyvec({x + y, 2 * x, res}), anymap({{"foo", 23}})));
+   });
+
+   // Wait for call4 to finish before returning ..
+   //
+   cerr << "HERE 55" << endl;
+   call4.get();
+   cerr << "HERE 66" << endl;
+   return make_ready_future(std::make_pair(anyvec(), anymap()));
+}
+
+
 
 int main () {
 
@@ -63,44 +106,79 @@ int main () {
    //
    cerr << "Worker starting .." << endl;
 
-   any a = &add2b; 
-   cerr << "1: " << (a.type() == typeid(endpoint_v_t)) << endl;
-   cerr << "1b: " << (a.type() == typeid(endpointf_t)) << endl;
+   auto foo = make_ready_future(23);
 
-   cerr << "FPtr = " << reinterpret_cast<void*>(any_cast<endpoint_v_t>(a)) << endl;
-   cerr << "FPtr = " << reinterpret_cast<void*>(&add2b) << endl;
-
-   a = &add2c;
-   cerr << "2: " << (a.type() == typeid(endpoint_v_t)) << endl;
-   cerr << "FPtr = " << reinterpret_cast<void*>(any_cast<endpoint_v_t>(a)) << endl;
-
-
-   // Setup WAMP session running over stdio
+   // Setup WAMP sess running over stdio
    //
-   autobahn::session session(cin, cout);
+   autobahn::session sess(cin, cout);
+   //sess = autobahn::session(cin, cout);
+
+   gsess = &sess;
 
 
-   auto s = session.join(std::string("realm1")).then([&session](future<int> s) {
+   auto s = sess.join(std::string("realm1")).then([&sess](future<int> s) {
 
       // WAMP session is now established ..
       //
       cerr << "Joined with session ID " << s.get() << endl;
 
-      auto r = session.provide("com.myapp.cpp.add2", &add2);
+      auto call4 = sess.call("com.math.slowsquare", {55}, {{"delay", 1}}).then([&](future<any> f) {
+
+         uint64_t res = any_cast<uint64_t> (f.get());
+         cerr << "Got result 4: " << res << endl;
+
+      });
+
+      call4.get();
+
+#if 0
+#if 1
+      auto r = sess.provide("com.myapp.cpp.add2", &add2);
+#else
+      auto r = sess.provide("com.myapp.cpp.add2",
+
+         [](const anyvec& args, const anymap& kwargs) {
+
+            uint64_t x = any_cast<uint64_t> (args[0]);
+            uint64_t y = any_cast<uint64_t> (args[1]);
+            return x + y;
+         }
+      );
+#endif
+
+#else
+
+#if 1
+//      auto r = sess.provide_v("com.myapp.cpp.add2", &add2b);
+//      auto r = sess.providef_vm("com.myapp.cpp.add2", &add2d);
+      auto r = sess.providef_vm("com.myapp.cpp.add2", &add2e);
+#else
+      auto r = sess.provide("com.myapp.cpp.add2",
+
+         [](const anyvec& args, const anymap& kwargs) {
+
+            uint64_t x = any_cast<uint64_t> (args[0]);
+            uint64_t y = any_cast<uint64_t> (args[1]);
+            return x + y;
+         }
+      );
+#endif
+
+#endif
 
       auto r2 = r.then([&](decltype(r)) {
          cerr << "procedure registered" << endl;
-         session.publish("com.myapp.tryme");
+         sess.publish("com.myapp.tryme");
       });
 
       r2.get();
 
       // Stop the event loop and exit the program.
       //
-      //session.stop();
+      //sess.stop();
    });
 
-   // Enter event loop for session. This will not return ..
+   // Enter event loop for sess. This will not return ..
    //
-   session.loop();
+   sess.loop();
 }

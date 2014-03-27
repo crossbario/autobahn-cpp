@@ -379,12 +379,9 @@ namespace autobahn {
       }
    }
 
-   boost::future<registration> session::provide(const std::string& procedure, endpoint_t endpoint) {
-      return _provide(procedure, endpoint);
-   }
-
+/*
    template<typename E>
-   boost::future<registration> session::_provide(const std::string& procedure, E endpoint) {
+   boost::future<registration> session::provide(const std::string& procedure, E endpoint) {
 
       // [REGISTER, Request|id, Options|dict, Procedure|uri]
 
@@ -400,18 +397,14 @@ namespace autobahn {
 
       return m_register_requests[m_request_id].m_res.get_future();
    }
-
-
-
+*/   
 /*
-#include <unistd.h>
-
-   std::cout.flush();
-   close(STDOUT_FILENO);
-   sleep(2);
-   std::cerr << "EXIT" << std::endl;
-
-
+   template
+   boost::future<registration> session::provide<endpoint_t>(const std::string& procedure, endpoint_t endpoint);
+*/
+/*
+   template
+   boost::future<registration> session::provide<endpoint_v_t>(const std::string& procedure, endpoint_v_t endpoint);
 */
 
    void session::process_welcome(const wamp_msg_t& msg) {
@@ -531,20 +524,72 @@ namespace autobahn {
 
          std::cerr << "==> 5" << std::endl;
          try {
-            std::cerr << endpoint->second << std::endl;
-            boost::any res = (*(endpoint->second))(args, kwargs);
+
+            if ((endpoint->second).type() == typeid(endpoint_t)) {
+
+               boost::any res = ( boost::any_cast<endpoint_t>(endpoint->second) )(args, kwargs);
+
+               m_packer.pack_array(4);
+               m_packer.pack(MSG_CODE_YIELD);
+               m_packer.pack(request_id);
+               m_packer.pack_map(0);
+               m_packer.pack_array(1);
+               pack_any(res);
+               send();
+
+            } else if ((endpoint->second).type() == typeid(endpoint_v_t)) {
+
+               anyvec res = ( boost::any_cast<endpoint_v_t>(endpoint->second) )(args, kwargs);
+
+               m_packer.pack_array(4);
+               m_packer.pack(MSG_CODE_YIELD);
+               m_packer.pack(request_id);
+               m_packer.pack_map(0);
+               pack_any(res);
+               send();
+
+            } else if ((endpoint->second).type() == typeid(endpointf_vm_t)) {
+
+               boost::future<anyvecmap> f_res = ( boost::any_cast<endpointf_vm_t>(endpoint->second) )(args, kwargs);
+
+               std::cerr << "++ 1" << std::endl;
+
+               f_res.then([&](decltype(f_res) f) {
+
+                  std::cerr << "++ 2" << std::endl;
+
+                  anyvecmap res = f.get();
+
+                  std::cerr << "++ 3" << std::endl;
+
+                  m_packer.pack_array(5);
+                  m_packer.pack(MSG_CODE_YIELD);
+                  m_packer.pack(request_id);
+                  m_packer.pack_map(0);
+                  pack_any(res.first);
+                  pack_any(res.second);
+                  send();
+
+                  std::cerr << "++ 4" << std::endl;
+               });
+
+               std::cerr << "++ 5" << std::endl;
+               f_res.get();
+               std::cerr << "++ 6" << std::endl;
+
+            } else {
+               // FIXME
+               std::cerr << "FIX ME INVOCATION " << std::endl;
+               std::cerr << typeid(endpoint_t).name() << std::endl;
+               std::cerr << ((endpoint->second).type()).name() << std::endl;
+            }
+//            boost::any res = (endpoint->second)(args, kwargs);
+//            boost::any res = (*(endpoint->second))(args, kwargs);
 
             // [YIELD, INVOCATION.Request|id, Options|dict]
             // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
             // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
 
-            m_packer.pack_array(4);
-            m_packer.pack(MSG_CODE_YIELD);
-            m_packer.pack(request_id);
-            m_packer.pack_map(0);
-            m_packer.pack_array(1);
-            pack_any(res);
-            send();
          }
          catch (...) {
             std::cerr << "INVOCATION failed" << std::endl;
@@ -635,9 +680,13 @@ namespace autobahn {
 
          uint64_t registration_id = msg[2].as<uint64_t>();
 
-         std::cerr << "REGxx" << register_request->second.m_endpoint << std::endl;
+         //std::cerr << "REGxx" << register_request->second.m_endpoint << std::endl;
+
+         std::cerr << "XXX 2a " << (register_request->second).m_endpoint.type().name() << std::endl;
 
          m_endpoints[registration_id] = register_request->second.m_endpoint;
+
+         std::cerr << "XXX 2b " << (m_endpoints[registration_id]).type().name() << std::endl;
 
          registration reg;
          reg.m_id = registration_id;

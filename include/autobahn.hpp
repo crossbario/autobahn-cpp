@@ -27,6 +27,8 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <functional>
+
 
 #include <msgpack.hpp>
 
@@ -55,30 +57,32 @@ namespace autobahn {
    typedef std::pair<anyvec, anymap> anyvecmap;
 
 
+//   typedef boost::any (*endpoint_t) (const anyvec&, const anymap&);
+
    /// Endpoint type for use with session::provide(const std::string&, endpoint_t)
-   typedef boost::any (*endpoint_t) (const anyvec&, const anymap&);
+   typedef std::function<boost::any(const anyvec&, const anymap&)> endpoint_t;
 
    /// Endpoint type for use with session::provide(const std::string&, endpoint_v_t)
-   typedef anyvec (*endpoint_v_t) (const anyvec&, const anymap&);
+   typedef std::function<anyvec(const anyvec&, const anymap&)> endpoint_v_t;
 
    /// Endpoint type for use with session::provide(const std::string&, endpoint_m_t)
-   typedef anymap (*endpoint_m_t) (const anyvec&, const anymap&);
+   typedef std::function<anymap(const anyvec&, const anymap&)> endpoint_m_t;
 
    /// Endpoint type for use with session::provide(const std::string&, endpoint_vm_t)
-   typedef anyvecmap (*endpoint_vm_t) (const anyvec&, const anymap&);
+   typedef std::function<anyvecmap(const anyvec&, const anymap&)> endpoint_vm_t;
 
 
    /// Endpoint type for use with session::provide(const std::string&, endpointf_t)
-   typedef boost::future<boost::any> (*endpointf_t) (const anyvec&, const anymap&);
+   typedef std::function<boost::future<boost::any>(const anyvec&, const anymap&)> endpointf_t;
 
    /// Endpoint type for use with session::provide(const std::string&, endpointf_v_t)
-   typedef boost::future<anyvec> (*endpointf_v_t) (const anyvec&, const anymap&);
+   typedef std::function<boost::future<anyvec>(const anyvec&, const anymap&)> endpointf_v_t;
 
    /// Endpoint type for use with session::provide(const std::string&, endpointf_m_t)
-   typedef boost::future<anymap> (*endpointf_m_t) (const anyvec&, const anymap&);
+   typedef std::function<boost::future<anymap>(const anyvec&, const anymap&)> endpointf_m_t;
 
    /// Endpoint type for use with session::provide(const std::string&, endpointf_vm_t)
-   typedef boost::future<anyvecmap> (*endpointf_vm_t) (const anyvec&, const anymap&);
+   typedef std::function<boost::future<anyvecmap>(const anyvec&, const anymap&)> endpointf_vm_t;
 
 
    /// Represents a procedure registration.
@@ -100,13 +104,15 @@ namespace autobahn {
 
       public:
 
+//         session() {};
+
          /*!
           * Create a new WAMP session.
           *
           * \param in The input stream to run this session on.
           * \param out THe output stream to run this session on.
           */
-         session(std::istream& in, std::ostream& out);
+         session(std::istream& in = std::cin, std::ostream& out = std::cout);
 
          /*!
           * Join a realm with this session.
@@ -195,8 +201,6 @@ namespace autobahn {
           */
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args, const anymap& kwargs);
 
-
-
          /*!
           * Register an endpoint as a procedure that can be called remotely.
           *
@@ -204,12 +208,17 @@ namespace autobahn {
           * \param endpoint The endpoint to be exposed as a remotely callable procedure.
           * \return A future that resolves to a autobahn::registration
           */
-         boost::future<registration> provide(const std::string& procedure, endpoint_t endpoint);
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_t endpoint);
 
+         inline boost::future<registration> provide_v(const std::string& procedure, endpoint_v_t endpoint);
+
+         inline boost::future<registration> providef_vm(const std::string& procedure, endpointf_vm_t endpoint);
 
       private:
+
          template<typename E>
-         boost::future<registration> _provide(const std::string& procedure, E endpoint);
+         inline boost::future<registration> _provide(const std::string& procedure, E endpoint);
+
 
          /// An outstanding WAMP call.
          struct call_t {
@@ -222,8 +231,9 @@ namespace autobahn {
 
          /// An outstanding WAMP register request.
          struct register_request_t {
-            register_request_t(endpoint_t endpoint = 0) : m_endpoint(endpoint) {};
-            endpoint_t m_endpoint;
+            register_request_t() {};
+            register_request_t(boost::any endpoint) : m_endpoint(endpoint) {};
+            boost::any m_endpoint;
             boost::promise<registration> m_res;
          };
 
@@ -231,7 +241,7 @@ namespace autobahn {
          typedef std::map<uint64_t, register_request_t> register_requests_t;
 
          /// Map of registered endpoints (registration ID -> endpoint)
-         typedef std::map<uint64_t, endpoint_t> endpoints_t;
+         typedef std::map<uint64_t, boost::any> endpoints_t;
 
          /// An unserialized, raw WAMP message.
          typedef std::vector<msgpack::object> wamp_msg_t;
@@ -303,7 +313,71 @@ namespace autobahn {
 
          /// Map of WAMP registration ID -> endpoint
          endpoints_t m_endpoints;
+
+         /// WAMP message type codes.
+         enum class msg_code : int {
+            HELLO = 1,
+            WELCOME = 2,
+            ABORT = 3,
+            CHALLENGE = 4,
+            AUTHENTICATE = 5,
+            GOODBYE = 6,
+            HEARTBEAT = 7,
+            ERROR = 8,
+            PUBLISH = 16,
+            PUBLISHED = 17,
+            SUBSCRIBE = 32,
+            SUBSCRIBED = 33,
+            UNSUBSCRIBE = 34,
+            UNSUBSCRIBED = 35,
+            EVENT = 36,
+            CALL = 48,
+            CANCEL = 49,
+            RESULT = 50,
+            REGISTER = 64,
+            REGISTERED = 65,
+            UNREGISTER = 66,
+            UNREGISTERED = 67,
+            INVOCATION = 68,
+            INTERRUPT = 69,
+            YIELD = 70
+         };
    };
+
+
+   boost::future<registration> session::provide(const std::string& procedure, endpoint_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_t> (endpoint));
+   }
+
+   boost::future<registration> session::provide_v(const std::string& procedure, endpoint_v_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_v_t> (endpoint));
+   }
+
+   boost::future<registration> session::providef_vm(const std::string& procedure, endpointf_vm_t endpoint) {
+      return _provide(procedure, static_cast<endpointf_vm_t> (endpoint));
+   }
+
+   template<typename E>
+   boost::future<registration> session::_provide(const std::string& procedure, E endpoint) {
+
+      // [REGISTER, Request|id, Options|dict, Procedure|uri]
+
+      std::cerr << "OOOOOOOOOOO " << typeid(endpoint).name() << std::endl;
+      std::cerr << "OOOOOOOOOOO " << typeid(E()).name() << std::endl;
+
+      m_request_id += 1;
+      m_register_requests[m_request_id] = register_request_t(endpoint);
+
+      m_packer.pack_array(4);
+      m_packer.pack(static_cast<int> (msg_code::REGISTER));
+      m_packer.pack(m_request_id);
+      m_packer.pack_map(0);
+      m_packer.pack(procedure);
+      send();
+
+      return m_register_requests[m_request_id].m_res.get_future();
+   }
+
 
 
 
