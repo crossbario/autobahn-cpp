@@ -1,6 +1,11 @@
 build:
 	scons
 
+test_asio:
+	scons
+#	./build/test/test_asio
+	python -u serialize.py | ./build/test/test_asio
+
 test_worker:
 	scons
 #	python server.py --debug --worker ./build/test/test7d
