@@ -27,7 +27,8 @@ if USE_SHIT_COMPILER:
    env["CXX"] = "g++"
    env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wno-deprecated-declarations', '-Wl,--no-as-needed', '-pthread'])
 else:
-   env.Append(CXXFLAGS = ['-g', '-std=c++11', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-Wno-unused-value', '-pthread'])
+#   env.Append(CXXFLAGS = ['-g', '-std=c++1y', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-Wno-unused-value', '-pthread'])
+   env.Append(CXXFLAGS = ['-std=c++11', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-Wno-unused-value', '-pthread'])
 #   env.Append(CXXFLAGS = ['-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
    env.Append(LINKFLAGS = ['-stdlib=libc++', '-pthread'])
    env["CC"] = "clang"

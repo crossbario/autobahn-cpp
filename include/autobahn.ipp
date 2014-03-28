@@ -70,7 +70,7 @@ namespace autobahn {
         m_session_id(0),
         m_request_id(0)
    {
-      receive_msg();
+//      receive_msg();
    }
 
 /*
@@ -86,9 +86,7 @@ namespace autobahn {
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::start() {
-      std::cerr << "HHHERR 2" << std::endl;
       receive_msg();
-      std::cerr << "HHHERR 3" << std::endl;
    }
 
 
@@ -905,11 +903,11 @@ namespace autobahn {
       // write actual serialized message
       written += boost::asio::write(m_out, boost::asio::buffer(m_buffer.data(), m_buffer.size()));
 
-      // clear serialization buffer
-      m_buffer.clear();
-
       if (m_debug) {
          std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + m_buffer.size()) << " octets)" << std::endl;
       }
+
+      // clear serialization buffer
+      m_buffer.clear();
    }
 }

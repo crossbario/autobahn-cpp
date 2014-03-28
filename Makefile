@@ -8,6 +8,10 @@ test_asio:
 #	python -u serialize.py | ./build/test/test12
 	python server.py --debug --worker ./build/test/test12
 
+test_asio2:
+	scons
+	./build/test/test13
+
 test_worker:
 	scons
 #	python server.py --debug --worker ./build/test/test7d
