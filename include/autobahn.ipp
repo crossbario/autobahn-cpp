@@ -28,7 +28,7 @@
 #include <string>
 #include <sstream>
 
-#include "autobahn.hpp"
+//#include "autobahn.hpp"
 
 
 #define MSG_CODE_HELLO 1
@@ -60,38 +60,21 @@
 
 namespace autobahn {
 
-   ProtocolError::ProtocolError(const std::string& msg)
-    : std::runtime_error(msg) {
-   }
-
-
-   Unimplemented::Unimplemented(const std::string& msg, int type_code)
-      : std::runtime_error(msg), m_type_code(type_code) {
-   };
-
-   const char* Unimplemented::what() const throw() {
-      if (m_type_code) {
-         std::ostringstream s;
-         s << std::runtime_error::what() << " (type code " << m_type_code << ")";
-         return s.str().c_str();
-      } else {
-         return std::runtime_error::what();
-      }
-   }
-
-
-
-   session::session(std::istream& in, std::ostream& out)
+   template<typename IStream, typename OStream>
+   session<IStream, OStream>::session(IStream& in, OStream& out)
       : m_debug(true),
         m_stopped(false),
         m_in(in),
         m_out(out),
         m_packer(&m_buffer),
         m_session_id(0),
-        m_request_id(0) {
+        m_request_id(0)
+   {
+      receive_msg();
    }
 
-   void session::stop(int exit_code) {
+/*
+   void session<IStream, OStream>::stop(int exit_code) {
       std::cerr << "stopping .." << std::endl;
       m_stopped = true;
       close(STDIN_FILENO);
@@ -99,9 +82,18 @@ namespace autobahn {
       close(STDERR_FILENO);
       exit(exit_code);
    }
+*/
+
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::start() {
+      std::cerr << "HHHERR 2" << std::endl;
+      receive_msg();
+      std::cerr << "HHHERR 3" << std::endl;
+   }
 
 
-   boost::future<int> session::join(const std::string& realm) {
+   template<typename IStream, typename OStream>
+   boost::future<int> session<IStream, OStream>::join(const std::string& realm) {
 
       // [HELLO, Realm|uri, Details|dict]
 
@@ -133,7 +125,49 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic) {
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide_v(const std::string& procedure, endpoint_v_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_v_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::providef_vm(const std::string& procedure, endpointf_vm_t endpoint) {
+      return _provide(procedure, static_cast<endpointf_vm_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   template<typename E>
+   boost::future<registration> session<IStream, OStream>::_provide(const std::string& procedure, E endpoint) {
+
+      // [REGISTER, Request|id, Options|dict, Procedure|uri]
+
+      std::cerr << "OOOOOOOOOOO " << typeid(endpoint).name() << std::endl;
+      std::cerr << "OOOOOOOOOOO " << typeid(E()).name() << std::endl;
+
+      m_request_id += 1;
+      m_register_requests[m_request_id] = register_request_t(endpoint);
+
+      m_packer.pack_array(4);
+      m_packer.pack(static_cast<int> (msg_code::REGISTER));
+      m_packer.pack(m_request_id);
+      m_packer.pack_map(0);
+      m_packer.pack(procedure);
+      send();
+
+      return m_register_requests[m_request_id].m_res.get_future();
+   }
+
+
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::publish(const std::string& topic) {
 
       // [PUBLISH, Request|id, Options|dict, Topic|uri]
 
@@ -148,7 +182,8 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, const anyvec& args) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::publish(const std::string& topic, const anyvec& args) {
 
       // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
 
@@ -170,7 +205,8 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, const anymap& kwargs) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::publish(const std::string& topic, const anymap& kwargs) {
 
       // [PUBLISH, Request|id, Options|dict, Topic|uri, [], ArgumentsKw|dict]
 
@@ -193,7 +229,8 @@ namespace autobahn {
    }
 
 
-   void session::publish(const std::string& topic, const anyvec& args, const anymap& kwargs) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::publish(const std::string& topic, const anyvec& args, const anymap& kwargs) {
 
       // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
 
@@ -216,7 +253,8 @@ namespace autobahn {
    }
 
 
-   boost::future<boost::any> session::call(const std::string& procedure) {
+   template<typename IStream, typename OStream>
+   boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure) {
 
       // [CALL, Request|id, Options|dict, Procedure|uri]
 
@@ -235,7 +273,12 @@ namespace autobahn {
    }
 
 
-   boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args) {
+   template<typename IStream, typename OStream>
+   boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure, const anyvec& args) {
+
+      if (m_debug) {
+         std::cerr << "call()" << std::endl;
+      }
 
       // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
 
@@ -260,8 +303,8 @@ namespace autobahn {
       }
    }
 
-
-   boost::future<boost::any> session::call(const std::string& procedure, const anymap& kwargs) {
+/*
+   boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure, const anymap& kwargs) {
 
       // [CALL, Request|id, Options|dict, Procedure|uri, [], ArgumentsKw|dict]
 
@@ -285,9 +328,10 @@ namespace autobahn {
          return call(procedure);
       }
    }
+*/
 
-
-   boost::future<boost::any> session::call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
+   template<typename IStream, typename OStream>
+   boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
 
       // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
 
@@ -314,7 +358,8 @@ namespace autobahn {
    }
 
 
-   void session::pack_any(const boost::any& value) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::pack_any(const boost::any& value) {
 
       if (value.empty()) {
 
@@ -382,7 +427,7 @@ namespace autobahn {
 
 /*
    template<typename E>
-   boost::future<registration> session::provide(const std::string& procedure, E endpoint) {
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, E endpoint) {
 
       // [REGISTER, Request|id, Options|dict, Procedure|uri]
 
@@ -401,20 +446,22 @@ namespace autobahn {
 */
 /*
    template
-   boost::future<registration> session::provide<endpoint_t>(const std::string& procedure, endpoint_t endpoint);
+   boost::future<registration> session<IStream, OStream>::provide<endpoint_t>(const std::string& procedure, endpoint_t endpoint);
 */
 /*
    template
-   boost::future<registration> session::provide<endpoint_v_t>(const std::string& procedure, endpoint_v_t endpoint);
+   boost::future<registration> session<IStream, OStream>::provide<endpoint_v_t>(const std::string& procedure, endpoint_v_t endpoint);
 */
 
-   void session::process_welcome(const wamp_msg_t& msg) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::process_welcome(const wamp_msg_t& msg) {
       m_session_id = msg[1].as<uint64_t>();
       m_session_join.set_value(m_session_id);
    }
 
 
-   void session::process_goodbye(const wamp_msg_t& msg) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::process_goodbye(const wamp_msg_t& msg) {
       if (!m_goodbye_sent) {
 
          // if we did not initiate closing, reply ..
@@ -437,17 +484,21 @@ namespace autobahn {
    }
 
 
-   void session::unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args) {
       for (int i = 0; i < raw_args.size(); ++i) {
          args.push_back(unpack_any(raw_args[i]));
       }
    }
 
-   void session::unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs) {
+
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs) {
    }
 
 
-   boost::any session::unpack_any(msgpack::object& obj) {
+   template<typename IStream, typename OStream>
+   boost::any session<IStream, OStream>::unpack_any(msgpack::object& obj) {
       switch (obj.type) {
 
          case msgpack::type::RAW:
@@ -490,7 +541,8 @@ namespace autobahn {
    }
 
 
-   void session::process_invocation(const wamp_msg_t& msg) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::process_invocation(const wamp_msg_t& msg) {
 
       // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict]
       // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
@@ -627,7 +679,8 @@ namespace autobahn {
    }
 
 
-   void session::process_call_result(const wamp_msg_t& msg) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::process_call_result(const wamp_msg_t& msg) {
 
       // [RESULT, CALL.Request|id, Details|dict]
       // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
@@ -643,7 +696,7 @@ namespace autobahn {
 
       uint64_t request_id = msg[1].as<uint64_t>();
 
-      calls_t::iterator call = m_calls.find(request_id);
+      typename calls_t::iterator call = m_calls.find(request_id);
 
       if (call != m_calls.end()) {
 
@@ -680,7 +733,8 @@ namespace autobahn {
    }
 
 
-   void session::process_registered(const wamp_msg_t& msg) {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::process_registered(const wamp_msg_t& msg) {
 
       // [REGISTERED, REGISTER.Request|id, Registration|id]
 
@@ -694,7 +748,7 @@ namespace autobahn {
 
       uint64_t request_id = msg[1].as<uint64_t>();
 
-      register_requests_t::iterator register_request = m_register_requests.find(request_id);
+      typename register_requests_t::iterator register_request = m_register_requests.find(request_id);
 
       if (register_request != m_register_requests.end()) {
 
@@ -723,145 +777,139 @@ namespace autobahn {
    }
 
 
-   void session::loop() {
-      int i = 0;
-      try {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::receive_msg() {
 
-         while (!m_stopped && receive()) {
+      if (m_debug) {
+         std::cerr << "RX preparing to receive message .." << std::endl;
+      }
 
-            msgpack::unpacked result;
-
-            while (m_unpacker.next(&result)) {
-               msgpack::object obj(result.get());
-
-               std::cerr << "Received: " << obj << std::endl;
-
-               if (obj.type != msgpack::type::ARRAY) {
-                  throw ProtocolError("invalid message structure - message is not an array");
-               }
-
-               wamp_msg_t msg;
-               obj.convert(&msg);
-
-               if (msg.size() < 1) {
-                  throw ProtocolError("invalid message structure - missing message code");
-               }
-
-               if (msg[0].type != msgpack::type::POSITIVE_INTEGER) {
-                  throw ProtocolError("invalid message code type - not an integer");
-               }
-
-               int code = msg[0].as<int>();
-
-               switch (code) {
-                  case MSG_CODE_WELCOME:
-                     process_welcome(msg);
-                     break;
-
-                  case MSG_CODE_RESULT:
-                     process_call_result(msg);
-                     break;
-
-                  case MSG_CODE_REGISTERED:
-                     process_registered(msg);
-                     break;
-
-                  case MSG_CODE_INVOCATION:
-                     process_invocation(msg);
-                     break;
-               }
-
-               //throw Unimplemented("WAMP message", 23);
+      // read 4 octets msg length prefix ..
+      boost::asio::async_read(m_in,
+         boost::asio::buffer(m_buffer_msg_len, sizeof(m_buffer_msg_len)),
+         bind(&session<IStream, OStream>::got_msg_header, this, boost::asio::placeholders::error));
+   }
 
 
-/*
-                std::cerr << msg.size() << std::endl;
-                if (msg[0] == MSG_CODE_HELLO) {
-                  std::cerr << "HELLO" << std::endl;
-                  std::map<std::string, msgpack::object> details;
-                  std::map<std::string, msgpack::object>::iterator details_it;
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::got_msg_header(const boost::system::error_code& error) {
+      if (!error) {
 
-                  msg[2].convert(&details);
-                  std::cerr << details.size() << std::endl;
+         m_msg_len = ntohl(*((uint32_t*) &m_buffer_msg_len));
 
-                  details_it = details.find("roles");
-                  std::cerr << details_it->second << std::endl;
-                }
-*/
-            }
-            ++i;
+         if (m_debug) {
+            std::cerr << "RX message (" << m_msg_len << " octets) ..." << std::endl;
          }
-         std::cerr << "processed " << i << std::endl;
-      }
-      catch (ProtocolError& e) {
-         std::cerr << "ProtocolError: " << e.what() << std::endl;
-         std::cerr.flush();
-      }
-      catch (Unimplemented& e) {
-         std::cerr << "Not implemented: " << e.what() << std::endl;
-         std::cerr.flush();
-      }
-      catch (...) {
-         std::cerr << "Unknown problem" << std::endl;
-         std::cerr.flush();
+
+         // read actual message
+         m_unpacker.reserve_buffer(m_msg_len);
+
+         boost::asio::async_read(m_in,
+            boost::asio::buffer(m_unpacker.buffer(), m_msg_len),
+            bind(&session<IStream, OStream>::got_msg_body, this, boost::asio::placeholders::error));
+
+      } else {
       }
    }
 
 
-   bool session::receive() {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::got_msg_body(const boost::system::error_code& error) {
+      if (!error) {
 
-      if (m_debug) {
-         std::cerr << "RX waiting .." << std::endl;
+         if (m_debug) {
+            std::cerr << "RX message received." << std::endl;
+         }
+
+         m_unpacker.buffer_consumed(m_msg_len);
+
+         msgpack::unpacked result;
+
+         while (m_unpacker.next(&result)) {
+
+            msgpack::object obj(result.get());
+
+            if (m_debug) {
+               std::cout << "RX WAMP message: " << obj << std::endl;
+            }
+
+            got_msg(obj);
+         }
+
+         if (!m_stopped) {
+            receive_msg();
+         }
+
+      } else {
+
       }
-
-      // read message length prefix
-      char blen[4];
-      m_in.read(blen, 4);
-      if (m_in.eof() || m_in.fail()) {
-         return false;
-      }
-      uint32_t len = ntohl(*((uint32_t*) &blen));
-
-      if (m_debug) {
-         std::cerr << "RX message (" << len << " octets) ..." << std::endl;
-      }
-
-      // read actual message
-      m_unpacker.reserve_buffer(len);
-      m_in.read(m_unpacker.buffer(), len);
-
-      if (m_in.eof() || m_in.fail()) {
-         return false;
-      }
-      m_unpacker.buffer_consumed(len);
-
-      if (m_debug) {
-         std::cerr << "RX message received." << std::endl;
-      }
-
-      return true;
    }
 
 
-   void session::send() {
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::got_msg(const msgpack::object& obj) {
+
+      if (obj.type != msgpack::type::ARRAY) {
+         throw ProtocolError("invalid message structure - message is not an array");
+      }
+
+      wamp_msg_t msg;
+      obj.convert(&msg);
+
+      if (msg.size() < 1) {
+         throw ProtocolError("invalid message structure - missing message code");
+      }
+
+      if (msg[0].type != msgpack::type::POSITIVE_INTEGER) {
+         throw ProtocolError("invalid message code type - not an integer");
+      }
+
+      int code = msg[0].as<int>();
+
+      switch (code) {
+         case MSG_CODE_WELCOME:
+            process_welcome(msg);
+            break;
+
+         case MSG_CODE_RESULT:
+            process_call_result(msg);
+            break;
+
+         case MSG_CODE_REGISTERED:
+            process_registered(msg);
+            break;
+
+         case MSG_CODE_INVOCATION:
+            process_invocation(msg);
+            break;
+      }
+   }
+
+
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::send() {
 
       if (m_debug) {
          std::cerr << "TX message (" << m_buffer.size() << " octets) ..." << std::endl;
       }
 
+      // boost::asio::async_write(s, boost::asio::buffer(data, size), handler);
+      // boost::asio::write(s, boost::asio::buffer(data, size));
+
+      std::size_t written = 0;
+
       // write message length prefix
       uint32_t len = htonl(m_buffer.size());
-      m_out.write((char*) &len, 4);
+      written += boost::asio::write(m_out, boost::asio::buffer((char*) &len, sizeof(len)));
 
       // write actual serialized message
-      m_out.write(m_buffer.data(), m_buffer.size());
+      written += boost::asio::write(m_out, boost::asio::buffer(m_buffer.data(), m_buffer.size()));
 
-      // flush ostream and clear serialization buffer
-      m_out.flush();
+      // clear serialization buffer
       m_buffer.clear();
 
       if (m_debug) {
-         std::cerr << "TX message sent." << std::endl;
+         std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + m_buffer.size()) << " octets)" << std::endl;
       }
    }
 }

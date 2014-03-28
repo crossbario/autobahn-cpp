@@ -4,15 +4,17 @@ build:
 test_asio:
 	scons
 #	./build/test/test_asio
-	python -u serialize.py | ./build/test/test_asio
+#	python -u serialize.py | ./build/test/test_asio
+#	python -u serialize.py | ./build/test/test12
+	python server.py --debug --worker ./build/test/test12
 
 test_worker:
 	scons
 #	python server.py --debug --worker ./build/test/test7d
 #	python server.py --debug --worker ./build/test/test7c
-	python server.py --debug --worker ./build/test/publish
+#	python server.py --debug --worker ./build/test/publish
 #	python server.py --debug --worker ./build/test/test11
-#	python server.py --debug --worker ./build/test/test7
+	python server.py --debug --worker ./build/test/test7
 
 test_unser:
 	scons

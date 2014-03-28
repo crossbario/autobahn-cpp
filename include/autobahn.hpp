@@ -37,9 +37,13 @@
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-//#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
+#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 #include <boost/thread/future.hpp>
 //#include <future>
+
+
+#include <boost/asio.hpp>
+
 
 
 /*!
@@ -100,6 +104,7 @@ namespace autobahn {
    /*!
     * A WAMP session.
     */
+   template<typename IStream, typename OStream>
    class session {
 
       public:
@@ -110,7 +115,7 @@ namespace autobahn {
           * \param in The input stream to run this session on.
           * \param out THe output stream to run this session on.
           */
-         session(std::istream& in = std::cin, std::ostream& out = std::cout);
+         session(IStream& in, OStream& out);
 
          /*!
           * Join a realm with this session.
@@ -118,26 +123,30 @@ namespace autobahn {
           * \param realm The realm to join on the WAMP router connected to.
           * \return A future that resolves when the realm was joined.
           */
+         inline
          boost::future<int> join(const std::string& realm);
 
+         inline
          boost::future<void> leave();
 
          /*!
           * Enter the session event loop. This will not return until the
           * session ends.
           */
-         void loop();
+         inline
+         void start();
 
          /*!
           * Stop the whole program.
           */
-         void stop(int exit_code = 0);
+         //void stop(int exit_code = 0);
 
          /*!
           * Publish an event with empty payload to a topic.
           *
           * \param topic The URI of the topic to publish to.
           */
+         inline
          void publish(const std::string& topic);
 
          /*!
@@ -146,6 +155,7 @@ namespace autobahn {
           * \param topic The URI of the topic to publish to.
           * \param args The positional payload for the event.
           */
+         inline
          void publish(const std::string& topic, const anyvec& args);
 
          /*!
@@ -154,6 +164,7 @@ namespace autobahn {
           * \param topic The URI of the topic to publish to.
           * \param kwargs The keyword payload for the event.
           */
+         inline
          void publish(const std::string& topic, const anymap& kwargs);
 
          /*!
@@ -163,6 +174,7 @@ namespace autobahn {
           * \param args The positional payload for the event.
           * \param kwargs The keyword payload for the event.
           */
+         inline
          void publish(const std::string& topic, const anyvec& args, const anymap& kwargs);
 
          /*!
@@ -171,7 +183,12 @@ namespace autobahn {
           * \param procedure The URI of the remote procedure to call.
           * \return A future that resolves to the result of the remote procedure call.
           */
+         inline
          boost::future<boost::any> call(const std::string& procedure);
+
+         inline void foo() {
+            std::cerr << "FOOO" << std::endl;
+         }
 
          /*!
           * Calls a remote procedure with positional arguments.
@@ -180,6 +197,7 @@ namespace autobahn {
           * \param args The positional arguments for the call.
           * \return A future that resolves to the result of the remote procedure call.
           */
+         inline
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args);
 
          /*!
@@ -189,7 +207,7 @@ namespace autobahn {
           * \param kwargs The keyword arguments for the call.
           * \return A future that resolves to the result of the remote procedure call.
           */
-         boost::future<boost::any> call(const std::string& procedure, const anymap& kwargs);
+         //boost::future<boost::any> call(const std::string& procedure, const anymap& kwargs);
 
          /*!
           * Calls a remote procedure with positional and keyword arguments.
@@ -199,6 +217,7 @@ namespace autobahn {
           * \param kwargs The keyword arguments for the call.
           * \return A future that resolves to the result of the remote procedure call.
           */
+         inline
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args, const anymap& kwargs);
 
          /*!
@@ -248,48 +267,62 @@ namespace autobahn {
 
 
          /// Process a WAMP HELLO message.
-         void process_welcome(const wamp_msg_t& msg);
+         inline void process_welcome(const wamp_msg_t& msg);
 
          /// Process a WAMP RESULT message.
-         void process_call_result(const wamp_msg_t& msg);
+         inline void process_call_result(const wamp_msg_t& msg);
 
          /// Process a WAMP REGISTERED message.
-         void process_registered(const wamp_msg_t& msg);
+         inline void process_registered(const wamp_msg_t& msg);
 
          /// Process a WAMP INVOCATION message.
-         void process_invocation(const wamp_msg_t& msg);
+         inline void process_invocation(const wamp_msg_t& msg);
 
          /// Process a WAMP GOODBYE message.
-         void process_goodbye(const wamp_msg_t& msg);
+         inline void process_goodbye(const wamp_msg_t& msg);
 
 
          /// Unpacks any MsgPack object into boost::any value.
-         boost::any unpack_any(msgpack::object& obj);
+         inline boost::any unpack_any(msgpack::object& obj);
 
          /// Unpacks MsgPack array into anyvec.
-         void unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args);
+         inline void unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args);
 
          /// Unpacks MsgPack map into anymap.
-         void unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs);
+         inline void unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs);
 
          /// Pack any value into serializion buffer.
-         void pack_any(const boost::any& value);
+         inline void pack_any(const boost::any& value);
 
          /// Send out message serialized in serialization buffer to ostream.
-         void send();
+         inline void send();
 
          /// Receive one message from istream in m_unpacker.
-         bool receive();
+         inline void receive_msg();
+
+
+         void got_msg_header(const boost::system::error_code& error);
+
+         void got_msg_body(const boost::system::error_code& error);
+
+         void got_msg(const msgpack::object& obj);
+
 
          bool m_debug;
 
          bool m_stopped;
 
          /// Input stream this session runs on.
-         std::istream& m_in;
+         IStream& m_in;
 
          /// Output stream this session runs on.
-         std::ostream& m_out;
+         OStream& m_out;
+
+
+         char m_buffer_msg_len[4];
+         uint32_t m_msg_len;
+
+
 
          /// MsgPack serialization buffer.
          msgpack::sbuffer m_buffer;
@@ -353,56 +386,13 @@ namespace autobahn {
    };
 
 
-   boost::future<registration> session::provide(const std::string& procedure, endpoint_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_t> (endpoint));
-   }
-
-   boost::future<registration> session::provide_v(const std::string& procedure, endpoint_v_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_v_t> (endpoint));
-   }
-
-   boost::future<registration> session::providef_vm(const std::string& procedure, endpointf_vm_t endpoint) {
-      return _provide(procedure, static_cast<endpointf_vm_t> (endpoint));
-   }
-
-   template<typename E>
-   boost::future<registration> session::_provide(const std::string& procedure, E endpoint) {
-
-      // [REGISTER, Request|id, Options|dict, Procedure|uri]
-
-      std::cerr << "OOOOOOOOOOO " << typeid(endpoint).name() << std::endl;
-      std::cerr << "OOOOOOOOOOO " << typeid(E()).name() << std::endl;
-
-      m_request_id += 1;
-      m_register_requests[m_request_id] = register_request_t(endpoint);
-
-      m_packer.pack_array(4);
-      m_packer.pack(static_cast<int> (msg_code::REGISTER));
-      m_packer.pack(m_request_id);
-      m_packer.pack_map(0);
-      m_packer.pack(procedure);
-      send();
-
-      return m_register_requests[m_request_id].m_res.get_future();
-   }
-
-
-
-
    class ProtocolError : public std::runtime_error {
       public:
-         ProtocolError(const std::string& msg);
-   };
-
-
-   class Unimplemented : public std::runtime_error {
-      public:
-         Unimplemented(const std::string& msg, int type_code = 0);
-         virtual const char* what() const throw();
-      private:
-         const int m_type_code;
+         ProtocolError(const std::string& msg) : std::runtime_error(msg) {};
    };
 
 }
+
+#include "autobahn.ipp"
 
 #endif // AUTOBAHN_HPP

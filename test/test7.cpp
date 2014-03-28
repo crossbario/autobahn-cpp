@@ -20,6 +20,8 @@
 #include <string>
 #include <sstream>
 
+#include <boost/asio.hpp>
+
 #define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 #include "autobahn.hpp"
 
@@ -27,9 +29,50 @@ using namespace std;
 using namespace boost;
 
 
+void print(const boost::system::error_code&) {
+   cerr << "Hello from worker timer" << endl;
+}
+
+void got_msg_header(const boost::system::error_code& error) {
+
+}
 
 int main () {
 
+   try {
+      asio::io_service io;
+
+      boost::asio::deadline_timer t(io, posix_time::seconds(1));
+      t.async_wait(&print);
+
+      asio::posix::stream_descriptor in(io, ::dup(STDIN_FILENO));
+      asio::posix::stream_descriptor out(io, ::dup(STDOUT_FILENO));
+
+      autobahn::session<asio::posix::stream_descriptor, asio::posix::stream_descriptor> session(in, out);
+
+
+      boost::asio::async_read(session.m_in,
+         boost::asio::buffer(session.m_buffer_msg_len, 4),
+         bind(&got_msg_header, boost::asio::placeholders::error));
+
+      cerr << "jjjj" << endl;
+
+      session.start();
+/*
+      auto s = session.join(std::string("realm1")).then([&session](future<int> s) {
+         cerr << "session connected" << endl;
+      });
+*/
+      cerr << "Starting I/O loop .." << endl;
+      io.run();
+   }
+   catch (std::exception& e) {
+      cerr << e.what() << endl;
+      return 1;
+   }
+   return 0;
+
+/*
    // A Worker MUST log to std::cerr, since std::cin/cout is used
    // for talking WAMP with the master
    //
@@ -116,4 +159,5 @@ int main () {
    // Enter event loop for session. This will not return ..
    //
    session.loop();
+*/   
 }
