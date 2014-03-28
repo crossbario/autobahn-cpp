@@ -115,7 +115,7 @@ namespace autobahn {
           * \param in The input stream to run this session on.
           * \param out THe output stream to run this session on.
           */
-         session(IStream& in, OStream& out);
+         session(boost::asio::io_service& io, IStream& in, OStream& out);
 
          /*!
           * Join a realm with this session.
@@ -312,6 +312,8 @@ namespace autobahn {
 
          bool m_stopped;
 
+         boost::asio::io_service& m_io;
+
          /// Input stream this session runs on.
          IStream& m_in;
 
@@ -322,6 +324,7 @@ namespace autobahn {
          char m_buffer_msg_len[4];
          uint32_t m_msg_len;
 
+         boost::promise<boost::any> m_test_promise;
 
 
          /// MsgPack serialization buffer.

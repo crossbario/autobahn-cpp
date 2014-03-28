@@ -61,9 +61,10 @@
 namespace autobahn {
 
    template<typename IStream, typename OStream>
-   session<IStream, OStream>::session(IStream& in, OStream& out)
+   session<IStream, OStream>::session(boost::asio::io_service& io, IStream& in, OStream& out)
       : m_debug(true),
         m_stopped(false),
+        m_io(io),
         m_in(in),
         m_out(out),
         m_packer(&m_buffer),
@@ -119,7 +120,7 @@ namespace autobahn {
 
       send();
 
-      return m_session_join.get_future();
+      return std::move(m_session_join.get_future());
    }
 
 
@@ -294,7 +295,10 @@ namespace autobahn {
          pack_any(args);
          send();
 
-         return m_calls[m_request_id].m_res.get_future();
+         //return m_calls[m_request_id].m_res.get_future();
+         //return std::move(m_calls[m_request_id].m_res.get_future());
+         //return m_calls[m_request_id].m_res.get_future();
+         return m_test_promise.get_future();
 
       } else {
          return call(procedure);
