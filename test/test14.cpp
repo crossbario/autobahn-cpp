@@ -40,7 +40,7 @@ struct rpcsvc {
       promise<float> m_promise;
    };
 
-   future<float> slowsquare(float x, int delay) {
+   future<float> slowsquare(float x, float delay) {
 
       m_call_id += 1;
       m_calls[m_call_id] = Call();
@@ -95,27 +95,51 @@ int main () {
          cout << "result 1: " << f.get() << endl;
       });
 
-      auto f2 = rpc.slowsquare(3, 1).then([](future<float> f) {
+      auto f2 = rpc.slowsquare(3, 1.1).then([](future<float> f) {
          cout << "call 2 returned" << endl;
          cout << "result 2: " << f.get() << endl;
       });
 
-      auto f3 = when_all(std::move(f1), std::move(f2));
-      auto f4 = f3.then([](decltype(f3)) {
-         cout << "done." << endl;
+      auto f3 = rpc.slowsquare(4, 1).then([](future<float> f) {
+         cout << "call 3 returned" << endl;
+         cout << "result 3: " << f.get() << endl;
       });
 
+      auto f12 = when_all(std::move(f1), std::move(f2));
+      auto f12d = f12.then([](decltype(f12)) {
+         cout << "call 1/2 done" << endl;
+      });
+
+/*
+      auto f23 = when_all(std::move(f2), std::move(f3));
+      auto f23d = f23.then([](decltype(f23)) {
+         cout << "call 2/3 done" << endl;
+      });
+
+      auto f123 = when_all(std::move(f12d), std::move(f23d));
+      auto f123d = f123.then([](decltype(f123)) {
+         cout << "all calls done" << endl;
+      });
+*/
       io.run();
 
       // Question 2:
       //
-      // Neither f3 nor f4 "induce" any work on ASIO reactor ..
-      // so ASIO will end it's loop though the continuation
-      // hasn't been executed yet. we workaround by "manually"
-      // waiting .. but that seems suboptimal ..
+      // Neither f12 nor f12d (and etc) "induce" any work on
+      // ASIO reactor .. so ASIO will end it's loop though the
+      // continuation hasn't been executed yet. we workaround
+      // by "manually" waiting .. but that seems suboptimal ..
       //
-      f4.get();
+      f12d.get();
 
+
+      // Question 3:
+      //
+      // When above f23,f23d,f123,f123d and the line below
+      // is commented in, the program will deadlock somehow.
+      // Why? And is there a safe ("fool proof") way to avoid
+      // this kind of issues?
+      //f123d.get();
    }
    catch (std::exception& e) {
       cerr << e.what() << endl;
