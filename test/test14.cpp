@@ -72,6 +72,8 @@ struct rpcsvc {
          }
       );
 
+      cout << "call " << m_call_id << " issued" << endl;
+
       return m_calls[m_call_id].m_promise.get_future();
    }
 
