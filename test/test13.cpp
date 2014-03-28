@@ -16,42 +16,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#if 1
-
-// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
-#define BOOST_THREAD_PROVIDES_FUTURE
-#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
-#include <boost/thread/future.hpp>
-
-struct Foo {
-
-   boost::future<int> start() {
-      return p.get_future();
-   }
-
-   void finish() {
-      p.set_value(23);
-   }
-
-   boost::promise<int> p;
-};
-
-
-int main () {
-    Foo foo;
-
-    auto f1 = foo.start();
-    auto f2 = f1.then([](boost::future<int> f) {
-        std::cout << "done:" << std::endl;
-        std::cout << f.get() << std::endl;
-    });
-
-    foo.finish();
-    //f2.get();
-}
-
-#else
 
 #include <iostream>
 #include <string>
@@ -133,7 +97,7 @@ int main () {
 
                   cerr << "HERE2" << endl;
 
-                  c.get();
+                  //c.get();
 
                   //c.wait();
 #endif
@@ -149,7 +113,7 @@ int main () {
 
 #if 1
       io.run();
-#else      
+#else
       std::thread t([&io](){ io.run(); });
       t.join();
 #endif
@@ -162,4 +126,3 @@ int main () {
    }
    return 0;
 }
-#endif

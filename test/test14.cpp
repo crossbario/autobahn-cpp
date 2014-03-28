@@ -53,7 +53,7 @@ struct rpcsvc {
       int call_id = m_call_id;
 
       timer->async_wait(
-         [=](system::error_code ec) {           
+         [=](system::error_code ec) {
             if (!ec) {
 
                // Question 1:
@@ -64,8 +64,8 @@ struct rpcsvc {
                //
                cout << m_call_id << " - " << call_id << endl;
 
-               this->m_calls[call_id].m_promise.set_value(x * x);
-               this->m_calls.erase(call_id);
+               m_calls[call_id].m_promise.set_value(x * x);
+               m_calls.erase(call_id);
             } else {
                cout << "Error in timer: " << ec << endl;
             }
@@ -94,22 +94,39 @@ int main () {
          cout << "call 1 returned" << endl;
          cout << "result 1: " << f.get() << endl;
       });
-
-      auto f2 = rpc.slowsquare(3, 1.1).then([](future<float> f) {
+/*
+      auto f2 = rpc.slowsquare(3, 1.1).then([&rpc](future<float> f) {
          cout << "call 2 returned" << endl;
          cout << "result 2: " << f.get() << endl;
-      });
 
+         auto f2b = rpc.slowsquare(5, 1.1).then([&rpc](future<float> f) {
+            cout << "call 2b returned" << endl;
+            cout << "result 2b: " << f.get() << endl;
+            auto f2c = rpc.slowsquare(6, 0.6).then([](future<float> f) {
+               cout << "call 2c returned" << endl;
+               cout << "result 2c: " << f.get() << endl;
+            });
+            return f2c;
+         });
+
+         auto f2d = rpc.slowsquare(7, 0.2).then([](future<float> f) {
+            cout << "call 1 returned" << endl;
+            cout << "result 1: " << f.get() << endl;
+         });
+
+         return when_all(std::move(f2b), std::move(f2d));
+      });
+*/
       auto f3 = rpc.slowsquare(4, 1).then([](future<float> f) {
          cout << "call 3 returned" << endl;
          cout << "result 3: " << f.get() << endl;
       });
-
+/*
       auto f12 = when_all(std::move(f1), std::move(f2));
       auto f12d = f12.then([](decltype(f12)) {
          cout << "call 1/2 done" << endl;
       });
-
+*/
 /*
       auto f23 = when_all(std::move(f2), std::move(f3));
       auto f23d = f23.then([](decltype(f23)) {
@@ -130,7 +147,7 @@ int main () {
       // continuation hasn't been executed yet. we workaround
       // by "manually" waiting .. but that seems suboptimal ..
       //
-      f12d.get();
+      //f12d.get();
 
 
       // Question 3:
