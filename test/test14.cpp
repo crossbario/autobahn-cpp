@@ -55,7 +55,15 @@ struct rpcsvc {
       timer->async_wait(
          [=](system::error_code ec) {           
             if (!ec) {
+
+               // Question 1:
+               //
+               // m_call_id seems to be captured by value, though we
+               // said [=] in the lambda .. why? We workaround by
+               // using a local var in the enclosing method body.
+               //
                cout << m_call_id << " - " << call_id << endl;
+
                this->m_calls[call_id].m_promise.set_value(x * x);
                this->m_calls.erase(call_id);
             } else {
@@ -97,7 +105,15 @@ int main () {
 
       io.run();
 
+      // Question 2:
+      //
+      // Neither f3 nor f4 "induce" any work on ASIO reactor ..
+      // so ASIO will end it's loop though the continuation
+      // hasn't been executed yet. we workaround by "manually"
+      // waiting .. but that seems suboptimal ..
+      //
       f4.get();
+
    }
    catch (std::exception& e) {
       cerr << e.what() << endl;
