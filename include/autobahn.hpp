@@ -246,10 +246,6 @@ namespace autobahn {
          inline boost::future<registration> _provide(const std::string& procedure, E endpoint);
 
 
-         /// Last request ID of outgoing WAMP requests.
-         uint64_t m_request_id;
-
-
          //////////////////////////////////////////////////////////////////////////////////////
          /// Caller
 
@@ -329,6 +325,9 @@ namespace autobahn {
          /// Process a WAMP SUBSCRIBED message.
          inline void process_subscribed(const wamp_msg_t& msg);
 
+         /// Process a WAMP EVENT message.
+         inline void process_event(const wamp_msg_t& msg);
+
          /// Process a WAMP REGISTERED message.
          inline void process_registered(const wamp_msg_t& msg);
 
@@ -398,6 +397,10 @@ namespace autobahn {
 
          /// Future to be fired when session was joined.
          boost::promise<uint64_t> m_session_join;
+
+         /// Last request ID of outgoing WAMP requests.
+         uint64_t m_request_id;
+
 
          bool m_goodbye_sent;
 

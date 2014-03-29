@@ -155,7 +155,7 @@ namespace autobahn {
       m_subscribe_requests[m_request_id] = subscribe_request_t(handler);
 
       m_packer.pack_array(4);
-      m_packer.pack(static_cast<int> (msg_code::REGISTER));
+      m_packer.pack(static_cast<int> (msg_code::SUBSCRIBE));
       m_packer.pack(m_request_id);
       m_packer.pack_map(0);
       m_packer.pack(topic);
@@ -815,6 +815,85 @@ namespace autobahn {
 
 
    template<typename IStream, typename OStream>
+   void session<IStream, OStream>::process_event(const wamp_msg_t& msg) {
+
+      // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict]
+      // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list]
+      // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentsKw|dict]
+
+      if (msg.size() != 4 && msg.size() != 5 && msg.size() != 6) {
+         throw ProtocolError("invalid EVENT message structure - length must be 4, 5 or 6");
+      }
+
+      if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
+         throw ProtocolError("invalid EVENT message structure - SUBSCRIBED.Subscription must be an integer");
+      }
+
+      uint64_t subscription_id = msg[1].as<uint64_t>();
+
+      typename handlers_t::iterator handler = m_handlers.find(subscription_id);
+
+      if (handler != m_handlers.end()) {
+
+         if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
+            throw ProtocolError("invalid EVENT message structure - PUBLISHED.Publication|id must be an integer");
+         }
+
+         uint64_t publication_id = msg[2].as<uint64_t>();
+
+         if (msg[3].type != msgpack::type::MAP) {
+            throw ProtocolError("invalid EVENT message structure - Details must be a dictionary");
+         }        
+
+         anyvec args;
+         anymap kwargs;
+
+         if (msg.size() > 4) {
+
+            if (msg[4].type != msgpack::type::ARRAY) {
+               throw ProtocolError("invalid EVENT message structure - EVENT.Arguments must be a list");
+            }
+
+            std::vector<msgpack::object> raw_args;
+            msg[4].convert(&raw_args);
+            unpack_anyvec(raw_args, args);
+
+            if (msg.size() > 5) {
+
+               if (msg[5].type != msgpack::type::MAP) {
+                  throw ProtocolError("invalid EVENT message structure - EVENT.Arguments must be a list");
+               }
+
+               std::map<std::string, msgpack::object> raw_kwargs;
+               msg[5].convert(&raw_kwargs);
+               unpack_anymap(raw_kwargs, kwargs);
+            }
+         }
+
+         try {
+
+            // now trigger the user supplied event handler ..
+            //
+            (handler->second)(args, kwargs);
+
+         } catch (...) {
+            if (m_debug) {
+               std::cerr << "Warning: event handler fired exception" << std::endl;
+            }
+         }
+
+      } else {
+         // silently swallow EVENT for non-existent subscription IDs.
+         // We may have just unsubscribed, the this EVENT might be have
+         // already been in-flight.
+         if (m_debug) {
+            std::cerr << "Skipping EVENT for non-existent subscription ID " << subscription_id << std::endl;
+         }
+      }
+   }
+
+
+   template<typename IStream, typename OStream>
    void session<IStream, OStream>::process_registered(const wamp_msg_t& msg) {
 
       // [REGISTERED, REGISTER.Request|id, Registration|id]
@@ -966,6 +1045,10 @@ namespace autobahn {
 
          case MSG_CODE_SUBSCRIBED:
             process_subscribed(msg);
+            break;
+
+         case MSG_CODE_EVENT:
+            process_event(msg);
             break;
 
          case MSG_CODE_INVOCATION:

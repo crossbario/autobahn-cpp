@@ -12,7 +12,8 @@ test_asio2:
 	scons
 #	./build/test/test15
 #	./build/test/test14
-	./build/test/test13
+#	./build/test/test13
+	./build/test/test16
 
 test_worker:
 	scons
