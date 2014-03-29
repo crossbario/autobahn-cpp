@@ -295,10 +295,12 @@ namespace autobahn {
          pack_any(args);
          send();
 
-         //return m_calls[m_request_id].m_res.get_future();
+         std::cerr << "set promise for " << m_request_id << std::endl;
+
+         return m_calls[m_request_id].m_res.get_future();
          //return std::move(m_calls[m_request_id].m_res.get_future());
          //return m_calls[m_request_id].m_res.get_future();
-         return m_test_promise.get_future();
+         //return m_test_promise.get_future();
 
       } else {
          return call(procedure);
@@ -701,6 +703,8 @@ namespace autobahn {
       typename calls_t::iterator call = m_calls.find(request_id);
 
       if (call != m_calls.end()) {
+
+         std::cerr << "process result for request ID " << request_id << std::endl;
 
          if (msg[2].type != msgpack::type::MAP) {
             throw ProtocolError("invalid RESULT message structure - Details must be a dictionary");

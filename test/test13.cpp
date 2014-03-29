@@ -65,6 +65,8 @@ int main () {
       tcp::resolver resolver(io);
       auto endpoint_iterator = resolver.resolve({"127.0.0.1", "8080"});
 
+      //future<void> fs;
+
 
       boost::asio::async_connect(socket, endpoint_iterator,
 
@@ -74,34 +76,27 @@ int main () {
                cerr << "connected" << endl;
                session.start();
 
-               auto s = session.join(string("realm1")).then([&](future<int> s) {
+               auto fs = session.join(string("realm1"));
+               auto fs2 = fs.then([&](future<int> s) {
                   cerr << "session joined" << endl;
+                  cerr << "session joined: " << s.get() << endl;
                   session.publish("com.myapp.topic1");
 
-#if 1
                   auto c = session.call("com.arguments.add2", {2, 3})
-                     .then([&](future<any> f) {
+                     .then([](future<any> f) {
 
                      cerr << "call returned" << endl;
-                     //cerr << "future valid: " << f.valid() << endl;
-                     //cerr << "future ready: " << is_ready(f) << endl;
-
                      any r = f.get();
-
                      cerr << "result type: " << r.type().name() << endl;
-
                      uint64_t res = any_cast<uint64_t> (r);
-
                      cerr << "result: " << res << endl;
                   });
-
                   cerr << "HERE2" << endl;
-
-                  //c.get();
-
-                  //c.wait();
-#endif
+                  return c;
                });
+               cerr << "HERE3" << endl;
+               //fs2.wait();
+               cerr << "HERE31" << endl;
 
             } else {
                cerr << "could not connect" << endl;
