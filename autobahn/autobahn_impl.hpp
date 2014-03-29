@@ -28,35 +28,6 @@
 #include <string>
 #include <sstream>
 
-//#include "autobahn.hpp"
-
-
-#define MSG_CODE_HELLO 1
-#define MSG_CODE_WELCOME 2
-#define MSG_CODE_ABORT 3
-#define MSG_CODE_CHALLENGE 4
-#define MSG_CODE_AUTHENTICATE 5
-#define MSG_CODE_GOODBYE 6
-#define MSG_CODE_HEARTBEAT 7
-#define MSG_CODE_ERROR 8
-#define MSG_CODE_PUBLISH 16
-#define MSG_CODE_PUBLISHED 17
-#define MSG_CODE_SUBSCRIBE 32
-#define MSG_CODE_SUBSCRIBED 33
-#define MSG_CODE_UNSUBSCRIBE 34
-#define MSG_CODE_UNSUBSCRIBED 35
-#define MSG_CODE_EVENT 36
-#define MSG_CODE_CALL 48
-#define MSG_CODE_CANCEL 49
-#define MSG_CODE_RESULT 50
-#define MSG_CODE_REGISTER 64
-#define MSG_CODE_REGISTERED 65
-#define MSG_CODE_UNREGISTER 66
-#define MSG_CODE_UNREGISTERED 67
-#define MSG_CODE_INVOCATION 68
-#define MSG_CODE_INTERRUPT 69
-#define MSG_CODE_YIELD 70
-
 
 namespace autobahn {
 
@@ -113,7 +84,7 @@ namespace autobahn {
 
       m_packer.pack_array(3);
 
-      m_packer.pack(MSG_CODE_HELLO);
+      m_packer.pack(static_cast<int> (msg_code::HELLO));
       m_packer.pack(realm);
 
       m_packer.pack_map(1);
@@ -250,7 +221,7 @@ namespace autobahn {
       // [PUBLISH, Request|id, Options|dict, Topic|uri]
 
       m_packer.pack_array(4);
-      m_packer.pack(MSG_CODE_PUBLISH);
+      m_packer.pack(static_cast<int> (msg_code::PUBLISH));
       m_packer.pack(m_request_id);
       m_packer.pack_map(0);
       m_packer.pack(topic);
@@ -272,7 +243,7 @@ namespace autobahn {
          // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
 
          m_packer.pack_array(5);
-         m_packer.pack(MSG_CODE_PUBLISH);
+         m_packer.pack(static_cast<int> (msg_code::PUBLISH));
          m_packer.pack(m_request_id);
          m_packer.pack_map(0);
          m_packer.pack(topic);
@@ -300,7 +271,7 @@ namespace autobahn {
          // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
 
          m_packer.pack_array(6);
-         m_packer.pack(MSG_CODE_PUBLISH);
+         m_packer.pack(static_cast<int> (msg_code::PUBLISH));
          m_packer.pack(m_request_id);
          m_packer.pack_map(0);
          m_packer.pack(topic);
@@ -328,7 +299,7 @@ namespace autobahn {
       // [CALL, Request|id, Options|dict, Procedure|uri]
 
       m_packer.pack_array(4);
-      m_packer.pack(MSG_CODE_CALL);
+      m_packer.pack(static_cast<int> (msg_code::CALL));
       m_packer.pack(m_request_id);
       m_packer.pack_map(0);
       m_packer.pack(procedure);
@@ -353,7 +324,7 @@ namespace autobahn {
          // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
 
          m_packer.pack_array(5);
-         m_packer.pack(MSG_CODE_CALL);
+         m_packer.pack(static_cast<int> (msg_code::CALL));
          m_packer.pack(m_request_id);
          m_packer.pack_map(0);
          m_packer.pack(procedure);
@@ -384,7 +355,7 @@ namespace autobahn {
          // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
 
          m_packer.pack_array(6);
-         m_packer.pack(MSG_CODE_CALL);
+         m_packer.pack(static_cast<int> (msg_code::CALL));
          m_packer.pack(m_request_id);
          m_packer.pack_map(0);
          m_packer.pack(procedure);
@@ -482,7 +453,7 @@ namespace autobahn {
 
 /*
       if (!m_session_id) {
-         throw ProtocolError("GOODBYE received an no session established");
+         throw protocol_error("GOODBYE received an no session established");
       }
 */
       m_session_id = 0;
@@ -495,7 +466,7 @@ namespace autobahn {
 
          m_packer.pack_array(3);
 
-         m_packer.pack(MSG_CODE_GOODBYE);
+         m_packer.pack(static_cast<int> (msg_code::GOODBYE));
          m_packer.pack_map(0);
          m_packer.pack(std::string("wamp.error.goodbye_and_out"));
          send();
@@ -523,7 +494,7 @@ namespace autobahn {
 
       m_packer.pack_array(3);
 
-      m_packer.pack(MSG_CODE_GOODBYE);
+      m_packer.pack(static_cast<int> (msg_code::GOODBYE));
       m_packer.pack_map(0);
       m_packer.pack(reason);
       send();
@@ -597,16 +568,16 @@ namespace autobahn {
       // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
       if (msg.size() != 4 && msg.size() != 5 && msg.size() != 6) {
-         throw ProtocolError("invalid INVOCATION message structure - length must be 4, 5 or 6");
+         throw protocol_error("invalid INVOCATION message structure - length must be 4, 5 or 6");
       }
 
       if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
-         throw ProtocolError("invalid INVOCATION message structure - INVOCATION.Request must be an integer");
+         throw protocol_error("invalid INVOCATION message structure - INVOCATION.Request must be an integer");
       }
       uint64_t request_id = msg[1].as<uint64_t>();
 
       if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
-         throw ProtocolError("invalid INVOCATION message structure - INVOCATION.Registration must be an integer");
+         throw protocol_error("invalid INVOCATION message structure - INVOCATION.Registration must be an integer");
       }
       uint64_t registration_id = msg[2].as<uint64_t>();
 
@@ -615,7 +586,7 @@ namespace autobahn {
       if (endpoint != m_endpoints.end()) {
 
          if (msg[3].type != msgpack::type::MAP) {
-            throw ProtocolError("invalid INVOCATION message structure - Details must be a dictionary");
+            throw protocol_error("invalid INVOCATION message structure - Details must be a dictionary");
          }
 
          anyvec args;
@@ -624,7 +595,7 @@ namespace autobahn {
          if (msg.size() > 4) {
 
             if (msg[4].type != msgpack::type::ARRAY) {
-               throw ProtocolError("invalid INVOCATION message structure - INVOCATION.Arguments must be a list");
+               throw protocol_error("invalid INVOCATION message structure - INVOCATION.Arguments must be a list");
             }
 
             std::vector<msgpack::object> raw_args;
@@ -648,7 +619,7 @@ namespace autobahn {
                boost::any res = ( boost::any_cast<endpoint_t>(endpoint->second) )(args, kwargs);
 
                m_packer.pack_array(4);
-               m_packer.pack(MSG_CODE_YIELD);
+               m_packer.pack(static_cast<int> (msg_code::YIELD));
                m_packer.pack(request_id);
                m_packer.pack_map(0);
                m_packer.pack_array(1);
@@ -660,7 +631,7 @@ namespace autobahn {
                anyvec res = ( boost::any_cast<endpoint_v_t>(endpoint->second) )(args, kwargs);
 
                m_packer.pack_array(4);
-               m_packer.pack(MSG_CODE_YIELD);
+               m_packer.pack(static_cast<int> (msg_code::YIELD));
                m_packer.pack(request_id);
                m_packer.pack_map(0);
                pack_any(res);
@@ -675,7 +646,7 @@ namespace autobahn {
                   anyvecmap res = f.get();
 
                   m_packer.pack_array(5);
-                  m_packer.pack(MSG_CODE_YIELD);
+                  m_packer.pack(static_cast<int> (msg_code::YIELD));
                   m_packer.pack(request_id);
                   m_packer.pack_map(0);
                   pack_any(res.first);
@@ -699,7 +670,7 @@ namespace autobahn {
          }
 
       } else {
-         throw ProtocolError("bogus INVOCATION message for non-registered registration ID");
+         throw protocol_error("bogus INVOCATION message for non-registered registration ID");
       }
    }
 
@@ -712,11 +683,11 @@ namespace autobahn {
       // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 
       if (msg.size() != 3 && msg.size() != 4 && msg.size() != 5) {
-         throw ProtocolError("invalid RESULT message structure - length must be 3, 4 or 5");
+         throw protocol_error("invalid RESULT message structure - length must be 3, 4 or 5");
       }
 
       if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
-         throw ProtocolError("invalid RESULT message structure - CALL.Request must be an integer");
+         throw protocol_error("invalid RESULT message structure - CALL.Request must be an integer");
       }
 
       uint64_t request_id = msg[1].as<uint64_t>();
@@ -726,13 +697,13 @@ namespace autobahn {
       if (call != m_calls.end()) {
 
          if (msg[2].type != msgpack::type::MAP) {
-            throw ProtocolError("invalid RESULT message structure - Details must be a dictionary");
+            throw protocol_error("invalid RESULT message structure - Details must be a dictionary");
          }
 
          if (msg.size() > 3) {
 
             if (msg[3].type != msgpack::type::ARRAY) {
-               throw ProtocolError("invalid RESULT message structure - YIELD.Arguments must be a list");
+               throw protocol_error("invalid RESULT message structure - YIELD.Arguments must be a list");
             }
 
             std::vector<msgpack::object> raw_args;
@@ -753,7 +724,7 @@ namespace autobahn {
             call->second.m_res.set_value(boost::any());
          }
       } else {
-         throw ProtocolError("bogus RESULT message for non-pending request ID");
+         throw protocol_error("bogus RESULT message for non-pending request ID");
       }
    }
 
@@ -764,11 +735,11 @@ namespace autobahn {
       // [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
 
       if (msg.size() != 3) {
-         throw ProtocolError("invalid SUBSCRIBED message structure - length must be 3");
+         throw protocol_error("invalid SUBSCRIBED message structure - length must be 3");
       }
 
       if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
-         throw ProtocolError("invalid SUBSCRIBED message structure - SUBSCRIBED.Request must be an integer");
+         throw protocol_error("invalid SUBSCRIBED message structure - SUBSCRIBED.Request must be an integer");
       }
 
       uint64_t request_id = msg[1].as<uint64_t>();
@@ -778,7 +749,7 @@ namespace autobahn {
       if (subscribe_request != m_subscribe_requests.end()) {
 
          if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
-            throw ProtocolError("invalid SUBSCRIBED message structure - SUBSCRIBED.Subscription must be an integer");
+            throw protocol_error("invalid SUBSCRIBED message structure - SUBSCRIBED.Subscription must be an integer");
          }
 
          uint64_t subscription_id = msg[2].as<uint64_t>();
@@ -790,7 +761,7 @@ namespace autobahn {
          m_subscribe_requests.erase(request_id);
 
       } else {
-         throw ProtocolError("bogus SUBSCRIBED message for non-pending request ID");
+         throw protocol_error("bogus SUBSCRIBED message for non-pending request ID");
       }
    }
 
@@ -803,11 +774,11 @@ namespace autobahn {
       // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentsKw|dict]
 
       if (msg.size() != 4 && msg.size() != 5 && msg.size() != 6) {
-         throw ProtocolError("invalid EVENT message structure - length must be 4, 5 or 6");
+         throw protocol_error("invalid EVENT message structure - length must be 4, 5 or 6");
       }
 
       if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
-         throw ProtocolError("invalid EVENT message structure - SUBSCRIBED.Subscription must be an integer");
+         throw protocol_error("invalid EVENT message structure - SUBSCRIBED.Subscription must be an integer");
       }
 
       uint64_t subscription_id = msg[1].as<uint64_t>();
@@ -817,13 +788,13 @@ namespace autobahn {
       if (handler != m_handlers.end()) {
 
          if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
-            throw ProtocolError("invalid EVENT message structure - PUBLISHED.Publication|id must be an integer");
+            throw protocol_error("invalid EVENT message structure - PUBLISHED.Publication|id must be an integer");
          }
 
          uint64_t publication_id = msg[2].as<uint64_t>();
 
          if (msg[3].type != msgpack::type::MAP) {
-            throw ProtocolError("invalid EVENT message structure - Details must be a dictionary");
+            throw protocol_error("invalid EVENT message structure - Details must be a dictionary");
          }        
 
          anyvec args;
@@ -832,7 +803,7 @@ namespace autobahn {
          if (msg.size() > 4) {
 
             if (msg[4].type != msgpack::type::ARRAY) {
-               throw ProtocolError("invalid EVENT message structure - EVENT.Arguments must be a list");
+               throw protocol_error("invalid EVENT message structure - EVENT.Arguments must be a list");
             }
 
             std::vector<msgpack::object> raw_args;
@@ -842,7 +813,7 @@ namespace autobahn {
             if (msg.size() > 5) {
 
                if (msg[5].type != msgpack::type::MAP) {
-                  throw ProtocolError("invalid EVENT message structure - EVENT.Arguments must be a list");
+                  throw protocol_error("invalid EVENT message structure - EVENT.Arguments must be a list");
                }
 
                std::map<std::string, msgpack::object> raw_kwargs;
@@ -880,11 +851,11 @@ namespace autobahn {
       // [REGISTERED, REGISTER.Request|id, Registration|id]
 
       if (msg.size() != 3) {
-         throw ProtocolError("invalid REGISTERED message structure - length must be 3");
+         throw protocol_error("invalid REGISTERED message structure - length must be 3");
       }
 
       if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
-         throw ProtocolError("invalid REGISTERED message structure - REGISTERED.Request must be an integer");
+         throw protocol_error("invalid REGISTERED message structure - REGISTERED.Request must be an integer");
       }
 
       uint64_t request_id = msg[1].as<uint64_t>();
@@ -894,7 +865,7 @@ namespace autobahn {
       if (register_request != m_register_requests.end()) {
 
          if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
-            throw ProtocolError("invalid REGISTERED message structure - REGISTERED.Registration must be an integer");
+            throw protocol_error("invalid REGISTERED message structure - REGISTERED.Registration must be an integer");
          }
 
          uint64_t registration_id = msg[2].as<uint64_t>();
@@ -904,7 +875,7 @@ namespace autobahn {
          register_request->second.m_res.set_value(registration(registration_id));
 
       } else {
-         throw ProtocolError("bogus REGISTERED message for non-pending request ID");
+         throw protocol_error("bogus REGISTERED message for non-pending request ID");
       }
    }
 
@@ -982,50 +953,110 @@ namespace autobahn {
    void session<IStream, OStream>::got_msg(const msgpack::object& obj) {
 
       if (obj.type != msgpack::type::ARRAY) {
-         throw ProtocolError("invalid message structure - message is not an array");
+         throw protocol_error("invalid message structure - message is not an array");
       }
 
       wamp_msg_t msg;
       obj.convert(&msg);
 
       if (msg.size() < 1) {
-         throw ProtocolError("invalid message structure - missing message code");
+         throw protocol_error("invalid message structure - missing message code");
       }
 
       if (msg[0].type != msgpack::type::POSITIVE_INTEGER) {
-         throw ProtocolError("invalid message code type - not an integer");
+         throw protocol_error("invalid message code type - not an integer");
       }
 
-      int code = msg[0].as<int>();
+      msg_code code = static_cast<msg_code> (msg[0].as<int>());
 
       switch (code) {
-         case MSG_CODE_WELCOME:
+         case msg_code::HELLO:
+            throw protocol_error("received HELLO message unexpected for WAMP client roles");
+
+         case msg_code::WELCOME:
             process_welcome(msg);
             break;
 
-         case MSG_CODE_GOODBYE:
+         case msg_code::ABORT:
+            // FIXME
+            break;
+
+         case msg_code::CHALLENGE:
+            throw protocol_error("received CHALLENGE message - not implemented");
+
+         case msg_code::AUTHENTICATE:
+            throw protocol_error("received AUTHENTICATE message unexpected for WAMP client roles");
+
+         case msg_code::GOODBYE:
             process_goodbye(msg);
             break;
 
-         case MSG_CODE_RESULT:
-            process_call_result(msg);
+         case msg_code::HEARTBEAT:
+            // FIXME
             break;
 
-         case MSG_CODE_REGISTERED:
-            process_registered(msg);
+         case msg_code::ERROR:
+            // FIXME
             break;
 
-         case MSG_CODE_SUBSCRIBED:
+         case msg_code::PUBLISH:
+            throw protocol_error("received PUBLISH message unexpected for WAMP client roles");
+
+         case msg_code::PUBLISHED:
+            // FIXME
+            break;
+
+         case msg_code::SUBSCRIBE:
+            throw protocol_error("received SUBSCRIBE message unexpected for WAMP client roles");
+
+         case msg_code::SUBSCRIBED:
             process_subscribed(msg);
             break;
 
-         case MSG_CODE_EVENT:
+         case msg_code::UNSUBSCRIBE:
+            throw protocol_error("received UNSUBSCRIBE message unexpected for WAMP client roles");
+
+         case msg_code::UNSUBSCRIBED:
+            // FIXME
+            break;
+
+         case msg_code::EVENT:
             process_event(msg);
             break;
 
-         case MSG_CODE_INVOCATION:
+         case msg_code::CALL:
+            throw protocol_error("received CALL message unexpected for WAMP client roles");
+
+         case msg_code::CANCEL:
+            throw protocol_error("received CANCEL message unexpected for WAMP client roles");
+
+         case msg_code::RESULT:
+            process_call_result(msg);
+            break;
+
+         case msg_code::REGISTER:
+            throw protocol_error("received REGISTER message unexpected for WAMP client roles");
+
+         case msg_code::REGISTERED:
+            process_registered(msg);
+            break;
+
+         case msg_code::UNREGISTER:
+            throw protocol_error("received UNREGISTER message unexpected for WAMP client roles");
+
+         case msg_code::UNREGISTERED:
+            // FIXME
+            break;
+
+         case msg_code::INVOCATION:
             process_invocation(msg);
             break;
+
+         case msg_code::INTERRUPT:
+            throw protocol_error("received INTERRUPT message - not implemented");
+
+         case msg_code::YIELD:
+            throw protocol_error("received YIELD message unexpected for WAMP client roles");
       }
    }
 

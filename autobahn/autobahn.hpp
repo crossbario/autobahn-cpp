@@ -449,9 +449,9 @@ namespace autobahn {
    };
 
 
-   class ProtocolError : public std::runtime_error {
+   class protocol_error : public std::runtime_error {
       public:
-         ProtocolError(const std::string& msg) : std::runtime_error(msg) {};
+         protocol_error(const std::string& msg) : std::runtime_error(msg) {};
    };
 
    class no_session_error : public std::runtime_error {
@@ -461,6 +461,6 @@ namespace autobahn {
 
 }
 
-#include "autobahn.ipp"
+#include "autobahn_impl.hpp"
 
 #endif // AUTOBAHN_HPP
