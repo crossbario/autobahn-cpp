@@ -29,10 +29,7 @@
 #include <map>
 #include <functional>
 
-
 #include <msgpack.hpp>
-
-#include <boost/any.hpp>
 
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
@@ -41,7 +38,7 @@
 #include <boost/thread/future.hpp>
 //#include <future>
 
-
+#include <boost/any.hpp>
 #include <boost/asio.hpp>
 
 
@@ -60,48 +57,55 @@ namespace autobahn {
    /// A pair of ::anyvec and ::anymap.
    typedef std::pair<anyvec, anymap> anyvecmap;
 
+
    /// Handler type for use with session::subscribe(const std::string&, handler_t)
    typedef std::function<void(const anyvec&, const anymap&)> handler_t;
 
 
-//   typedef boost::any (*endpoint_t) (const anyvec&, const anymap&);
-
    /// Endpoint type for use with session::provide(const std::string&, endpoint_t)
    typedef std::function<boost::any(const anyvec&, const anymap&)> endpoint_t;
 
-   /// Endpoint type for use with session::provide(const std::string&, endpoint_v_t)
+   /// Endpoint type for use with session::provide_v(const std::string&, endpoint_v_t)
    typedef std::function<anyvec(const anyvec&, const anymap&)> endpoint_v_t;
 
-   /// Endpoint type for use with session::provide(const std::string&, endpoint_m_t)
+   /// Endpoint type for use with session::provide_m(const std::string&, endpoint_m_t)
    typedef std::function<anymap(const anyvec&, const anymap&)> endpoint_m_t;
 
-   /// Endpoint type for use with session::provide(const std::string&, endpoint_vm_t)
+   /// Endpoint type for use with session::provide_vm(const std::string&, endpoint_vm_t)
    typedef std::function<anyvecmap(const anyvec&, const anymap&)> endpoint_vm_t;
 
 
-   /// Endpoint type for use with session::provide(const std::string&, endpointf_t)
-   typedef std::function<boost::future<boost::any>(const anyvec&, const anymap&)> endpointf_t;
+   /// Endpoint type for use with session::provide(const std::string&, endpoint_ft)
+   typedef std::function<boost::future<boost::any>(const anyvec&, const anymap&)> endpoint_f_t;
 
-   /// Endpoint type for use with session::provide(const std::string&, endpointf_v_t)
-   typedef std::function<boost::future<anyvec>(const anyvec&, const anymap&)> endpointf_v_t;
+   /// Endpoint type for use with session::provide_fv(const std::string&, endpoint_fv_t)
+   typedef std::function<boost::future<anyvec>(const anyvec&, const anymap&)> endpoint_fv_t;
 
-   /// Endpoint type for use with session::provide(const std::string&, endpointf_m_t)
-   typedef std::function<boost::future<anymap>(const anyvec&, const anymap&)> endpointf_m_t;
+   /// Endpoint type for use with session::provide_fm(const std::string&, endpoint_fm_t)
+   typedef std::function<boost::future<anymap>(const anyvec&, const anymap&)> endpoint_fm_t;
 
-   /// Endpoint type for use with session::provide(const std::string&, endpointf_vm_t)
-   typedef std::function<boost::future<anyvecmap>(const anyvec&, const anymap&)> endpointf_vm_t;
+   /// Endpoint type for use with session::provide_fvm(const std::string&, endpoint_fvm_t)
+   typedef std::function<boost::future<anyvecmap>(const anyvec&, const anymap&)> endpoint_fvm_t;
 
 
    /// Represents a procedure registration.
    struct registration {
-      uint64_t m_id;
+      registration() : id(0) {};
+      registration(uint64_t id) : id(id) {};
+      uint64_t id;
    };
-
 
    /// Represents a topic subscription.
    struct subscription {
       subscription() : id(0) {};
       subscription(uint64_t id) : id(id) {};
+      uint64_t id;
+   };
+
+   /// Represents an event publication (for acknowledged publications).
+   struct publication {
+      publication() : id(0) {};
+      publication(uint64_t id) : id(id) {};
       uint64_t id;
    };
 
@@ -183,6 +187,16 @@ namespace autobahn {
          void publish(const std::string& topic, const anyvec& args, const anymap& kwargs);
 
 
+         /*!
+          * Subscribe a handler to a topic to receive events.
+          *
+          * \param topic The URI of the topic to subscribe to.
+          * \param handler The handler that will receive events under the subscription.
+          * \return A future that resolves to a autobahn::subscription
+          */
+         inline
+         boost::future<subscription> subscribe(const std::string& topic, handler_t handler);
+
 
          /*!
           * Calls a remote procedure with no arguments.
@@ -216,18 +230,6 @@ namespace autobahn {
 
 
          /*!
-          * Subscribe a handler to a topic to receive events.
-          *
-          * \param topic The URI of the topic to subscribe to.
-          * \param handler The handler that will receive events under the subscription.
-          * \return A future that resolves to a autobahn::subscription
-          */
-         inline
-         boost::future<subscription> subscribe(const std::string& topic, handler_t handler);
-
-
-
-         /*!
           * Register an endpoint as a procedure that can be called remotely.
           *
           * \param procedure The URI under which the procedure is to be exposed.
@@ -238,7 +240,17 @@ namespace autobahn {
 
          inline boost::future<registration> provide_v(const std::string& procedure, endpoint_v_t endpoint);
 
-         inline boost::future<registration> providef_vm(const std::string& procedure, endpointf_vm_t endpoint);
+         inline boost::future<registration> provide_m(const std::string& procedure, endpoint_m_t endpoint);
+
+         inline boost::future<registration> provide_vm(const std::string& procedure, endpoint_vm_t endpoint);
+
+         inline boost::future<registration> provide_f(const std::string& procedure, endpoint_f_t endpoint);
+
+         inline boost::future<registration> provide_fv(const std::string& procedure, endpoint_fv_t endpoint);
+
+         inline boost::future<registration> provide_fm(const std::string& procedure, endpoint_fm_t endpoint);
+
+         inline boost::future<registration> provide_fvm(const std::string& procedure, endpoint_fvm_t endpoint);
 
       private:
 

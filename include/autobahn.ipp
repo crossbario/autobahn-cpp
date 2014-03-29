@@ -179,8 +179,38 @@ namespace autobahn {
 
 
    template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::providef_vm(const std::string& procedure, endpointf_vm_t endpoint) {
-      return _provide(procedure, static_cast<endpointf_vm_t> (endpoint));
+   boost::future<registration> session<IStream, OStream>::provide_m(const std::string& procedure, endpoint_m_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_m_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide_vm(const std::string& procedure, endpoint_vm_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_vm_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide_f(const std::string& procedure, endpoint_f_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_f_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide_fv(const std::string& procedure, endpoint_fv_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_fv_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide_fm(const std::string& procedure, endpoint_fm_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_fm_t> (endpoint));
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide_fvm(const std::string& procedure, endpoint_fvm_t endpoint) {
+      return _provide(procedure, static_cast<endpoint_fvm_t> (endpoint));
    }
 
 
@@ -188,13 +218,14 @@ namespace autobahn {
    template<typename E>
    boost::future<registration> session<IStream, OStream>::_provide(const std::string& procedure, E endpoint) {
 
-      // [REGISTER, Request|id, Options|dict, Procedure|uri]
-
-      std::cerr << "OOOOOOOOOOO " << typeid(endpoint).name() << std::endl;
-      std::cerr << "OOOOOOOOOOO " << typeid(E()).name() << std::endl;
+      if (!m_session_id) {
+         throw no_session_error();
+      }
 
       m_request_id += 1;
       m_register_requests[m_request_id] = register_request_t(endpoint);
+
+      // [REGISTER, Request|id, Options|dict, Procedure|uri]
 
       m_packer.pack_array(4);
       m_packer.pack(static_cast<int> (msg_code::REGISTER));
@@ -434,37 +465,10 @@ namespace autobahn {
          m_packer.pack(val);
 
       } else {
-         //std::cerr << "? ";
+         std::cerr << "Warning: don't know how to pack type " << value.type().name() << std::endl;
       }
    }
 
-/*
-   template<typename E>
-   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, E endpoint) {
-
-      // [REGISTER, Request|id, Options|dict, Procedure|uri]
-
-      m_request_id += 1;
-      m_register_requests[m_request_id] = register_request_t(endpoint);
-
-      m_packer.pack_array(4);
-      m_packer.pack(MSG_CODE_REGISTER);
-      m_packer.pack(m_request_id);
-      m_packer.pack_map(0);
-      m_packer.pack(procedure);
-      send();
-
-      return m_register_requests[m_request_id].m_res.get_future();
-   }
-*/
-/*
-   template
-   boost::future<registration> session<IStream, OStream>::provide<endpoint_t>(const std::string& procedure, endpoint_t endpoint);
-*/
-/*
-   template
-   boost::future<registration> session<IStream, OStream>::provide<endpoint_v_t>(const std::string& procedure, endpoint_v_t endpoint);
-*/
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::process_welcome(const wamp_msg_t& msg) {
@@ -592,8 +596,6 @@ namespace autobahn {
       // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
       // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
-      std::cerr << "==> 1" << std::endl;
-
       if (msg.size() != 4 && msg.size() != 5 && msg.size() != 6) {
          throw ProtocolError("invalid INVOCATION message structure - length must be 4, 5 or 6");
       }
@@ -603,16 +605,12 @@ namespace autobahn {
       }
       uint64_t request_id = msg[1].as<uint64_t>();
 
-      std::cerr << "==> 2" << std::endl;
-
       if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
          throw ProtocolError("invalid INVOCATION message structure - INVOCATION.Registration must be an integer");
       }
       uint64_t registration_id = msg[2].as<uint64_t>();
 
       endpoints_t::iterator endpoint = m_endpoints.find(registration_id);
-
-      std::cerr << "==> 3" << std::endl;
 
       if (endpoint != m_endpoints.end()) {
 
@@ -622,8 +620,6 @@ namespace autobahn {
 
          anyvec args;
          anymap kwargs;
-
-         std::cerr << "==> 4" << std::endl;
 
          if (msg.size() > 4) {
 
@@ -642,7 +638,9 @@ namespace autobahn {
             }
          }
 
-         std::cerr << "==> 5" << std::endl;
+         // [YIELD, INVOCATION.Request|id, Options|dict]
+         // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
+         // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
          try {
 
             if ((endpoint->second).type() == typeid(endpoint_t)) {
@@ -668,19 +666,13 @@ namespace autobahn {
                pack_any(res);
                send();
 
-            } else if ((endpoint->second).type() == typeid(endpointf_vm_t)) {
+            } else if ((endpoint->second).type() == typeid(endpoint_fvm_t)) {
 
-               boost::future<anyvecmap> f_res = ( boost::any_cast<endpointf_vm_t>(endpoint->second) )(args, kwargs);
-
-               std::cerr << "++ 1" << std::endl;
+               boost::future<anyvecmap> f_res = ( boost::any_cast<endpoint_fvm_t>(endpoint->second) )(args, kwargs);
 
                auto done = f_res.then([&](decltype(f_res) f) {
 
-                  std::cerr << "++ 2 " << typeid(f).name() << std::endl;
-
                   anyvecmap res = f.get();
-
-                  std::cerr << "++ 3" << std::endl;
 
                   m_packer.pack_array(5);
                   m_packer.pack(MSG_CODE_YIELD);
@@ -689,13 +681,9 @@ namespace autobahn {
                   pack_any(res.first);
                   pack_any(res.second);
                   send();
-
-                  std::cerr << "++ 4" << std::endl;
                });
 
-               std::cerr << "++ 5" << std::endl;
-               done.get();
-               std::cerr << "++ 6" << std::endl;
+               done.wait();
 
             } else {
                // FIXME
@@ -703,19 +691,12 @@ namespace autobahn {
                std::cerr << typeid(endpoint_t).name() << std::endl;
                std::cerr << ((endpoint->second).type()).name() << std::endl;
             }
-//            boost::any res = (endpoint->second)(args, kwargs);
-//            boost::any res = (*(endpoint->second))(args, kwargs);
-
-            // [YIELD, INVOCATION.Request|id, Options|dict]
-            // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
-            // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
 
          }
          catch (...) {
+            // FIXME: send ERROR
             std::cerr << "INVOCATION failed" << std::endl;
          }
-
-         std::cerr << "==> 6" << std::endl;
 
       } else {
          throw ProtocolError("bogus INVOCATION message for non-registered registration ID");
@@ -918,18 +899,9 @@ namespace autobahn {
 
          uint64_t registration_id = msg[2].as<uint64_t>();
 
-         //std::cerr << "REGxx" << register_request->second.m_endpoint << std::endl;
-
-         std::cerr << "XXX 2a " << (register_request->second).m_endpoint.type().name() << std::endl;
-
          m_endpoints[registration_id] = register_request->second.m_endpoint;
 
-         std::cerr << "XXX 2b " << (m_endpoints[registration_id]).type().name() << std::endl;
-
-         registration reg;
-         reg.m_id = registration_id;
-
-         register_request->second.m_res.set_value(reg);
+         register_request->second.m_res.set_value(registration(registration_id));
 
       } else {
          throw ProtocolError("bogus REGISTERED message for non-pending request ID");

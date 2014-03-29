@@ -88,6 +88,8 @@ int main () {
                      cerr << "Subscribed with subscription ID " << sub.get().id << endl;
                   });
 
+                  f1.wait();
+
                });
 
             } else {
