@@ -16,7 +16,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
+#include <string>
 #include <iostream>
 #include <chrono>
 #include <functional>
@@ -27,6 +27,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace autobahn;
 
 using boost::asio::ip::tcp;
 
@@ -49,8 +50,9 @@ int main () {
 
       // create a WAMP session that talks over TCP
       //
+      bool debug = true;
       autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket);
+                        tcp::socket> session(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -81,14 +83,22 @@ int main () {
                   // publish an event every second ..
                   //
                   bool stop_publish = false;
+                  int count = 1;
                   asio::deadline_timer timer(io, posix_time::seconds(1));
 
                   std::function<void ()> dopub = [&]() {
                      timer.async_wait([&](system::error_code) {
 
-                        session.publish("com.myapp.topic1");
+                        try {
+                           session.publish("com.myapp.topic1", {anymap({{"foo", count}}), 3});
+//                           session.publish("com.myapp.topic1", {count, anyvec({1, 2, 3})}, {{"foo", string("bar")}});
+                        } catch (...) {
+                           cerr << "could not publish event" << endl;
+                        }
 
-                        cerr << "Event published." << endl;
+                        cerr << "Event " << count << "published." << endl;
+
+                        count += 1;
 
                         if (!stop_publish) {
                            timer.expires_at(timer.expires_at() + posix_time::seconds(1));
@@ -113,7 +123,7 @@ int main () {
                      uint64_t res = any_cast<uint64_t> (f.get());
                      cerr << "Call 2 result: " << res << endl;
 
-                     auto c3 = session.call("com.math.slowsquare", {4}, {{"delay", 10}})
+                     auto c3 = session.call("com.math.slowsquare", {4}, {{"delay", 3}})
                         .then([](future<any> f) {
 
                         uint64_t res = any_cast<uint64_t> (f.get());
@@ -124,12 +134,23 @@ int main () {
 
                   // do something when all remote procedure calls have finished
                   //
-                  auto done = when_all(std::move(c1), std::move(c2));
-                  done.then([&](decltype(done)) {
+                  auto finish = when_all(std::move(c1), std::move(c2));
+                  auto end = finish.then([&](decltype(finish)) {
                      cerr << "All calls finished" << endl;
-                     stop_publish = true;
-                  }).wait();
 
+                     stop_publish = true;
+                     timer.cancel();
+
+                     auto l = session.leave().then([&](future<std::string> reason) {
+                        //session.stop();
+                        cerr << "Session left: " << reason.get() << endl;
+                     });
+
+                     l.wait();
+   
+                  });
+
+                  end.wait();
                });
 
             } else {
@@ -141,8 +162,11 @@ int main () {
       cerr << "Starting ASIO I/O loop .." << endl;
 
       io.run();
+      //session.stop();
+      //io.stop();
 
       cerr << "ASIO I/O loop ended" << endl;
+      //exit(0);
    }
    catch (std::exception& e) {
       cerr << e.what() << endl;

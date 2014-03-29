@@ -1,17 +1,18 @@
 # **Autobahn**|Cpp
 
-**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
-
-It implements version 2 of WAMP with the following roles:
+**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a [WAMP](http://wamp.ws/) implementation in C++ with the following roles
 
  * Caller
  * Callee
  * Publisher
  * Subscriber
 
-and depends on
+running over TCP, Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
+
+The library is "header-only" and depends on
 
  * C++ 11 compiler
+ * `boost::asio`
  * `boost::any`
  * `boost::future`
 
@@ -124,6 +125,8 @@ _gen/doxygen
 
 ## Futures
 
+* [ASIO C++11 Examples](http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/examples/cpp11_examples.html)
+* [Using Asio with C++11](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3388.pdf)
 * [C++17: I See a Monad in Your Future! ](http://bartoszmilewski.com/2014/02/26/c17-i-see-a-monad-in-your-future/)
 * [Boost Thread](http://www.boost.org/doc/libs/1_55_0/doc/html/thread.html)
 * [Boost Issue: when_all](https://svn.boost.org/trac/boost/ticket/7447)

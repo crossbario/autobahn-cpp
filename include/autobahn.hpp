@@ -60,6 +60,9 @@ namespace autobahn {
    /// A pair of ::anyvec and ::anymap.
    typedef std::pair<anyvec, anymap> anyvecmap;
 
+   /// Handler type for use with session::subscribe(const std::string&, handler_t)
+   typedef std::function<void(const anyvec&, const anymap&)> handler_t;
+
 
 //   typedef boost::any (*endpoint_t) (const anyvec&, const anymap&);
 
@@ -97,7 +100,9 @@ namespace autobahn {
 
    /// Represents a topic subscription.
    struct subscription {
-      uint64_t m_id;
+      subscription() : id(0) {};
+      subscription(uint64_t id) : id(id) {};
+      uint64_t id;
    };
 
 
@@ -118,29 +123,37 @@ namespace autobahn {
          session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug = false);
 
          /*!
-          * Join a realm with this session.
-          *
-          * \param realm The realm to join on the WAMP router connected to.
-          * \return A future that resolves when the realm was joined.
-          */
-         inline
-         boost::future<uint64_t> join(const std::string& realm);
-         //boost::shared_future<int> join(const std::string& realm);
-
-         inline
-         boost::future<void> leave();
-
-         /*!
-          * Enter the session event loop. This will not return until the
-          * session ends.
+          * Start listening on the IStream provided to the constructor
+          * of this session.
           */
          inline
          void start();
 
          /*!
-          * Stop the whole program.
+          * Closes the IStream and the OStream provided to the constructor
+          * of this session.
           */
-         //void stop(int exit_code = 0);
+         inline
+         void stop();
+
+         /*!
+          * Join a realm with this session.
+          *
+          * \param realm The realm to join on the WAMP router connected to.
+          * \return A future that resolves with the session ID when the realm was joined.
+          */
+         inline
+         boost::future<uint64_t> join(const std::string& realm);
+
+         /*!
+          * Leave the realm.
+          *
+          * \param reason An optional WAMP URI providing a reason for leaving.
+          * \return A future that resolves with the reason sent by the peer.
+          */
+         inline
+         boost::future<std::string> leave(const std::string& reason = std::string("wamp.error.close_realm"));
+
 
          /*!
           * Publish an event with empty payload to a topic.
@@ -160,15 +173,6 @@ namespace autobahn {
          void publish(const std::string& topic, const anyvec& args);
 
          /*!
-          * Publish an event with keyword payload to a topic.
-          *
-          * \param topic The URI of the topic to publish to.
-          * \param kwargs The keyword payload for the event.
-          */
-         inline
-         void publish(const std::string& topic, const anymap& kwargs);
-
-         /*!
           * Publish an event with both positional and keyword payload to a topic.
           *
           * \param topic The URI of the topic to publish to.
@@ -178,6 +182,8 @@ namespace autobahn {
          inline
          void publish(const std::string& topic, const anyvec& args, const anymap& kwargs);
 
+
+
          /*!
           * Calls a remote procedure with no arguments.
           *
@@ -186,10 +192,6 @@ namespace autobahn {
           */
          inline
          boost::future<boost::any> call(const std::string& procedure);
-
-         inline void foo() {
-            std::cerr << "FOOO" << std::endl;
-         }
 
          /*!
           * Calls a remote procedure with positional arguments.
@@ -202,15 +204,6 @@ namespace autobahn {
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args);
 
          /*!
-          * Calls a remote procedure with keyword arguments.
-          *
-          * \param procedure The URI of the remote procedure to call.
-          * \param kwargs The keyword arguments for the call.
-          * \return A future that resolves to the result of the remote procedure call.
-          */
-         //boost::future<boost::any> call(const std::string& procedure, const anymap& kwargs);
-
-         /*!
           * Calls a remote procedure with positional and keyword arguments.
           *
           * \param procedure The URI of the remote procedure to call.
@@ -220,6 +213,19 @@ namespace autobahn {
           */
          inline
          boost::future<boost::any> call(const std::string& procedure, const anyvec& args, const anymap& kwargs);
+
+
+         /*!
+          * Subscribe a handler to a topic to receive events.
+          *
+          * \param topic The URI of the topic to subscribe to.
+          * \param handler The handler that will receive events under the subscription.
+          * \return A future that resolves to a autobahn::subscription
+          */
+         inline
+         boost::future<subscription> subscribe(const std::string& topic, handler_t handler);
+
+
 
          /*!
           * Register an endpoint as a procedure that can be called remotely.
@@ -240,6 +246,13 @@ namespace autobahn {
          inline boost::future<registration> _provide(const std::string& procedure, E endpoint);
 
 
+         /// Last request ID of outgoing WAMP requests.
+         uint64_t m_request_id;
+
+
+         //////////////////////////////////////////////////////////////////////////////////////
+         /// Caller
+
          /// An outstanding WAMP call.
          struct call_t {
             boost::promise<boost::any> m_res;
@@ -248,6 +261,36 @@ namespace autobahn {
          /// Map of outstanding WAMP calls (request ID -> call).
          typedef std::map<uint64_t, call_t> calls_t;
 
+         /// Map of WAMP call ID -> call
+         calls_t m_calls;
+
+
+         //////////////////////////////////////////////////////////////////////////////////////
+         /// Subscriber
+
+         /// An outstanding WAMP subscribe request.
+         struct subscribe_request_t {
+            subscribe_request_t() {};
+            subscribe_request_t(handler_t handler) : m_handler(handler) {};
+            handler_t m_handler;
+            boost::promise<subscription> m_res;
+         };
+
+         /// Map of outstanding WAMP subscribe requests (request ID -> subscribe request).
+         typedef std::map<uint64_t, subscribe_request_t> subscribe_requests_t;
+
+         /// Map of WAMP subscribe request ID -> subscribe request
+         subscribe_requests_t m_subscribe_requests;
+
+         /// Map of subscribed handlers (subscription ID -> handler)
+         typedef std::map<uint64_t, handler_t> handlers_t;
+
+         /// Map of WAMP subscription ID -> handler
+         handlers_t m_handlers;
+
+
+         //////////////////////////////////////////////////////////////////////////////////////
+         /// Callee
 
          /// An outstanding WAMP register request.
          struct register_request_t {
@@ -260,11 +303,21 @@ namespace autobahn {
          /// Map of outstanding WAMP register requests (request ID -> register request).
          typedef std::map<uint64_t, register_request_t> register_requests_t;
 
+         /// Map of WAMP register request ID -> register request
+         register_requests_t m_register_requests;
+
          /// Map of registered endpoints (registration ID -> endpoint)
          typedef std::map<uint64_t, boost::any> endpoints_t;
 
+         /// Map of WAMP registration ID -> endpoint
+         endpoints_t m_endpoints;
+
+
+
          /// An unserialized, raw WAMP message.
          typedef std::vector<msgpack::object> wamp_msg_t;
+
+
 
 
          /// Process a WAMP HELLO message.
@@ -272,6 +325,9 @@ namespace autobahn {
 
          /// Process a WAMP RESULT message.
          inline void process_call_result(const wamp_msg_t& msg);
+
+         /// Process a WAMP SUBSCRIBED message.
+         inline void process_subscribed(const wamp_msg_t& msg);
 
          /// Process a WAMP REGISTERED message.
          inline void process_registered(const wamp_msg_t& msg);
@@ -347,18 +403,6 @@ namespace autobahn {
 
          boost::promise<std::string> m_session_leave;
 
-         /// Last request ID of outgoing WAMP requests.
-         uint64_t m_request_id;
-
-         /// Map of WAMP call ID -> call
-         calls_t m_calls;
-
-         /// Map of WAMP register request ID -> register request
-         register_requests_t m_register_requests;
-
-         /// Map of WAMP registration ID -> endpoint
-         endpoints_t m_endpoints;
-
          /// WAMP message type codes.
          enum class msg_code : int {
             HELLO = 1,
@@ -393,6 +437,11 @@ namespace autobahn {
    class ProtocolError : public std::runtime_error {
       public:
          ProtocolError(const std::string& msg) : std::runtime_error(msg) {};
+   };
+
+   class no_session_error : public std::runtime_error {
+      public:
+         no_session_error() : std::runtime_error("session not joined") {};
    };
 
 }

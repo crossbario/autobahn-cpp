@@ -92,6 +92,20 @@ namespace autobahn {
 
 
    template<typename IStream, typename OStream>
+   void session<IStream, OStream>::stop() {
+      m_stopped = true;
+      try {
+         m_in.close();
+      } catch (...) {
+      }
+      try {
+         m_out.close();
+      } catch (...) {
+      }
+   }
+
+
+   template<typename IStream, typename OStream>
    boost::future<uint64_t> session<IStream, OStream>::join(const std::string& realm) {
 //   boost::shared_future<uint64_t> session<IStream, OStream>::join(const std::string& realm) {
 
@@ -126,6 +140,30 @@ namespace autobahn {
 //      return std::move(m_session_join.get_future());
       return m_session_join.get_future();
    }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<subscription> session<IStream, OStream>::subscribe(const std::string& topic, handler_t handler) {
+
+      if (!m_session_id) {
+         throw no_session_error();
+      }
+
+      // [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
+
+      m_request_id += 1;
+      m_subscribe_requests[m_request_id] = subscribe_request_t(handler);
+
+      m_packer.pack_array(4);
+      m_packer.pack(static_cast<int> (msg_code::REGISTER));
+      m_packer.pack(m_request_id);
+      m_packer.pack_map(0);
+      m_packer.pack(topic);
+      send();
+
+      return m_subscribe_requests[m_request_id].m_res.get_future();
+   }
+
 
 
    template<typename IStream, typename OStream>
@@ -172,9 +210,13 @@ namespace autobahn {
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::publish(const std::string& topic) {
 
-      // [PUBLISH, Request|id, Options|dict, Topic|uri]
+      if (!m_session_id) {
+         throw no_session_error();
+      }
 
       m_request_id += 1;
+
+      // [PUBLISH, Request|id, Options|dict, Topic|uri]
 
       m_packer.pack_array(4);
       m_packer.pack(MSG_CODE_PUBLISH);
@@ -188,11 +230,15 @@ namespace autobahn {
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::publish(const std::string& topic, const anyvec& args) {
 
-      // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
+      if (!m_session_id) {
+         throw no_session_error();
+      }
 
       if (args.size() > 0) {
 
          m_request_id += 1;
+
+         // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
 
          m_packer.pack_array(5);
          m_packer.pack(MSG_CODE_PUBLISH);
@@ -201,30 +247,7 @@ namespace autobahn {
          m_packer.pack(topic);
          pack_any(args);
          send();
-      } else {
 
-         publish(topic);
-      }
-   }
-
-
-   template<typename IStream, typename OStream>
-   void session<IStream, OStream>::publish(const std::string& topic, const anymap& kwargs) {
-
-      // [PUBLISH, Request|id, Options|dict, Topic|uri, [], ArgumentsKw|dict]
-
-      if (kwargs.size() > 0) {
-
-         m_request_id += 1;
-
-         m_packer.pack_array(6);
-         m_packer.pack(MSG_CODE_PUBLISH);
-         m_packer.pack(m_request_id);
-         m_packer.pack_map(0);
-         m_packer.pack(topic);
-         m_packer.pack_array(0);
-         pack_any(kwargs);
-         send();
       } else {
 
          publish(topic);
@@ -235,11 +258,15 @@ namespace autobahn {
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::publish(const std::string& topic, const anyvec& args, const anymap& kwargs) {
 
-      // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
+      if (!m_session_id) {
+         throw no_session_error();
+      }
 
       if (kwargs.size() > 0) {
 
          m_request_id += 1;
+
+         // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
 
          m_packer.pack_array(6);
          m_packer.pack(MSG_CODE_PUBLISH);
@@ -249,6 +276,7 @@ namespace autobahn {
          pack_any(args);
          pack_any(kwargs);
          send();
+
       } else {
 
          publish(topic, args);
@@ -259,11 +287,14 @@ namespace autobahn {
    template<typename IStream, typename OStream>
    boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure) {
 
-      // [CALL, Request|id, Options|dict, Procedure|uri]
+      if (!m_session_id) {
+         throw no_session_error();
+      }
 
       m_request_id += 1;
-
       m_calls[m_request_id] = call_t();
+
+      // [CALL, Request|id, Options|dict, Procedure|uri]
 
       m_packer.pack_array(4);
       m_packer.pack(MSG_CODE_CALL);
@@ -279,17 +310,16 @@ namespace autobahn {
    template<typename IStream, typename OStream>
    boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure, const anyvec& args) {
 
-      if (m_debug) {
-         std::cerr << "call()" << std::endl;
+      if (!m_session_id) {
+         throw no_session_error();
       }
-
-      // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
 
       if (args.size() > 0) {
 
          m_request_id += 1;
-
          m_calls[m_request_id] = call_t();
+
+         // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
 
          m_packer.pack_array(5);
          m_packer.pack(MSG_CODE_CALL);
@@ -302,47 +332,25 @@ namespace autobahn {
          return m_calls[m_request_id].m_res.get_future();
 
       } else {
+
          return call(procedure);
       }
    }
 
-/*
-   boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure, const anymap& kwargs) {
-
-      // [CALL, Request|id, Options|dict, Procedure|uri, [], ArgumentsKw|dict]
-
-      if (kwargs.size() > 0) {
-
-         m_request_id += 1;
-
-         m_calls[m_request_id] = call_t();
-
-         m_packer.pack_array(6);
-         m_packer.pack(MSG_CODE_CALL);
-         m_packer.pack(m_request_id);
-         m_packer.pack_map(0);
-         m_packer.pack(procedure);
-         m_packer.pack_array(0);
-         pack_any(kwargs);
-         send();
-
-         return m_calls[m_request_id].m_res.get_future();
-      } else {
-         return call(procedure);
-      }
-   }
-*/
 
    template<typename IStream, typename OStream>
    boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure, const anyvec& args, const anymap& kwargs) {
 
-      // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
+      if (!m_session_id) {
+         throw no_session_error();
+      }
 
       if (kwargs.size() > 0) {
 
          m_request_id += 1;
-
          m_calls[m_request_id] = call_t();
+
+         // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
 
          m_packer.pack_array(6);
          m_packer.pack(MSG_CODE_CALL);
@@ -359,6 +367,8 @@ namespace autobahn {
          return call(procedure, args);
       }
    }
+
+
 
 
    template<typename IStream, typename OStream>
@@ -465,6 +475,14 @@ namespace autobahn {
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::process_goodbye(const wamp_msg_t& msg) {
+
+/*
+      if (!m_session_id) {
+         throw ProtocolError("GOODBYE received an no session established");
+      }
+*/
+      m_session_id = 0;
+
       if (!m_goodbye_sent) {
 
          // if we did not initiate closing, reply ..
@@ -484,6 +502,29 @@ namespace autobahn {
       }
       std::string reason = msg[2].as<std::string>();
       m_session_leave.set_value(reason);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<std::string> session<IStream, OStream>::leave(const std::string& reason) {
+
+      if (!m_session_id) {
+         throw no_session_error();
+      }
+
+      m_goodbye_sent = true;
+      m_session_id = 0;
+
+      // [GOODBYE, Details|dict, Reason|uri]
+
+      m_packer.pack_array(3);
+
+      m_packer.pack(MSG_CODE_GOODBYE);
+      m_packer.pack_map(0);
+      m_packer.pack(reason);
+      send();
+
+      return m_session_leave.get_future();
    }
 
 
@@ -737,6 +778,43 @@ namespace autobahn {
 
 
    template<typename IStream, typename OStream>
+   void session<IStream, OStream>::process_subscribed(const wamp_msg_t& msg) {
+
+      // [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
+
+      if (msg.size() != 3) {
+         throw ProtocolError("invalid SUBSCRIBED message structure - length must be 3");
+      }
+
+      if (msg[1].type != msgpack::type::POSITIVE_INTEGER) {
+         throw ProtocolError("invalid SUBSCRIBED message structure - SUBSCRIBED.Request must be an integer");
+      }
+
+      uint64_t request_id = msg[1].as<uint64_t>();
+
+      typename subscribe_requests_t::iterator subscribe_request = m_subscribe_requests.find(request_id);
+
+      if (subscribe_request != m_subscribe_requests.end()) {
+
+         if (msg[2].type != msgpack::type::POSITIVE_INTEGER) {
+            throw ProtocolError("invalid SUBSCRIBED message structure - SUBSCRIBED.Subscription must be an integer");
+         }
+
+         uint64_t subscription_id = msg[2].as<uint64_t>();
+
+         m_handlers[subscription_id] = subscribe_request->second.m_handler;
+
+         subscribe_request->second.m_res.set_value(subscription(subscription_id));
+
+         m_subscribe_requests.erase(request_id);
+
+      } else {
+         throw ProtocolError("bogus SUBSCRIBED message for non-pending request ID");
+      }
+   }
+
+
+   template<typename IStream, typename OStream>
    void session<IStream, OStream>::process_registered(const wamp_msg_t& msg) {
 
       // [REGISTERED, REGISTER.Request|id, Registration|id]
@@ -833,7 +911,7 @@ namespace autobahn {
             msgpack::object obj(result.get());
 
             if (m_debug) {
-               std::cout << "RX WAMP message: " << obj << std::endl;
+               std::cerr << "RX WAMP message: " << obj << std::endl;
             }
 
             got_msg(obj);
@@ -874,12 +952,20 @@ namespace autobahn {
             process_welcome(msg);
             break;
 
+         case MSG_CODE_GOODBYE:
+            process_goodbye(msg);
+            break;
+
          case MSG_CODE_RESULT:
             process_call_result(msg);
             break;
 
          case MSG_CODE_REGISTERED:
             process_registered(msg);
+            break;
+
+         case MSG_CODE_SUBSCRIBED:
+            process_subscribed(msg);
             break;
 
          case MSG_CODE_INVOCATION:
@@ -892,24 +978,30 @@ namespace autobahn {
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::send() {
 
-      if (m_debug) {
-         std::cerr << "TX message (" << m_buffer.size() << " octets) ..." << std::endl;
-      }
+      if (!m_stopped) {
+         if (m_debug) {
+            std::cerr << "TX message (" << m_buffer.size() << " octets) ..." << std::endl;
+         }
 
-      // boost::asio::async_write(s, boost::asio::buffer(data, size), handler);
-      // boost::asio::write(s, boost::asio::buffer(data, size));
+         // boost::asio::async_write(s, boost::asio::buffer(data, size), handler);
+         // boost::asio::write(s, boost::asio::buffer(data, size));
 
-      std::size_t written = 0;
+         std::size_t written = 0;
 
-      // write message length prefix
-      uint32_t len = htonl(m_buffer.size());
-      written += boost::asio::write(m_out, boost::asio::buffer((char*) &len, sizeof(len)));
+         // write message length prefix
+         uint32_t len = htonl(m_buffer.size());
+         written += boost::asio::write(m_out, boost::asio::buffer((char*) &len, sizeof(len)));
 
-      // write actual serialized message
-      written += boost::asio::write(m_out, boost::asio::buffer(m_buffer.data(), m_buffer.size()));
+         // write actual serialized message
+         written += boost::asio::write(m_out, boost::asio::buffer(m_buffer.data(), m_buffer.size()));
 
-      if (m_debug) {
-         std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + m_buffer.size()) << " octets)" << std::endl;
+         if (m_debug) {
+            std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + m_buffer.size()) << " octets)" << std::endl;
+         }        
+      } else {
+         if (m_debug) {
+            std::cerr << "TX message skipped since session stopped (" << m_buffer.size() << " octets)." << std::endl;
+         }
       }
 
       // clear serialization buffer
