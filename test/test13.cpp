@@ -18,9 +18,8 @@
 
 
 #include <iostream>
-#include <string>
-#include <thread>
 #include <chrono>
+#include <functional>
 
 #include "autobahn.hpp"
 
@@ -31,89 +30,119 @@ using namespace boost;
 
 using boost::asio::ip::tcp;
 
-template<typename R>
-  bool is_ready(future<R>& f)
-  { return f.wait_for(std::chrono::seconds(0)) == future_status::ready; }
-
-
-
-// http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/examples/cpp11_examples.html
-
 
 int main () {
 
    try {
+      // ASIO service object
+      //
       asio::io_service io;
 
-      asio::deadline_timer timer(io, posix_time::seconds(2));
-      timer.async_wait(
-         [](system::error_code ec) {
-            if (!ec) {
-               cerr << "Timeout!" << endl;
-            } else {
-               cerr << "Error in timer" << endl;
-            }
-         }
-      );
-
-#if 1
+      // the TCP socket we connect
+      //
       tcp::socket socket(io);
 
-      autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket);
-
+      // connect to this server/port
+      //
       tcp::resolver resolver(io);
       auto endpoint_iterator = resolver.resolve({"127.0.0.1", "8080"});
 
-      //future<void> fs;
+      // create a WAMP session that talks over TCP
+      //
+      autobahn::session<tcp::socket,
+                        tcp::socket> session(io, socket, socket);
 
+      // make sure the future returned from the session joining a realm (see below)
+      // does not run out of scope (being destructed prematurely ..)
+      //
+      future<void> session_future;
 
+      // now do an asynchronous connect ..
+      //
       boost::asio::async_connect(socket, endpoint_iterator,
 
+         // we either connected or an error happened during connect ..
+         //
          [&](boost::system::error_code ec, tcp::resolver::iterator) {
 
             if (!ec) {
-               cerr << "connected" << endl;
+               cerr << "Connected to server" << endl;
+
+               // start the WAMP session on the transport that has been connected
+               //
                session.start();
 
-               auto fs = session.join(string("realm1"));
-               auto fs2 = fs.then([&](future<int> s) {
-                  cerr << "session joined" << endl;
-                  cerr << "session joined: " << s.get() << endl;
-                  session.publish("com.myapp.topic1");
+               // join a realm with the WAMP session
+               //
+               session_future = session.join("realm1").then([&](future<uint64_t> s) {
 
-                  auto c = session.call("com.arguments.add2", {2, 3})
+                  cerr << "Session joined to realm with session ID " << s.get() << endl;
+
+                  // publish an event every second ..
+                  //
+                  bool stop_publish = false;
+                  asio::deadline_timer timer(io, posix_time::seconds(1));
+
+                  std::function<void ()> dopub = [&]() {
+                     timer.async_wait([&](system::error_code) {
+
+                        session.publish("com.myapp.topic1");
+
+                        cerr << "Event published." << endl;
+
+                        if (!stop_publish) {
+                           timer.expires_at(timer.expires_at() + posix_time::seconds(1));
+                           dopub();                           
+                        }
+                     });             
+                  };
+                  dopub();
+
+                  // issue a number of remote procedure calls ..
+                  //
+                  auto c1 = session.call("com.math.slowsquare", {2}, {{"delay", 3}})
                      .then([](future<any> f) {
 
-                     cerr << "call returned" << endl;
-                     any r = f.get();
-                     cerr << "result type: " << r.type().name() << endl;
-                     uint64_t res = any_cast<uint64_t> (r);
-                     cerr << "result: " << res << endl;
+                     uint64_t res = any_cast<uint64_t> (f.get());
+                     cerr << "Call 1 result: " << res << endl;
                   });
-                  cerr << "HERE2" << endl;
-                  return c;
+
+                  auto c2 = session.call("com.math.slowsquare", {3})
+                     .then([&session](future<any> f) {
+
+                     uint64_t res = any_cast<uint64_t> (f.get());
+                     cerr << "Call 2 result: " << res << endl;
+
+                     auto c3 = session.call("com.math.slowsquare", {4}, {{"delay", 10}})
+                        .then([](future<any> f) {
+
+                        uint64_t res = any_cast<uint64_t> (f.get());
+                        cerr << "Call 3 result: " << res << endl;
+                     });
+                     c3.wait();
+                  });
+
+                  // do something when all remote procedure calls have finished
+                  //
+                  auto done = when_all(std::move(c1), std::move(c2));
+                  done.then([&](decltype(done)) {
+                     cerr << "All calls finished" << endl;
+                     stop_publish = true;
+                  }).wait();
+
                });
-               cerr << "HERE3" << endl;
-               //fs2.wait();
-               cerr << "HERE31" << endl;
 
             } else {
-               cerr << "could not connect" << endl;
+               cerr << "Could not connect to server: " << ec.message() << endl;
             }
          }
       );
-#endif
 
+      cerr << "Starting ASIO I/O loop .." << endl;
 
-#if 1
       io.run();
-#else
-      std::thread t([&io](){ io.run(); });
-      t.join();
-#endif
 
-      cerr << "I/O loop ended .." << endl;
+      cerr << "ASIO I/O loop ended" << endl;
    }
    catch (std::exception& e) {
       cerr << e.what() << endl;

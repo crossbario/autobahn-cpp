@@ -61,8 +61,8 @@
 namespace autobahn {
 
    template<typename IStream, typename OStream>
-   session<IStream, OStream>::session(boost::asio::io_service& io, IStream& in, OStream& out)
-      : m_debug(true),
+   session<IStream, OStream>::session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug)
+      : m_debug(debug),
         m_stopped(false),
         m_io(io),
         m_in(in),
@@ -92,7 +92,8 @@ namespace autobahn {
 
 
    template<typename IStream, typename OStream>
-   boost::future<int> session<IStream, OStream>::join(const std::string& realm) {
+   boost::future<uint64_t> session<IStream, OStream>::join(const std::string& realm) {
+//   boost::shared_future<uint64_t> session<IStream, OStream>::join(const std::string& realm) {
 
       // [HELLO, Realm|uri, Details|dict]
 
@@ -120,7 +121,10 @@ namespace autobahn {
 
       send();
 
-      return std::move(m_session_join.get_future());
+//      return m_session_join.get_future().share();
+//      return boost::shared_future<uint64_t>(m_session_join.get_future());
+//      return std::move(m_session_join.get_future());
+      return m_session_join.get_future();
    }
 
 
@@ -295,12 +299,7 @@ namespace autobahn {
          pack_any(args);
          send();
 
-         std::cerr << "set promise for " << m_request_id << std::endl;
-
          return m_calls[m_request_id].m_res.get_future();
-         //return std::move(m_calls[m_request_id].m_res.get_future());
-         //return m_calls[m_request_id].m_res.get_future();
-         //return m_test_promise.get_future();
 
       } else {
          return call(procedure);
@@ -703,8 +702,6 @@ namespace autobahn {
       typename calls_t::iterator call = m_calls.find(request_id);
 
       if (call != m_calls.end()) {
-
-         std::cerr << "process result for request ID " << request_id << std::endl;
 
          if (msg[2].type != msgpack::type::MAP) {
             throw ProtocolError("invalid RESULT message structure - Details must be a dictionary");

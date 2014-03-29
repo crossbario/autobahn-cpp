@@ -115,7 +115,7 @@ namespace autobahn {
           * \param in The input stream to run this session on.
           * \param out THe output stream to run this session on.
           */
-         session(boost::asio::io_service& io, IStream& in, OStream& out);
+         session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug = false);
 
          /*!
           * Join a realm with this session.
@@ -124,7 +124,8 @@ namespace autobahn {
           * \return A future that resolves when the realm was joined.
           */
          inline
-         boost::future<int> join(const std::string& realm);
+         boost::future<uint64_t> join(const std::string& realm);
+         //boost::shared_future<int> join(const std::string& realm);
 
          inline
          boost::future<void> leave();
@@ -340,7 +341,7 @@ namespace autobahn {
          uint64_t m_session_id;
 
          /// Future to be fired when session was joined.
-         boost::promise<int> m_session_join;
+         boost::promise<uint64_t> m_session_join;
 
          bool m_goodbye_sent;
 
