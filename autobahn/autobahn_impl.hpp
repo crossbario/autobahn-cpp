@@ -795,7 +795,7 @@ namespace autobahn {
 
          if (msg[3].type != msgpack::type::MAP) {
             throw protocol_error("invalid EVENT message structure - Details must be a dictionary");
-         }        
+         }
 
          anyvec args;
          anymap kwargs;
@@ -1069,8 +1069,12 @@ namespace autobahn {
             std::cerr << "TX message (" << m_buffer.size() << " octets) ..." << std::endl;
          }
 
-         // boost::asio::async_write(s, boost::asio::buffer(data, size), handler);
-         // boost::asio::write(s, boost::asio::buffer(data, size));
+         // FIXME: rework this for queuing, async_write using gathered write
+         //
+         // boost::asio::write(m_out, std::vector<boost::asio::const_buffer>& out_vec, handler);
+
+         // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference/const_buffer/const_buffer/overload2.html
+         // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference/async_write/overload1.html
 
          std::size_t written = 0;
 
@@ -1083,7 +1087,7 @@ namespace autobahn {
 
          if (m_debug) {
             std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + m_buffer.size()) << " octets)" << std::endl;
-         }        
+         }
       } else {
          if (m_debug) {
             std::cerr << "TX message skipped since session stopped (" << m_buffer.size() << " octets)." << std::endl;

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+   <body>
+      <h1>PubSub Basic Frontend</h1>
+      <p>Open JavaScript console to watch output.</p>
+      <script src="https://autobahn.s3.amazonaws.com/autobahnjs/latest/autobahn.min.jgz"></script>
+      <script>
+         var connection = new autobahn.Connection({
+            url: 'ws://127.0.0.1:8080/',
+            realm: 'realm1'}
+         );
+
+         connection.onopen = function (session) {
+
+            function onevent1(args) {
+               console.log("Got event on topic 1:", args[0]);
+            }
+            session.subscribe('com.myapp.topic1', onevent1);
+
+            function onevent2(args, kwargs) {
+               console.log("Got event on topic 2:", args, kwargs);
+            }
+            session.subscribe('com.myapp.topic2', onevent2);
+         };
+
+         connection.open();
+      </script>
+   </body>
+</html>

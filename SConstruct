@@ -56,4 +56,5 @@ Export('env')
 
 #Export('autobahn')
 
-tests = SConscript('test/SConscript', variant_dir = 'build/test', duplicate = 0)
+#tests = SConscript('test/SConscript', variant_dir = 'build/test', duplicate = 0)
+examples = SConscript('examples/SConscript', variant_dir = 'build/examples', duplicate = 0)
