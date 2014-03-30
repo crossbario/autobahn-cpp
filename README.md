@@ -7,7 +7,9 @@
  * **Publisher**
  * **Subscriber**
 
-running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport. The API and implementation make use of modern C++ 11 and `future`.
+running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
+
+The API and implementation make use of modern C++ 11 and new asynchronous idioms using futures continuations and lambda.
 
 ## Show me some code!
 
