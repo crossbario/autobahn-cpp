@@ -9,23 +9,23 @@
 
 running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
 
-The API and implementation make use of modern C++ 11 and `std::future`. Here is some code
+The API and implementation make use of modern C++ 11 and `future`. Here is some code
 
 ```c++
 // 1) call a remote procedure
 //
 auto c1 = session.call("com.mathservice.add2", {23, 777})
 .then(
-   [&](boost::future<boost::any> f) {
+   [&](future<any> f) {
 
       // call result received
 		//
-		std::cout << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
-	};);
+		cout << "Got RPC result " << any_cast<uint64_t> (f.get()) << endl;
+	});
 
 // 3) publish an event to a topic
 //
-session.publish("com.myapp.topic2", {23, true, std::string("hello")});
+session.publish("com.myapp.topic2", {23, true, string("hello")});
 
 // 4) subscribe an event handler to a topic
 //
@@ -56,7 +56,7 @@ The library and example programs are developed with
 > Notes:
 >
 > * Support for GNU g++/libstdc++ depends on this [issue](https://github.com/tavendo/AutobahnCpp/issues/1)
-> * While C++ 11 provides a `std::future` - but this does not yet support continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
+> * While C++ 11 provides a `future` - but this does not yet support continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
 > * Support for `when_all` and `when_any` depends on Boost 1.56 (!) or higher.
 
 
