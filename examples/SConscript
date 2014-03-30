@@ -18,7 +18,13 @@
 
 Import('env')
 
-examples = ['subscribe1.cpp', 'publish1.cpp', 'call1.cpp']
+examples = ['subscribe1.cpp',
+            'publish1.cpp',
+            'publish2.cpp',
+            'call1.cpp',
+            'call2.cpp',
+            'stdio.cpp',
+            ]
 
 prgs = []
 

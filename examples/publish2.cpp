@@ -18,11 +18,12 @@
 
 #include <string>
 #include <iostream>
+#include <chrono>
+#include <functional>
 
 #include "autobahn.hpp"
 
 #include <boost/asio.hpp>
-#include <boost/version.hpp>
 
 using namespace std;
 using namespace boost;
@@ -32,8 +33,6 @@ using boost::asio::ip::tcp;
 
 
 int main () {
-
-   cerr << "Running on " << BOOST_VERSION << endl;
 
    try {
       // ASIO service object
@@ -81,19 +80,49 @@ int main () {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  // call a remote procedure ..
+                  // event without any payload
                   //
-                  session.call("com.mathservice.add2", {23, 777}).then([&](future<any> f) {
+                  session.publish("com.myapp.topic2");
 
-                     // call result received
-                     //
-                     std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
-                     io.stop();
 
-                  });
+                  // event with positional payload
+                  //
+                  session.publish("com.myapp.topic2", {23, true, std::string("hello")});
+
+
+                  // event with complex positional payload
+                  //
+                  autobahn::anyvec v;
+                  v.push_back(1);
+                  v.push_back(3.123);
+                  v.push_back(false);
+                  v.push_back(std::string("hello"));
+
+                  autobahn::anyvec v2;
+                  v2.push_back(std::string("foo"));
+                  v2.push_back(std::string("bar"));
+
+                  v.push_back(v2);
+
+                  autobahn::anymap m;
+                  m["foo"] = 23;
+                  m["bar"] = 1.23;
+                  m["baz"] = std::string("awesome");
+
+                  v.push_back(m);
+
+                  session.publish("com.myapp.topic2", v);
+
+
+                  // event with keyword payload
+                  //
+                  autobahn::anymap m2;
+                  m2["a"] = 23;
+                  m2["b"] = std::string("foobar");
+
+                  session.publish("com.myapp.topic2", {}, m2);
+
                });
-
-               session_future.wait();
 
             } else {
                cerr << "Could not connect to server: " << ec.message() << endl;
@@ -104,11 +133,8 @@ int main () {
       cerr << "Starting ASIO I/O loop .." << endl;
 
       io.run();
-      //session.stop();
-      //io.stop();
 
       cerr << "ASIO I/O loop ended" << endl;
-      //exit(0);
    }
    catch (std::exception& e) {
       cerr << e.what() << endl;

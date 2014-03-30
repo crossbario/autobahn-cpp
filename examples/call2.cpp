@@ -18,12 +18,11 @@
 
 #include <string>
 #include <iostream>
-#include <chrono>
-#include <functional>
 
 #include "autobahn.hpp"
 
 #include <boost/asio.hpp>
+#include <boost/version.hpp>
 
 using namespace std;
 using namespace boost;
@@ -33,6 +32,8 @@ using boost::asio::ip::tcp;
 
 
 int main () {
+
+   cerr << "Running on " << BOOST_VERSION << endl;
 
    try {
       // ASIO service object
@@ -46,11 +47,11 @@ int main () {
       // connect to this server/port
       //
       tcp::resolver resolver(io);
-      auto endpoint_iterator = resolver.resolve({"127.0.0.1", "8080"});
+      auto endpoint_iterator = resolver.resolve({"127.0.0.1", "8090"});
 
       // create a WAMP session that talks over TCP
       //
-      bool debug = true;
+      bool debug = false;
       autobahn::session<tcp::socket,
                         tcp::socket> session(io, socket, socket, debug);
 
@@ -80,16 +81,55 @@ int main () {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  auto f1 = session.subscribe("com.myapp.topic1",
-                     [](const anyvec& args, const anymap& kwargs) {
-                        cerr << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
-                     }
-                  ).then([](future<subscription> sub) {
-                     cerr << "Subscribed with subscription ID " << sub.get().id << endl;
+                  // issue a number of remote procedure calls ..
+                  //
+                  auto c0 = session.call("com.mathservice.add2", {2, 9})
+                     .then([](future<any> f) {
+
+                     uint64_t res = any_cast<uint64_t> (f.get());
+                     cerr << "Call 0 result: " << res << endl;
                   });
 
-                  f1.wait();
+                  c0.wait();
 
+                  auto c1 = session.call("com.math.slowsquare", {2}, {{"delay", 3}})
+                     .then([](future<any> f) {
+
+                     uint64_t res = any_cast<uint64_t> (f.get());
+                     cerr << "Call 1 result: " << res << endl;
+                  });
+
+                  auto c2 = session.call("com.math.slowsquare", {3})
+                     .then([&session](future<any> f) {
+
+                     uint64_t res = any_cast<uint64_t> (f.get());
+                     cerr << "Call 2 result: " << res << endl;
+
+                     auto c3 = session.call("com.math.slowsquare", {4}, {{"delay", 3}})
+                        .then([](future<any> f) {
+
+                        uint64_t res = any_cast<uint64_t> (f.get());
+                        cerr << "Call 3 result: " << res << endl;
+                     });
+                     c3.wait();
+                  });
+
+                  // do something when all remote procedure calls have finished
+                  //
+                  auto finish = when_all(std::move(c1), std::move(c2));
+                  auto end = finish.then([&](decltype(finish)) {
+                     cerr << "All calls finished" << endl;
+
+                     auto l = session.leave().then([&](future<std::string> reason) {
+                        //session.stop();
+                        cerr << "Session left: " << reason.get() << endl;
+                     });
+
+                     l.wait();
+
+                  });
+
+                  end.wait();
                });
 
             } else {
@@ -101,8 +141,11 @@ int main () {
       cerr << "Starting ASIO I/O loop .." << endl;
 
       io.run();
+      //session.stop();
+      //io.stop();
 
       cerr << "ASIO I/O loop ended" << endl;
+      //exit(0);
    }
    catch (std::exception& e) {
       cerr << e.what() << endl;
