@@ -32,7 +32,8 @@ session.publish("com.myapp.topic2", {23, true, std::string("hello")});
 auto s1 = session.subscribe("com.myapp.topic1",
    [](const anyvec& args, const anymap& kwargs) {
       cerr << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
-   }).then(
+   })
+.then(
    [](future<subscription> sub) {
       cerr << "Subscribed with subscription ID " << sub.get().id << endl;
    });
