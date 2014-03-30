@@ -1,5 +1,7 @@
 # **Autobahn**|Cpp
 
+## Introduction
+
 **Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a [WAMP](http://wamp.ws/) implementation in C++ with the following roles
 
  * **Caller**
@@ -9,7 +11,9 @@
 
 running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
 
-The API and implementation make use of modern C++ 11 and `future`. Here is some code
+The API and implementation make use of modern C++ 11 and `future`
+
+## Show me some code!
 
 ```c++
 // 1) call a remote procedure
@@ -31,11 +35,11 @@ session.publish("com.myapp.topic2", {23, true, string("hello")});
 //
 auto s1 = session.subscribe("com.myapp.topic1",
    [](const anyvec& args, const anymap& kwargs) {
-      cerr << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
+      cout << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
    })
 .then(
    [](future<subscription> sub) {
-      cerr << "Subscribed with subscription ID " << sub.get().id << endl;
+      cout << "Subscribed with subscription ID " << sub.get().id << endl;
    });
 
 ```
