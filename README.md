@@ -12,14 +12,33 @@ running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket
 The API and implementation make use of modern C++ 11 and `std::future`. Here is some code
 
 ```c++
-// call a remote procedure ..
+// 1) call a remote procedure
 //
-session.call("com.mathservice.add2", {23, 777}).then([&](boost::future<boost::any> f) {
+auto c1 = session.call("com.mathservice.add2", {23, 777})
+   .then([&](boost::future<boost::any> f) {
 
- // call result received
- //
- std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
-});
+      // call result received
+		//
+		std::cout << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
+	}
+);
+
+// 3) publish an event to a topic
+//
+session.publish("com.myapp.topic2", {23, true, std::string("hello")});
+
+// 4) subscribe an event handler to a topic
+//
+auto s1 = session.subscribe("com.myapp.topic1",
+   [](const anyvec& args, const anymap& kwargs) {
+      cerr << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
+   }
+).then(
+   [](future<subscription> sub) {
+      cerr << "Subscribed with subscription ID " << sub.get().id << endl;
+   }
+);
+
 ```
 
 The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
