@@ -21,8 +21,10 @@ Import('env')
 examples = ['subscribe1.cpp',
             'publish1.cpp',
             'publish2.cpp',
+            'publish3.cpp',
             'call1.cpp',
             'call2.cpp',
+            'call3.cpp',
             'stdio.cpp',
             ]
 

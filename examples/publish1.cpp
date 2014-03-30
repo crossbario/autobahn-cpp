@@ -59,11 +59,6 @@ int main () {
       //
       future<void> session_future;
 
-      // same for other vars we need to keep alive ..
-      int count = 1;
-      asio::deadline_timer timer(io, posix_time::seconds(1));
-      std::function<void ()> dopub;
-
       // now do an asynchronous connect ..
       //
       boost::asio::async_connect(socket, endpoint_iterator,
@@ -85,21 +80,11 @@ int main () {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  // publish an event every second ..
+                  // event with positional payload
                   //
-                  dopub = [&]() {
-                     timer.async_wait([&](system::error_code) {
+                  session.publish("com.myapp.topic2", {23, true, std::string("hello")});
 
-                        session.publish("com.myapp.topic2", {count, anyvec({1, 2, 3})}, {{"foo", string("bar")}});
-
-                        cerr << "Event " << count << " published." << endl;
-
-                        count += 1;
-                        timer.expires_at(timer.expires_at() + posix_time::seconds(1));
-                        dopub();
-                     });
-                  };
-                  dopub();
+                  io.stop();
                });
 
             } else {

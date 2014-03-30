@@ -2,24 +2,44 @@
 
 **Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a [WAMP](http://wamp.ws/) implementation in C++ with the following roles
 
- * Caller
- * Callee
- * Publisher
- * Subscriber
+ * **Caller**
+ * **Callee**
+ * **Publisher**
+ * **Subscriber**
 
-running over TCP, Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
+running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
 
-The library is "header-only" and depends on
+The API and implementation make use of modern C++ 11 and `std::future`. Here is some code
+
+```c++
+// call a remote procedure ..
+//
+session.call("com.mathservice.add2", {23, 777}).then([&](boost::future<boost::any> f) {
+
+ // call result received
+ //
+ std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
+});
+```
+
+The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
  * C++ 11 compiler
- * `boost::asio`
- * `boost::any`
  * `boost::future`
+ * `boost::any`
+ * `boost::asio`
+ 
+The library and example programs are developed with
+
+ * clang 3.4
+ * libc++
 
 
-> Note: While C++ 11 provides a `std::future`, that lacks continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015:
-* [C++ Standardisation Roadmap](http://isocpp.org/std/status)
-* [Boost C++ 1y](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/compliance.html#thread.compliance.cxx1y.async)
+> Notes:
+>
+> * Support for GNU g++/libstdc++ depends on this [issue](https://github.com/tavendo/AutobahnCpp/issues/1)
+> * While C++ 11 provides a `std::future` - but this does not yet support continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
+> * Support for `when_all` and `when_any` depends on Boost 1.56 (!) or higher.
 
 
 ## Building
@@ -132,6 +152,7 @@ _gen/doxygen
 * [Boost Issue: when_all](https://svn.boost.org/trac/boost/ticket/7447)
 * [Boost Issue. when_any](https://svn.boost.org/trac/boost/ticket/7446)
 * [Boost Issue: future fires twice](https://svn.boost.org/trac/boost/ticket/9711)
+* [Boost C++ 1y](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/compliance.html#thread.compliance.cxx1y.async)
 
 ## Closures Cheetsheet
 

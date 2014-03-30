@@ -18,11 +18,12 @@
 
 #include <string>
 #include <iostream>
+#include <chrono>
+#include <functional>
 
 #include "autobahn.hpp"
 
 #include <boost/asio.hpp>
-#include <boost/version.hpp>
 
 using namespace std;
 using namespace boost;
@@ -32,8 +33,6 @@ using boost::asio::ip::tcp;
 
 
 int main () {
-
-   cerr << "Running on " << BOOST_VERSION << endl;
 
    try {
       // ASIO service object
@@ -60,6 +59,11 @@ int main () {
       //
       future<void> session_future;
 
+      // same for other vars we need to keep alive ..
+      int count = 1;
+      asio::deadline_timer timer(io, posix_time::seconds(1));
+      std::function<void ()> dopub;
+
       // now do an asynchronous connect ..
       //
       boost::asio::async_connect(socket, endpoint_iterator,
@@ -81,19 +85,22 @@ int main () {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  // call a remote procedure ..
+                  // publish an event every second ..
                   //
-                  session.call("com.mathservice.add2", {23, 777}).then([&](future<any> f) {
+                  dopub = [&]() {
+                     timer.async_wait([&](system::error_code) {
 
-                     // call result received
-                     //
-                     std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
-                     io.stop();
+                        session.publish("com.myapp.topic2", {count, anyvec({1, 2, 3})}, {{"foo", string("bar")}});
 
-                  });
+                        cerr << "Event " << count << " published." << endl;
+
+                        count += 1;
+                        timer.expires_at(timer.expires_at() + posix_time::seconds(1));
+                        dopub();
+                     });
+                  };
+                  dopub();
                });
-
-               session_future.wait();
 
             } else {
                cerr << "Could not connect to server: " << ec.message() << endl;
