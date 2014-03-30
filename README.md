@@ -9,9 +9,21 @@
 
 running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
 
-The API and implementation make use of modern C++ 11 and new asynchronous idioms using futures continuations and lambda.
+The API and implementation make use of modern C++ 11 and new asynchronous idioms using futures continuations and lambdas.
+
+The implementation is "header-only", light-weight (< 2k code lines) and **depends on** the following:
+
+ * C++ 11 compiler
+ * `boost::future`
+ * `boost::any`
+ * `boost::asio`
+ 
+> The library and example programs are tested and developed with **clang 3.4**, **libc++** and **Boost trunk** on an Ubuntu 13.10 x86-64 bit system. Your mileage with other tools may vary, but we accept PRs;)
+
 
 ## Show me some code!
+
+Here is how programming with **Autobahn**|Cpp looks like:
 
 ```c++
 // 1) call a remote procedure
@@ -42,18 +54,8 @@ auto s1 = session.subscribe("com.myapp.topic1",
 
 ```
 
-The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
- * C++ 11 compiler
- * `boost::future`
- * `boost::any`
- * `boost::asio`
- 
-The library and example programs are developed with
-
- * clang 3.4
- * libc++
-
+## Building
 
 > Notes:
 >
@@ -61,8 +63,6 @@ The library and example programs are developed with
 > * While C++ 11 provides a `future` - but this does not yet support continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
 > * Support for `when_all` and `when_any` depends on Boost 1.56 (!) or higher.
 
-
-## Building
 
 ### Build tools
 
