@@ -1,7 +1,5 @@
 # **Autobahn**|Cpp
 
-## Introduction
-
 **Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a [WAMP](http://wamp.ws/) implementation in C++ with the following roles
 
  * **Caller**
@@ -9,9 +7,7 @@
  * **Publisher**
  * **Subscriber**
 
-running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
-
-The API and implementation make use of modern C++ 11 and `future`
+running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport. The API and implementation make use of modern C++ 11 and `future`.
 
 ## Show me some code!
 
