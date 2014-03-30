@@ -21,7 +21,9 @@ import datetime
 
 from twisted.python import log
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import Deferred, \
+                                   inlineCallbacks, \
+                                   returnValue
 from twisted.internet.endpoints import serverFromString
 
 from autobahn.twisted.util import sleep
@@ -62,6 +64,66 @@ class MyBackendComponent(ApplicationSession):
 
       yield self.register(utcnow, 'com.timeservice.now')
 
+      def square(x):
+         return x * x
+
+      yield self.register(square, 'com.math.square')
+
+      @inlineCallbacks
+      def slowsquare(x, delay = 1):
+         print("slowsquare with delay = {}".format(delay))
+         yield sleep(delay)
+         returnValue(x * x)
+
+      yield self.register(slowsquare, 'com.math.slowsquare')
+
+      def add2(a, b):
+         return a + b
+
+      yield self.register(add2, 'com.mathservice.add2')
+
+      def ping():
+         return
+
+      def add2(a, b):
+         return a + b
+
+      def stars(nick = "somebody", stars = 0):
+         return "{} starred {}x".format(nick, stars)
+
+      def orders(product, limit = 5):
+         return ["Product {}".format(i) for i in range(50)][:limit]
+
+      def arglen(*args, **kwargs):
+         return [len(args), len(kwargs)]
+
+      yield self.register(ping, 'com.arguments.ping')
+      yield self.register(add2, 'com.arguments.add2')
+      yield self.register(stars, 'com.arguments.stars')
+      yield self.register(orders, 'com.arguments.orders')
+      yield self.register(arglen, 'com.arguments.arglen')
+
+
+      def add_complex(a, ai, b, bi):
+         return CallResult(c = a + b, ci = ai + bi)
+
+      yield self.register(add_complex, 'com.myapp.add_complex')
+
+      def split_name(fullname):
+         forename, surname = fullname.split()
+         return CallResult(forename, surname)
+
+      yield self.register(split_name, 'com.myapp.split_name')
+
+
+      def numbers(start, end, prefix = "Number: "):
+         res = []
+         for i in range(start, end):
+            res.append(prefix + str(i))
+         return res
+
+      yield self.register(numbers, 'com.arguments.numbers')
+
       ## publish events to a topic
       ##
       counter = 0
@@ -70,6 +132,8 @@ class MyBackendComponent(ApplicationSession):
          print("Published event: {}".format(counter))
          counter += 1
          yield sleep(1)
+
+
 
 
 if __name__ == '__main__':
@@ -95,7 +159,8 @@ if __name__ == '__main__':
 
    ## 6) create a WAMP-over-RawSocket-MsgPack transport server factory
    serializer = MsgPackSerializer()
-   transport_factory2 = WampRawSocketServerFactory(session_factory, serializer, debug = False)
+   serializer._serializer.ENABLE_V5 = False
+   transport_factory2 = WampRawSocketServerFactory(session_factory, serializer, debug = True)
 
    ## 7) start the server from a Twisted endpoint
    server2 = serverFromString(reactor, "tcp:8090")

@@ -791,7 +791,7 @@ namespace autobahn {
             throw protocol_error("invalid EVENT message structure - PUBLISHED.Publication|id must be an integer");
          }
 
-         uint64_t publication_id = msg[2].as<uint64_t>();
+         //uint64_t publication_id = msg[2].as<uint64_t>();
 
          if (msg[3].type != msgpack::type::MAP) {
             throw protocol_error("invalid EVENT message structure - Details must be a dictionary");
