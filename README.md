@@ -14,14 +14,14 @@ The API and implementation make use of modern C++ 11 and `std::future`. Here is 
 ```c++
 // 1) call a remote procedure
 //
-auto c1 = session.call("com.mathservice.add2", {23, 777}).then(
+auto c1 = session.call("com.mathservice.add2", {23, 777})
+.then(
    [&](boost::future<boost::any> f) {
 
       // call result received
 		//
 		std::cout << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
-	});
-);
+	};);
 
 // 3) publish an event to a topic
 //
