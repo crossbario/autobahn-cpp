@@ -126,6 +126,36 @@ Add the following to `$HOME/.profile`
 export LD_LIBRARY_PATH=${HOME}/msgpack_clang/lib:${LD_LIBRARY_PATH}
 ```
 
+
+## Use clang
+##
+export CC='clang'
+export CXX='clang++'
+
+## Libaries (clang based)
+##
+export BOOST_ROOT=${HOME}/boost_trunk_clang
+export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
+
+export MSGPACK_ROOT=${HOME}/msgpack_clang
+export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
+
+
+## Use GNU
+##
+export CC='gcc'
+export CXX='g++'
+
+## Libraries (GCC based)
+##
+export BOOST_ROOT=${HOME}/boost_trunk_gcc
+export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
+
+export MSGPACK_ROOT=${HOME}/msgpack_gcc
+export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
+
+
+
 ### **Autobahn**|Cpp
 
 ## Note: You need to either set BOOST_ROOT to the root of a stock Boost distribution

@@ -32,8 +32,8 @@ if 'CXX' in os.environ:
 if env['CXX'].startswith('g++'):
 
    GCC_VERSION = commands.getoutput(env['CXX'] + ' -dumpversion')
-   if GCC_VERSION < "4.4.0":
-      raise SCons.Errors.UserError, "GCC version {} with insufficient C++ 11 support detected".format(GCC_VERSION)
+   if GCC_VERSION < "4.3.0":
+      raise SCons.Errors.UserError, "GCC version {} detected with no or insufficient C++ 11 support detected".format(GCC_VERSION)
 
    env.Append(CXXFLAGS = ['-std=c++11',
                           '-O2',
