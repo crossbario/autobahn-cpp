@@ -174,6 +174,8 @@ The library is "header-only", means there isn't anything to compile or build. Ju
 
 ## Examples
 
+The Autobahn|Cpp repository contains a number of [examples](https://github.com/tavendo/AutobahnCpp/tree/master/examples) that demonstrate all 4 basic patterns of using WAMP.
+
 ### Building the Examples
 
 For building the examples, add the following to your `~/.profile`:
@@ -219,12 +221,40 @@ scons -j 4
 
 ### Running the Examples
 
-Write me.
+The examples include a [Autobahn|Python](http://autobahn.ws/python) based WAMP router and example backend.
+
+To run this, you need Python and pip. Then
+
+```shell
+pip install autobahn[twisted]
+```
+
+Start the router in a first terminal
+
+```shell
+cd autobahn/examples
+python server.py
+```
+
+Then start one of the built examples
+
+```shell
+cd autobahn
+./build/examples/call1
+```
 
 
 ## Documentation
 
 [Click here for the Autobahn|Cpp Documentation](http://autobahn.ws/cpp)
+
+Build the API reference with Doxygen
+
+```shell
+cd autobahn/docs
+doxygen Doxyfile
+```
+
 
 ### Building the Documentation
 
