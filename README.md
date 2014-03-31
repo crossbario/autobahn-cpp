@@ -7,12 +7,10 @@
  * **Publisher**
  * **Subscriber**
 
-The API and implementation make use of modern C++ 11 and new asynchronous idioms using (upcoming) features of the standard C++ library, in particular **Futures**, [**Continuations**](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf) and **Lambdas**. [Continuations](http://en.wikipedia.org/wiki/Continuation) are *one* way of managing control flow in an asynchronous program. Other styles include:
+The API and implementation make use of modern C++ 11 and new asynchronous idioms using (upcoming) features of the standard C++ library, in particular **Futures**, [**Continuations**](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf) and **Lambdas**.
 
- * asynchronous [Callbacks](http://en.wikipedia.org/wiki/Callback_%28computer_programming%29)
- * [Coroutines](http://en.wikipedia.org/wiki/Coroutine) (`yield` or `await`)
- * Actors ([Erlang/OTP](http://www.scala-lang.org/), [Scala](http://www.scala-lang.org/)/[Akka](http://akka.io/) or [Rust](http://www.scala-lang.org/))
- * [Transactional memory](http://en.wikipedia.org/wiki/Transactional_Synchronization_Extensions)
+> [Continuations](http://en.wikipedia.org/wiki/Continuation) are *one* way of managing control flow in an asynchronous program. Other styles include: asynchronous [Callbacks](http://en.wikipedia.org/wiki/Callback_%28computer_programming%29), [Coroutines](http://en.wikipedia.org/wiki/Coroutine) (`yield` or `await`), Actors ([Erlang/OTP](http://www.scala-lang.org/), [Scala](http://www.scala-lang.org/)/[Akka](http://akka.io/) or [Rust](http://www.scala-lang.org/)) and [Transactional memory](http://en.wikipedia.org/wiki/Transactional_Synchronization_Extensions).
+> 
 
 The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
@@ -23,9 +21,6 @@ The library is "header-only", light-weight (< 2k code lines) and **depends on** 
 
 **Autobahn**|Cpp supports running WAMP `rawsocket-msgpack` over TCP(-TLS), Unix domain sockets or pipes (`stdio`).
  
-> The library and example programs are tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
-
-
 ## Show me some code!
 
 Here is how programming with C++ and **Autobahn**|Cpp looks like.
@@ -63,6 +58,16 @@ auto r1 = session.provide("com.myapp.cpp.square",
 session.publish("com.myapp.topic2", {23, true, string("hello")});
 ```
 
+**Publishing an Event (acknowledged)**
+
+```c++
+session.publish("com.myapp.topic2", {23, true, string("hello")})
+.then(
+   [](future<publication> pub) {
+      cout << "Published with publication ID " << pub.get().id << endl;
+   });
+```
+
 **Subscribing to a Topic**
 
 ```c++
@@ -82,11 +87,12 @@ auto s1 = session.subscribe("com.myapp.topic1",
 
 ## Building
 
-> Notes:
+> *Notes*
 >
-> * Support for GNU g++/libstdc++ is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/1). Support for Window/MSVC is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/2)
-> * While C++ 11 provides a `future` - but this does not yet support continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
-> * Support for `when_all` and `when_any` depends on Boost 1.56 (!) or higher.
+> * The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/2).
+> * While C++ 11 includes `std::future` in the standard library, this lacks continuations. `boost::future.then` allows attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
+> * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 (upcoming release as of 31/03/2014) or higher.
+> * The library and example programs were tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
 
 
 ### Build tools
@@ -107,7 +113,7 @@ sudo apt-get install clang-3.4 libc++1 libc++-dev
 
 ### Boost
 
-Get the latest Boost from [here](http://www.boost.org/). Then
+To build Boost 1.55 (current release) from sources, get source code package for the latest Boost release from [here](http://www.boost.org/) and
 
 ```shell
 cd $HOME
@@ -117,17 +123,23 @@ cd boost_1_55_0/
 ./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
 
-Get Boost trunk by doing:
+> Note: The `-j 4` option will allow use of 4 cores for building.
+> 
+
+To build with GCC instead of clang:
 
 ```shell
-git clone --recursive git@github.com:boostorg/boost.git
+./b2 toolset=gcc -j 4
 ```
 
-
-Add the following to `$HOME/.profile`
+To build Boost trunk (needed for `when_all`, `when_any`)
 
 ```shell
-export LD_LIBRARY_PATH=${HOME}/boost_1_55_0/stage/lib:${LD_LIBRARY_PATH}
+cd $HOME
+git clone --recursive git@github.com:boostorg/boost.git
+cd boost/
+./bootstrap.sh
+./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
 
 ### MsgPack-C
@@ -145,13 +157,36 @@ make
 make install
 ```
 
+To build with GCC instead of clang:
+
+
+```shell
+./configure --prefix=$HOME/msgpack_gcc
+```
+
+
 Add the following to `$HOME/.profile`
 
 ```shell
 export LD_LIBRARY_PATH=${HOME}/msgpack_clang/lib:${LD_LIBRARY_PATH}
 ```
 
+### **Autobahn**|Cpp
 
+To get **Autobahn**|Cpp library and examples, clone the repo
+
+```shell
+cd $HOME
+git clone git@github.com:tavendo/AutobahnCpp.git
+cd AutobahnCpp
+```
+
+The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
+
+For building the examples, add the following to your `~/.profile`:
+
+
+```shell
 ## Use clang
 ##
 export CC='clang'
@@ -164,8 +199,11 @@ export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
 
 export MSGPACK_ROOT=${HOME}/msgpack_clang
 export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
+```
 
+For building with GCC, use the following
 
+```shell
 ## Use GNU
 ##
 export CC='gcc'
@@ -178,33 +216,12 @@ export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
 
 export MSGPACK_ROOT=${HOME}/msgpack_gcc
 export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
+```
 
-
-
-### **Autobahn**|Cpp
-
-## Note: You need to either set BOOST_ROOT to the root of a stock Boost distribution
-## or set BOOST_INCLUDES and BOOST_LIBS if Boost comes with your OS distro e.g. and
-## needs BOOST_INCLUDES=/usr/include/boost and BOOST_LIBS=/usr/lib like Ubuntu.
-##
-
-## Note: You need to either set MSGPACK_ROOT to the root of a stock MsgPack-C distribution
-## or set MSGPACK_INCLUDES and MSGPACK_LIBS if MsgPack-C comes with your OS distro e.g. and
-## needs MSGPACK_INCLUDES=/usr/include/boost and MSGPACK_LIBS=/usr/lib.
-##
-
-scons -j 4
-
-
-
-Finally, to build **Autobahn**|Cpp
+Now build all examples:
 
 ```shell
-source $HOME/.profile
-cd $HOME
-git clone git@github.com:tavendo/AutobahnCpp.git
-cd AutobahnCpp
-scons
+scons -j 4
 ```
 
 ## Building Documentation
@@ -223,11 +240,6 @@ Sphinx takes the RST files generated plus manually written RST files and generat
 sudo apt-get install doxygen python-sphinx
 sudo /usr/bin/pip install breathe
 ```
-
-
-_gen/doxygen
-
-
 
 ## Futures
 
