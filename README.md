@@ -96,9 +96,6 @@ Get Boost trunk by doing:
 
 ```shell
 git clone --recursive git@github.com:boostorg/boost.git
-
-
-svn co  http://svn.boost.org/svn/boost/trunk boost-trunk
 ```
 
 
@@ -130,6 +127,20 @@ export LD_LIBRARY_PATH=${HOME}/msgpack_clang/lib:${LD_LIBRARY_PATH}
 ```
 
 ### **Autobahn**|Cpp
+
+## Note: You need to either set BOOST_ROOT to the root of a stock Boost distribution
+## or set BOOST_INCLUDES and BOOST_LIBS if Boost comes with your OS distro e.g. and
+## needs BOOST_INCLUDES=/usr/include/boost and BOOST_LIBS=/usr/lib like Ubuntu.
+##
+
+## Note: You need to either set MSGPACK_ROOT to the root of a stock MsgPack-C distribution
+## or set MSGPACK_INCLUDES and MSGPACK_LIBS if MsgPack-C comes with your OS distro e.g. and
+## needs MSGPACK_INCLUDES=/usr/include/boost and MSGPACK_LIBS=/usr/lib.
+##
+
+scons -j 4
+
+
 
 Finally, to build **Autobahn**|Cpp
 
