@@ -126,9 +126,9 @@ int main () {
                      });
 
                      l.wait();
-
                   });
 
+                  finish.wait();
                   end.wait();
                });
 
