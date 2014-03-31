@@ -32,8 +32,6 @@ auto c1 = session.call("com.mathservice.add2", {23, 777})
 .then(
    [&](future<any> f) {
 
-      // call result received
-		//
 		cout << "Got RPC result " << any_cast<uint64_t> (f.get()) << endl;
 	});
 ```
@@ -45,7 +43,6 @@ auto r1 = session.provide("com.myapp.cpp.square",
    [](const anyvec& args, const anymap& kwargs) {
 
       cerr << "Someone is calling my lambda function .." << endl;
-
       uint64_t x = any_cast<uint64_t> (args[0]);
       return x * x;
    });
@@ -63,7 +60,7 @@ session.publish("com.myapp.topic2", {23, true, string("hello")});
 auto opts = PublishOptions();
 opts.acknowledge = True;
 
-session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
+auto p1 = session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
 .then(
    [](future<publication> pub) {
       cout << "Published with publication ID " << pub.get().id << endl;
@@ -73,8 +70,6 @@ session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
 **Subscribing to a Topic**
 
 ```c++
-// 4) subscribe an event handler to a topic
-//
 auto s1 = session.subscribe("com.myapp.topic1",
    [](const anyvec& args, const anymap& kwargs) {
       cout << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
