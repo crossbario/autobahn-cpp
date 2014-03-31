@@ -91,7 +91,7 @@ int main () {
 
       // create a WAMP session that talks over TCP
       //
-      bool debug = true;
+      bool debug = false;
       autobahn::session<tcp::socket,
                         tcp::socket> session(io, socket, socket, debug);
 
