@@ -216,27 +216,33 @@ export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
 Now build all examples:
 
 ```shell
+cd autobahn/examples
 scons -j 4
 ```
+
+The examples will get built in `autobahn/build/examples`.
+
 
 ### Running the Examples
 
 The examples include a [Autobahn|Python](http://autobahn.ws/python) based WAMP router and example backend.
 
-To run this, you need Python and pip. Then
+To run this, you need [Python](http://python.org) and [pip](http://www.pip-installer.org/en/latest/installing.html) already installed.
+
+Then, to install **Autobahn|Python**
 
 ```shell
 pip install autobahn[twisted]
 ```
 
-Start the router in a first terminal
+Start the example router in a first terminal
 
 ```shell
 cd autobahn/examples
 python server.py
 ```
 
-Then start one of the built examples
+Then start one of the built C++ examples
 
 ```shell
 cd autobahn
