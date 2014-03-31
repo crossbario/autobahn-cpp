@@ -21,6 +21,52 @@
                console.log("Got event on topic 2:", args, kwargs);
             }
             session.subscribe('com.myapp.topic2', onevent2);
+
+            session.call('com.myapp.cpp.add2', [99, 1]).then(
+               function (res) {
+                  console.log("Got result", res);
+               },
+               function (err) {
+                  console.log(err);
+               }
+            );
+
+            session.call('com.myapp.cpp.square', [23]).then(
+               function (res) {
+                  console.log("Got result", res);
+               },
+               function (err) {
+                  console.log(err);
+               }
+            );
+
+            session.call('com.myapp.cpp.numbers', [1, 10]).then(
+               function (res) {
+                  console.log("Got result", res);
+               },
+               function (err) {
+                  console.log(err);
+               }
+            );
+
+            session.call('com.myapp.cpp.add_diff_mul', [23, 7]).then(
+               function (res) {
+                  console.log("Got result", res);
+               },
+               function (err) {
+                  console.log(err);
+               }
+            );
+
+            session.call('com.myapp.cpp.somemath', [33, 7]).then(
+               function (res) {
+                  console.log("Got result", res);
+               },
+               function (err) {
+                  console.log(err);
+               }
+            );
+
          };
 
          connection.open();

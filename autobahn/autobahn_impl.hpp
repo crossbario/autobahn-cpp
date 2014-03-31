@@ -616,6 +616,10 @@ namespace autobahn {
 
             if ((endpoint->second).type() == typeid(endpoint_t)) {
 
+               if (m_debug) {
+                  std::cerr << "Invoking endpoint registered under " << registration_id << " as of type endpoint_t" << std::endl;
+               }
+
                boost::any res = ( boost::any_cast<endpoint_t>(endpoint->second) )(args, kwargs);
 
                m_packer.pack_array(4);
@@ -628,6 +632,10 @@ namespace autobahn {
 
             } else if ((endpoint->second).type() == typeid(endpoint_v_t)) {
 
+               if (m_debug) {
+                  std::cerr << "Invoking endpoint registered under " << registration_id << " as of type endpoint_v_t" << std::endl;
+               }
+
                anyvec res = ( boost::any_cast<endpoint_v_t>(endpoint->second) )(args, kwargs);
 
                m_packer.pack_array(4);
@@ -638,6 +646,10 @@ namespace autobahn {
                send();
 
             } else if ((endpoint->second).type() == typeid(endpoint_fvm_t)) {
+
+               if (m_debug) {
+                  std::cerr << "Invoking endpoint registered under " << registration_id << " as of type endpoint_fvm_t" << std::endl;
+               }
 
                boost::future<anyvecmap> f_res = ( boost::any_cast<endpoint_fvm_t>(endpoint->second) )(args, kwargs);
 

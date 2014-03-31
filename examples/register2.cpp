@@ -31,13 +31,42 @@ using namespace autobahn;
 using boost::asio::ip::tcp;
 
 
-any add2(const anyvec& args, const anymap& kwargs) {
+/// Procedure that returns a single positional result (being a vector)
+any numbers(const anyvec& args, const anymap& kwargs) {
 
-   cerr << "Someone is calling add2() .." << endl;
+   cerr << "Someone is calling numbers() .." << endl;
+
+   uint64_t start = any_cast<uint64_t> (args[0]);
+   uint64_t end = any_cast<uint64_t> (args[1]);
+
+   anyvec res;
+   for (uint64_t i = start; i < end; ++i) {
+      res.push_back(i);
+   }
+   return res;
+}
+
+
+/// Procedure that returns 3 positional results (each being a scalar)
+anyvec add_diff_mul(const anyvec& args, const anymap& kwargs) {
+
+   cerr << "Someone is calling add_diff_mul() .." << endl;
 
    uint64_t x = any_cast<uint64_t> (args[0]);
    uint64_t y = any_cast<uint64_t> (args[1]);
-   return x + y;
+
+   return {x + y, x > y ? x - y : y - x, x * y};
+}
+
+
+/// Procedure that returns a future which resolves with both positional and keyword results
+future<anyvecmap> somemath(const anyvec& args, const anymap& kwargs) {
+
+   cerr << "Someone is calling somemath() .." << endl;
+
+   uint64_t x = any_cast<uint64_t> (args[0]);
+   uint64_t y = any_cast<uint64_t> (args[1]);
+   return make_ready_future(std::make_pair(anyvec({x + y, 2 * x}), anymap({{"foo", 23}, {"bar", string("baz")}})));
 }
 
 
@@ -62,7 +91,7 @@ int main () {
 
       // create a WAMP session that talks over TCP
       //
-      bool debug = false;
+      bool debug = true;
       autobahn::session<tcp::socket,
                         tcp::socket> session(io, socket, socket, debug);
 
@@ -92,27 +121,34 @@ int main () {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  // register a free standing function for remoting
+                  // register some procedure for remote calling ..
                   //
-                  auto r1 = session.provide("com.myapp.cpp.add2", &add2);
-
-                  r1.then([](future<registration> reg) {
-                     cerr << "Registered with registration ID " << reg.get().id << endl;
-                  }).wait();
-
-
-                  // register a lambda for remoting
-                  //
-                  session.provide("com.myapp.cpp.square",
-
-                     [](const anyvec& args, const anymap& kwargs) {
-
-                        cerr << "Someone is calling my lambda function .." << endl;
-
-                        uint64_t x = any_cast<uint64_t> (args[0]);
-                        return x * x;
+                  auto r1 = session.provide("com.myapp.cpp.numbers", &numbers)
+                     .then([](future<registration> reg) {
+                        cerr << "Registered numbers() with registration ID " << reg.get().id << endl;
                      }
-                  ).wait();
+                  );
+
+                  auto r2 = session.provide_v("com.myapp.cpp.add_diff_mul", &add_diff_mul)
+                     .then([](future<registration> reg) {
+                        cerr << "Registered add_diff_mul() with registration ID " << reg.get().id << endl;
+                     }
+                  );
+
+                  auto r3 = session.provide_fvm("com.myapp.cpp.somemath", &somemath)
+                     .then([](future<registration> reg) {
+                        cerr << "Registered somemath() with registration ID " << reg.get().id << endl;
+                     }
+                  );
+
+                  // do something when we are finished with all registrations ..
+                  //
+                  auto done = when_all(std::move(r1), std::move(r2), std::move(r3));
+
+                  done.then([](decltype(done)) {
+
+                     cerr << "All procedures registered" << endl;
+                  }).wait();
                });
 
             } else {
