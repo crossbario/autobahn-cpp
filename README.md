@@ -31,8 +31,7 @@ Here is how programming with C++ and **Autobahn**|Cpp looks like.
 auto c1 = session.call("com.mathservice.add2", {23, 777})
 .then(
    [&](future<any> f) {
-
-		cout << "Got RPC result " << any_cast<uint64_t> (f.get()) << endl;
+		cout << "Got call result " << any_cast<uint64_t> (f.get()) << endl;
 	});
 ```
 
@@ -41,8 +40,7 @@ auto c1 = session.call("com.mathservice.add2", {23, 777})
 auto r1 = session.provide("com.myapp.cpp.square",
 
    [](const anyvec& args, const anymap& kwargs) {
-
-      cerr << "Someone is calling my lambda function .." << endl;
+      cerr << "Procedure is invoked .." << endl;
       uint64_t x = any_cast<uint64_t> (args[0]);
       return x * x;
    });
@@ -63,7 +61,7 @@ opts.acknowledge = True;
 auto p1 = session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
 .then(
    [](future<publication> pub) {
-      cout << "Published with publication ID " << pub.get().id << endl;
+      cout << "Published with ID " << pub.get().id << endl;
    });
 ```
 
@@ -76,7 +74,7 @@ auto s1 = session.subscribe("com.myapp.topic1",
    })
 .then(
    [](future<subscription> sub) {
-      cout << "Subscribed with subscription ID " << sub.get().id << endl;
+      cout << "Subscribed with ID " << sub.get().id << endl;
    });
 
 ```
