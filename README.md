@@ -38,7 +38,6 @@ auto c1 = session.call("com.mathservice.add2", {23, 777})
 **Registering a remoted Procedure**
 ```c++
 auto r1 = session.provide("com.myapp.cpp.square",
-
    [](const anyvec& args, const anymap& kwargs) {
       cerr << "Procedure is invoked .." << endl;
       uint64_t x = any_cast<uint64_t> (args[0]);
@@ -76,7 +75,6 @@ auto s1 = session.subscribe("com.myapp.topic1",
    [](future<subscription> sub) {
       cout << "Subscribed with ID " << sub.get().id << endl;
    });
-
 ```
 
 
@@ -174,7 +172,18 @@ The library is "header-only", means there isn't anything to compile or build. Ju
 
 ## Examples
 
-The Autobahn|Cpp repository contains a number of [examples](https://github.com/tavendo/AutobahnCpp/tree/master/examples) that demonstrate all 4 basic patterns of using WAMP.
+The Autobahn|Cpp repository contains a number of [examples](https://github.com/tavendo/AutobahnCpp/tree/master/examples) that demonstrate all 4 basic patterns of using WAMP:
+
+* [Call 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/call1.cpp)
+* [Call 2](https://github.com/tavendo/AutobahnCpp/blob/master/examples/call2.cpp)
+* [Call 3](https://github.com/tavendo/AutobahnCpp/blob/master/examples/call3.cpp)
+* [Register 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/register1.cpp)
+* [Register 2](https://github.com/tavendo/AutobahnCpp/blob/master/examples/register2.cpp)
+* [Publish 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish1.cpp)
+* [Publish 2](https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish2.cpp)
+* [Publish 3](https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish3.cpp)
+* [Subscribe 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/subscribe1.cpp)
+
 
 ### Building the Examples
 
