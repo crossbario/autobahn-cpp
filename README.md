@@ -15,9 +15,9 @@ The API and implementation make use of modern C++ 11 and new asynchronous idioms
 The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
  * C++ 11 compiler
- * `boost::future`
- * `boost::any`
- * `boost::asio`
+ * [`boost::future`](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
+ * [`boost::any`](http://www.boost.org/doc/libs/1_55_0/doc/html/any.html)
+ * [`boost::asio`](http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio.html)
 
 **Autobahn**|Cpp supports running WAMP `rawsocket-msgpack` over TCP(-TLS), Unix domain sockets or pipes (`stdio`).
  
