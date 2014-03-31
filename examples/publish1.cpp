@@ -80,11 +80,19 @@ int main () {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  // event with positional payload
+                  // publish event with positional payload
                   //
                   session.publish("com.myapp.topic2", {23, true, std::string("hello")});
 
-                  io.stop();
+                  cerr << "Event published" << endl;
+
+                  // leave the session and stop I/O loop
+                  //
+                  session.leave().then([&](future<string> reason) {
+                     cerr << "Session left (" << reason.get() << ")" << endl;
+                     io.stop();
+                  }).wait();
+
                });
 
             } else {

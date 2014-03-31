@@ -116,20 +116,19 @@ int main () {
 
                   // do something when all remote procedure calls have finished
                   //
-                  auto finish = when_all(std::move(c1), std::move(c2));
-                  auto end = finish.then([&](decltype(finish)) {
+                  auto finish = when_all(std::move(c0), std::move(c1), std::move(c2));
+
+                  finish.then([&](decltype(finish)) {
+
                      cerr << "All calls finished" << endl;
 
-                     auto l = session.leave().then([&](future<std::string> reason) {
-                        //session.stop();
-                        cerr << "Session left: " << reason.get() << endl;
-                     });
-
-                     l.wait();
+                     // leave the session and stop I/O loop
+                     //
+                     session.leave().then([&](future<string> reason) {
+                        cerr << "Session left (" << reason.get() << ")" << endl;
+                        io.stop();
+                     }).wait();
                   });
-
-                  finish.wait();
-                  end.wait();
                });
 
             } else {
@@ -141,11 +140,8 @@ int main () {
       cerr << "Starting ASIO I/O loop .." << endl;
 
       io.run();
-      //session.stop();
-      //io.stop();
 
       cerr << "ASIO I/O loop ended" << endl;
-      //exit(0);
    }
    catch (std::exception& e) {
       cerr << e.what() << endl;

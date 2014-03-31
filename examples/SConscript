@@ -24,7 +24,7 @@ examples = ['subscribe1.cpp',
             'publish3.cpp',
             'call1.cpp',
             'call2.cpp',
-            #'call3.cpp',
+            'call3.cpp',
             'stdio.cpp',
             ]
 

@@ -16,234 +16,132 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <string>
+#include <iostream>
 
 #include "autobahn.hpp"
 
-using namespace boost;
+#include <boost/asio.hpp>
+#include <boost/version.hpp>
+
 using namespace std;
+using namespace boost;
 using namespace autobahn;
+
+using boost::asio::ip::tcp;
 
 
 int main () {
 
-   // A Worker MUST log to std::cerr, since std::cin/cout is used
-   // for talking WAMP with the master
-   //
-   std::cerr << "Worker starting .." << std::endl;
+   cerr << "Running on " << BOOST_VERSION << endl;
 
-   // Setup WAMP session running over stdio
-   //
-   autobahn::session session(std::cin, std::cout);
-
-   // Launch policy to use
-   //
-   boost::launch lp = boost::launch::deferred;
-
-   // To establish a session, we join a "realm" ..
-   //
-   session.join(std::string("realm1")).then([&](boost::future<int> fs) {
-
-      // WAMP session is now established ..
+   try {
+      // ASIO service object
       //
-      int session_id = fs.get();
+      asio::io_service io;
 
-      std::cerr << "Joined with session ID " << session_id << std::endl;
-
-      autobahn::anyvec params1 = {2, "foobar"};
-      autobahn::anymap params2 = {{"a", 23}, {"b", 7}};
-
-
-      // Variant A: positional args via generic vector, generic result
+      // the TCP socket we connect
       //
-      autobahn::anyvec args;
-      args.push_back(23);
-      args.push_back(777);
-/*
-      session.call("com.mathservice.add2", args).then(lp, [](boost::future<boost::any> f) {
-         uint64_t res = boost::any_cast<uint64_t> (f.get());
-         std::cerr << "A - Got RPC result " << res << std::endl;
-      });
-*/
+      tcp::socket socket(io);
 
-#if 0
-      // Variant B: generic positional args, generic result
+      // connect to this server/port
       //
-      boost::any a = 23;
-      boost::any b = 777;
+      tcp::resolver resolver(io);
+      auto endpoint_iterator = resolver.resolve({"127.0.0.1", "8090"});
 
-      session.call("com.mathservice.add2", a, b).then(lp, [](boost::future<boost::any> f) {
-         int res = boost::any_cast<int> (f.get());
-         std::cerr << "B - Got RPC result " << res << std::endl;
-      });
-
-
-      // Variant C: typed positional args, generic result
+      // create a WAMP session that talks over TCP
       //
-      session.call("com.mathservice.add2", 23, 777).then(lp, [](boost::future<boost::any> f) {
-         int res = boost::any_cast<int> (f.get());
-         std::cerr << "C - Got RPC result " << res << std::endl;
-      });
+      bool debug = false;
+      autobahn::session<tcp::socket,
+                        tcp::socket> session(io, socket, socket, debug);
 
-#endif
-#if 0
-      // Variant C: typed positional args, generic result
+      // make sure the future returned from the session joining a realm (see below)
+      // does not run out of scope (being destructed prematurely ..)
       //
-      session.call("com.mathservice.add2", {23, 777}).then(lp, [](boost::future<boost::any> f) {
-         int res = boost::any_cast<int> (f.get());
-         std::cerr << "D - Got RPC result " << res << std::endl;
-      });
+      future<void> session_future;
 
+      // now do an asynchronous connect ..
+      //
+      boost::asio::async_connect(socket, endpoint_iterator,
 
-      session.call("com.arguments.stars", {}, {{"stars", 10}}).then(lp, [](boost::future<boost::any> f) {
-         std::string res = boost::any_cast<std::string> (f.get());
-         std::cerr << "E - Got RPC result " << res << std::endl;
-      });
-#endif
-/*
-      session.call<std::string>("com.arguments.stars", {}, {{"stars", 20}}).then(lp, [](boost::future<std::string> f) {
-         std::cerr << "F - Got RPC result " << f.get() << std::endl;
-      });
-*/
-/*
-      session.call("com.arguments.numbers", {1, 7}, {{"prefix", std::string("Hello number: ")}}).then([](boost::future<boost::any> f) {
-//      session.call("com.arguments.numbers", {1, 7}).then([](boost::future<boost::any> f) {
-         boost::any res = f.get();
-         std::cerr << "G - Got RPC result " << res.type().name() << std::endl;
+         // we either connected or an error happened during connect ..
+         //
+         [&](boost::system::error_code ec, tcp::resolver::iterator) {
 
-         autobahn::anyvec v = boost::any_cast<autobahn::anyvec>(res);
-         std::cerr << "G2 " << v.size() << std::endl;
-         for (int i = 0; i < v.size(); ++i) {
-            std::cerr << boost::any_cast<std::string>(v[i]) << std::endl;
-         }
-      });
-*/
+            if (!ec) {
+               cerr << "Connected to server" << endl;
 
-/*
-      auto f1 = session.call("com.mathservice.add2", {7, 33}).then(
-         [](future<any> f) {
+               // start the WAMP session on the transport that has been connected
+               //
+               session.start();
 
-            uint64_t res = any_cast<uint64_t> (f.get());
-            cerr << "A - Got RPC result " << res << endl;
-            return res * 2;
-         }
-      ).then(lp, [](future<uint64_t> f) {
-         cerr << "A DONE " << f.get() << endl;
-      });
-*/
-/*
-template<class Lhs, class Rhs>
-  auto adding_func(const Lhs &lhs, const Rhs &rhs) -> decltype(lhs+rhs) {return lhs + rhs;}
-*/
-   auto xx = 33;
+               // join a realm with the WAMP session
+               //
+               session_future = session.join("realm1").then([&](future<uint64_t> s) {
 
-   decltype(xx) yy;
+                  cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-   yy = 2 * xx;
-#if 0
-   shared_future<int> shared_future1 = async([] { return 125; });
+                  // call a remote procedure with positional arguments
+                  //
+                  auto c1 = session.call("com.mathservice.add2", {23, 777})
+                     .then([&](future<any> f) {
 
-   future<std::string> future2 = async([]() { return std::string("hi"); });
+                        cerr << "Call 1 result: " << any_cast<uint64_t> (f.get()) << endl;
+                     }
+                  );
 
-   future<tuple<shared_future<int>,future<std::string>>> all_f = when_all(shared_future1, future2);
+                  // call a remote procedure with keyword arguments
+                  //
+                  auto c2 = session.call("com.arguments.stars", {}, {{"stars", 10}})
+                     .then([&](future<any> f) {
 
-   future<int> result = all_f.then([](future<boost::tuple<shared_future<int>,future<std::string>>> f) {
-      std::cerr << f.get().type().name() << std::endl;
-   });
-#endif
+                        cerr << "Call 2 result: " << any_cast<string> (f.get()) << endl;
+                     }
+                  );
 
-#if 1
-      auto f1 = session.call("com.mathservice.add2", {7, 33});
+                  // call a remote procedure with positional and keyword arguments
+                  //
+                  auto c3 = session.call("com.arguments.numbers", {1, 7}, {{"prefix", string("Hello number: ")}})
+                     .then([](boost::future<boost::any> f) {
 
-      auto f1done = f1.then([](decltype(f1) res) {
-         cerr << "Result 1: " << any_cast<uint64_t>(res.get()) << endl;
-         return 10;
-      });
+                     anyvec v = any_cast<anyvec>(f.get());
+                     for (int i = 0; i < v.size(); ++i) {
+                        cerr << any_cast<string>(v[i]) << endl;
+                     }
+                  });
 
-      auto f2 = session.call("com.mathservice.add2", {60, 90});
+                  // do something when all remote procedure calls have finished
+                  //
+                  auto finish = when_all(std::move(c1), std::move(c2), std::move(c3));
 
-      auto f2done = f2.then([](decltype(f2) res) {
-         cerr << "Result 2: " << any_cast<uint64_t>(res.get()) << endl;
-         return 20;
-      });
+                  finish.then([&](decltype(finish)) {
 
-      //future<tuple<shared_future<int>, future<int>>> f3 = when_all(f1done, f2done);
-#endif
-#if 0
-      auto f3 = when_all(f1done, f2done);
+                     cerr << "All calls finished" << endl;
 
-      f3.then(lp, [](decltype(f3) res) {
-         cerr << "Done." << endl;
-      });
+                     // leave the session and stop I/O loop
+                     //
+                     session.leave().then([&](future<string> reason) {
+                        cerr << "Session left (" << reason.get() << ")" << endl;
+                        io.stop();
+                     }).wait();
+                  });
+               });
 
-      when_all(f1done, f2done).then(lp, [](decltype(f3) res) {
-         cerr << "Done." << endl;
-      });
-#else
-#endif
-/*
-      wait_for_all(f1, f2);
-      cerr << "Done." << endl;
-*/
-      //decltype(some_int)
-/*
-      auto f1 = session.call("com.mathservice.add2", {7, 33}).then(
-         [](future<any> f) {
-
-            uint64_t res = any_cast<uint64_t> (f.get());
-            cerr << "Result 1: " << res << endl;
-         }
-      );
-
-      auto f2 = session.call("com.mathservice.add2", {10, 40}).then(
-         [](future<any> f) {
-
-            uint64_t res = any_cast<uint64_t> (f.get());
-            cerr << "Result 2: " << res << endl;
-         }
-      );
-
-      wait_for_all(f1, f2).then(lp,
-         [](boost::future<void>, boost::future<void>) {
-
-            cerr << "Done." << endl;
-         }
-      );
-*/
-/*
-//      boost::future<void> f2 = session.call("com.arguments.numbers", {1, 7}, {{"prefix", std::string("Hello number: ")}}).then(
-      auto f2 = session.call("com.arguments.numbers", {1, 7}, {{"prefix", std::string("Hello number: ")}}).then(
-         [](boost::future<boost::any> f) {
-
-            boost::any res = f.get();
-            std::cerr << "G - Got RPC result " << res.type().name() << std::endl;
-
-            autobahn::anyvec v = boost::any_cast<autobahn::anyvec>(res);
-            std::cerr << "G2 " << v.size() << std::endl;
-            for (int i = 0; i < v.size(); ++i) {
-               std::cerr << boost::any_cast<std::string>(v[i]) << std::endl;
+            } else {
+               cerr << "Could not connect to server: " << ec.message() << endl;
             }
          }
       );
-*/
-/*
-      f2.then(lp, [](boost::future<void>) {
-         std::cerr << "DONE F2" << std::endl;
-      });
-*/
-/*
-      boost::wait_for_all(f1, f2).then(lp, [](boost::future<void>, boost::future<void>) {
-         std::cerr << "DONE F2" << std::endl;
-      });
-*/
-//      boost::future< std::tuple< boost::future<void>, boost::future<void> > > f3 = boost::wait_for_all(f1, f2);
-      //auto f3 = boost::wait_for_all(f1, f2);
 
-   });
+      cerr << "Starting ASIO I/O loop .." << endl;
 
+      io.run();
 
-   // Enter event loop for session ..
-   //
-   session.loop();
+      cerr << "ASIO I/O loop ended" << endl;
+   }
+   catch (std::exception& e) {
+      cerr << e.what() << endl;
+      return 1;
+   }
+   return 0;
 }

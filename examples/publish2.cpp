@@ -122,6 +122,17 @@ int main () {
 
                   session.publish("com.myapp.topic2", {}, m2);
 
+
+                  cerr << "Events published" << endl;
+
+
+                  // leave the session and stop I/O loop
+                  //
+                  session.leave().then([&](future<string> reason) {
+                     cerr << "Session left (" << reason.get() << ")" << endl;
+                     io.stop();
+                  }).wait();
+
                });
 
             } else {
