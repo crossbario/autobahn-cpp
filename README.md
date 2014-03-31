@@ -159,13 +159,6 @@ To build with GCC instead of clang:
 ./configure --prefix=$HOME/msgpack_gcc
 ```
 
-
-Add the following to `$HOME/.profile`
-
-```shell
-export LD_LIBRARY_PATH=${HOME}/msgpack_clang/lib:${LD_LIBRARY_PATH}
-```
-
 ### **Autobahn**|Cpp
 
 To get **Autobahn**|Cpp library and examples, clone the repo
@@ -177,6 +170,11 @@ cd AutobahnCpp
 ```
 
 The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
+
+
+## Examples
+
+### Building the Examples
 
 For building the examples, add the following to your `~/.profile`:
 
@@ -219,7 +217,16 @@ Now build all examples:
 scons -j 4
 ```
 
-## Building Documentation
+### Running the Examples
+
+Write me.
+
+
+## Documentation
+
+[Click here for the Autobahn|Cpp Documentation](http://autobahn.ws/cpp)
+
+### Building the Documentation
 
 The documentation is built using Sphinx, Doxygen and Breathe.
 
@@ -236,7 +243,7 @@ sudo apt-get install doxygen python-sphinx
 sudo /usr/bin/pip install breathe
 ```
 
-## Futures
+## Resources
 
 * [ASIO C++11 Examples](http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/examples/cpp11_examples.html)
 * [Using Asio with C++11](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3388.pdf)
@@ -247,6 +254,7 @@ sudo /usr/bin/pip install breathe
 * [Boost Issue: future fires twice](https://svn.boost.org/trac/boost/ticket/9711)
 * [Boost C++ 1y](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/compliance.html#thread.compliance.cxx1y.async)
 * [Asynchronous API in C++ and the Continuation Monad](https://www.fpcomplete.com/blog/2012/06/asynchronous-api-in-c-and-the-continuation-monad)
+
 
 ## Closures Cheetsheet
 
