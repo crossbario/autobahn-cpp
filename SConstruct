@@ -35,7 +35,17 @@ if env['CXX'].startswith('g++'):
    if GCC_VERSION < "4.4.0":
       raise SCons.Errors.UserError, "GCC version {} with insufficient C++ 11 support detected".format(GCC_VERSION)
 
-   env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wno-deprecated-declarations', '-Wl,--no-as-needed', '-pthread'])
+   env.Append(CXXFLAGS = ['-std=c++11',
+                          '-O2',
+                          '-Wall',
+                          '-pedantic',
+                          '-Wno-deprecated-declarations',
+                          '-Wno-unused-local-typedefs',
+                          '-Wl,--no-as-needed',
+                          '-pthread'])
+
+   env.Append(LINKFLAGS = ['-pthread'])
+
    print("Using GNU toolchain")
 
 elif env['CXX'].startswith('clang++'):
@@ -50,6 +60,7 @@ elif env['CXX'].startswith('clang++'):
                           '-pthread'])
 
    env.Append(LINKFLAGS = ['-stdlib=libc++', '-pthread'])
+
    print("Using clang toolchain")
 
 else:

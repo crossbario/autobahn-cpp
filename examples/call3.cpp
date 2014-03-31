@@ -105,7 +105,7 @@ int main () {
                      .then([](boost::future<boost::any> f) {
 
                      anyvec v = any_cast<anyvec>(f.get());
-                     for (int i = 0; i < v.size(); ++i) {
+                     for (size_t i = 0; i < v.size(); ++i) {
                         cerr << any_cast<string>(v[i]) << endl;
                      }
                   });

@@ -89,7 +89,7 @@ cd $HOME
 tar xvjf Downloads/boost_1_55_0.tar.bz2
 cd boost_1_55_0/
 ./bootstrap.sh
-./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++"
+./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
 
 Get Boost trunk by doing:
