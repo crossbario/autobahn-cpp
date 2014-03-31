@@ -1,33 +1,43 @@
 # **Autobahn**|Cpp
 
-**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a [WAMP](http://wamp.ws/) implementation in C++ with the following roles
+**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which implements the [Web Application Messaging Protocol (WAMP)](http://wamp.ws/) in C++ supporting the following application roles
 
  * **Caller**
  * **Callee**
  * **Publisher**
  * **Subscriber**
 
-running over TCP(-TLS), Unix domain sockets or pipes (`stdio`), using `rawsocket-msgpack` WAMP transport.
+The API and implementation make use of modern C++ 11 and new asynchronous idioms using (upcoming) features of the standard C++ library, in particular **Futures**, [**Continuations**](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf) and **Lambdas**.
 
-The API and implementation make use of modern C++ 11 and new asynchronous idioms using futures continuations and lambdas.
+> [Continuations](http://en.wikipedia.org/wiki/Continuation) are *one* way of managing control flow in an asynchronous program.
+> 
+> Other styles include:
+> 
+> * [Coroutines](http://en.wikipedia.org/wiki/Coroutine) (`yield` or `await`)
+> * [Transactional memory](http://en.wikipedia.org/wiki/Transactional_Synchronization_Extensions)
+> * asynchronous [Callbacks](http://en.wikipedia.org/wiki/Callback_%28computer_programming%29)
+> * Actors ([Erlang/OTP](http://www.scala-lang.org/), [Scala](http://www.scala-lang.org/)/[Akka](http://akka.io/) or [Rust](http://www.scala-lang.org/))
+> 
 
-The implementation is "header-only", light-weight (< 2k code lines) and **depends on** the following:
+The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
  * C++ 11 compiler
  * `boost::future`
  * `boost::any`
  * `boost::asio`
+
+**Autobahn**|Cpp supports running WAMP `rawsocket-msgpack` over TCP(-TLS), Unix domain sockets or pipes (`stdio`).
  
-> The library and example programs are tested and developed with **clang 3.4**, **libc++** and **Boost trunk** on an Ubuntu 13.10 x86-64 bit system. Your mileage with other tools may vary, but we accept PRs;)
+> The library and example programs are tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
 
 
 ## Show me some code!
 
-Here is how programming with **Autobahn**|Cpp looks like:
+Here is how programming with C++ and **Autobahn**|Cpp looks like.
+
+**Calling a remote Procedure**
 
 ```c++
-// 1) call a remote procedure
-//
 auto c1 = session.call("com.mathservice.add2", {23, 777})
 .then(
    [&](future<any> f) {
@@ -36,11 +46,31 @@ auto c1 = session.call("com.mathservice.add2", {23, 777})
 		//
 		cout << "Got RPC result " << any_cast<uint64_t> (f.get()) << endl;
 	});
+```
 
-// 3) publish an event to a topic
-//
+**Registering a remoted Procedure**
+```c++
+auto r1 = session.provide("com.myapp.cpp.square",
+
+   [](const anyvec& args, const anymap& kwargs) {
+
+      cerr << "Someone is calling my lambda function .." << endl;
+
+      uint64_t x = any_cast<uint64_t> (args[0]);
+      return x * x;
+   }
+);
+```
+
+**Publishing an Event**
+
+```c++
 session.publish("com.myapp.topic2", {23, true, string("hello")});
+```
 
+**Subscribing to a Topic**
+
+```c++
 // 4) subscribe an event handler to a topic
 //
 auto s1 = session.subscribe("com.myapp.topic1",
@@ -59,7 +89,7 @@ auto s1 = session.subscribe("com.myapp.topic1",
 
 > Notes:
 >
-> * Support for GNU g++/libstdc++ depends on this [issue](https://github.com/tavendo/AutobahnCpp/issues/1)
+> * Support for GNU g++/libstdc++ is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/1). Support for Window/MSVC is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/2)
 > * While C++ 11 provides a `future` - but this does not yet support continuations. **Autobahn**|Cpp makes use of `boost::future.then` for attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
 > * Support for `when_all` and `when_any` depends on Boost 1.56 (!) or higher.
 
