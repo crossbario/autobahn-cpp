@@ -48,8 +48,7 @@ auto r1 = session.provide("com.myapp.cpp.square",
 
       uint64_t x = any_cast<uint64_t> (args[0]);
       return x * x;
-   }
-);
+   });
 ```
 
 **Publishing an Event**
@@ -61,7 +60,10 @@ session.publish("com.myapp.topic2", {23, true, string("hello")});
 **Publishing an Event (acknowledged)**
 
 ```c++
-session.publish("com.myapp.topic2", {23, true, string("hello")})
+auto opts = PublishOptions();
+opts.acknowledge = True;
+
+session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
 .then(
    [](future<publication> pub) {
       cout << "Published with publication ID " << pub.get().id << endl;
