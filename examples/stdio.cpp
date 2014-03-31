@@ -59,16 +59,23 @@ int main () {
 
          cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-         // issue a remote procedure call ..
+         // call a remote procedure ..
          //
-         session.call("com.mathservice.add2", {2, 9})
-            .then([](future<any> f) {
+         auto c1 = session.call("com.mathservice.add2", {23, 777}).then([&](future<any> f) {
 
-            uint64_t res = any_cast<uint64_t> (f.get());
-            cerr << "Call result: " << res << endl;
-         }).wait();
+            // call result received
+            //
+            std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
+         });
 
-         io.stop();
+         c1.then([&](decltype(c1)) {
+            // leave the session and stop I/O loop
+            //
+            session.leave().then([&](future<string> reason) {
+               cerr << "Session left (" << reason.get() << ")" << endl;
+               io.stop();
+            }).wait();
+         });
       });
 
       cerr << "Starting ASIO I/O loop .." << endl;
