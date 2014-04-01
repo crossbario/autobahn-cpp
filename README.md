@@ -12,16 +12,15 @@ The API and implementation make use of modern C++ 11 and new asynchronous idioms
 > [Continuations](http://en.wikipedia.org/wiki/Continuation) are *one* way of managing control flow in an asynchronous program. Other styles include: asynchronous [Callbacks](http://en.wikipedia.org/wiki/Callback_%28computer_programming%29), [Coroutines](http://en.wikipedia.org/wiki/Coroutine) (`yield` or `await`), Actors ([Erlang/OTP](http://www.scala-lang.org/), [Scala](http://www.scala-lang.org/)/[Akka](http://akka.io/) or [Rust](http://www.scala-lang.org/)) and [Transactional memory](http://en.wikipedia.org/wiki/Transactional_Synchronization_Extensions).
 > 
 
-The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
+**Autobahn**|Cpp supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Unix domain sockets** or **pipes** (`stdio`). The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
  * C++ 11 compiler
  * [`boost::future`](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
  * [`boost::any`](http://www.boost.org/doc/libs/1_55_0/doc/html/any.html)
  * [`boost::asio`](http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio.html)
 
-**Autobahn**|Cpp supports running WAMP (`rawsocket-msgpack`) over TCP(-TLS), Unix domain sockets or pipes (`stdio`).
+For getting help, questions or feedback, get in touch on the **[mailing list](https://groups.google.com/forum/#!forum/autobahnws)**, **[Twitter](https://twitter.com/autobahnws)** or **IRC `#autobahn`** (Freenode).
 
-For getting help, questions or feedback, get in touch on the [mailing list](https://groups.google.com/forum/#!forum/autobahnws), IRC on Freenode under channel `#autobahn` or on [Twitter](https://twitter.com/autobahnws).
  
 ## Show me some code!
 
