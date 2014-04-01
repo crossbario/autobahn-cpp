@@ -42,6 +42,10 @@ auto r1 = session.provide("com.myapp.cpp.square",
       cerr << "Procedure is invoked .." << endl;
       uint64_t x = any_cast<uint64_t> (args[0]);
       return x * x;
+   })
+.then(
+   [](future<registration> reg) {
+      cout << "Registered with ID " << reg.get().id << endl;
    });
 ```
 
