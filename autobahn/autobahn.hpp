@@ -42,6 +42,13 @@
 #include <boost/asio.hpp>
 
 
+/*! \mainpage Reference Documentation
+ *
+ * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
+ *
+ * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
+ */
+
 
 /*!
  * Autobahn namespace.

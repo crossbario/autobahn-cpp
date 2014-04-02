@@ -277,7 +277,7 @@ cd autobahn
 
 ### Building the Documentation
 
-The documentation is built using Sphinx, Doxygen and Breathe.
+The documentation is built using [Sphinx](http://sphinx-doc.org/), [Doxygen](http://www.stack.nl/~dimitri/doxygen/) and [Breathe](http://michaeljones.github.io/breathe/).
 
 ### Install documentation build tools
 

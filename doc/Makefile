@@ -48,6 +48,9 @@ help:
 
 clean:
 	rm -rf $(BUILDDIR)/*
+	rm -rf _doxygen
+	rm -rf _build
+	rm -rf _upload
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
