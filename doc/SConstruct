@@ -20,8 +20,8 @@ import os
 import json
 import pkg_resources
 
-#taschenmesser = pkg_resources.resource_filename('taschenmesser', '..')
-taschenmesser = "../../../infrequent/taschenmesser"
+taschenmesser = pkg_resources.resource_filename('taschenmesser', '..')
+#taschenmesser = "../../../infrequent/taschenmesser"
 env = Environment(tools = ['default', 'taschenmesser'],
                   toolpath = [taschenmesser],
                   ENV = os.environ)
@@ -34,8 +34,9 @@ sphinx_docs = env.Command('_build', [], "sphinx-build -b html . $TARGET")
 env.AlwaysBuild(sphinx_docs)
 Clean(sphinx_docs, '_build')
 
-uploaded_sphinx = env.s3_dir_uploader('_upload', '_build/html', 'autobahn.ws', 'cpp')
+uploaded_sphinx = env.s3_dir_uploader('_upload', '_build', 'autobahn.ws', 'cpp')
 Depends(uploaded_sphinx, sphinx_docs)
+
 
 
 ##
@@ -47,3 +48,10 @@ Clean(doxygen_docs, '_doxygen')
 
 uploaded_doxygen = env.s3_dir_uploader('_upload', '_doxygen/html', 'autobahn.ws', 'cpp/reference')
 Depends(uploaded_doxygen, doxygen_docs)
+
+
+##
+## Targets
+##
+Default([sphinx_docs, doxygen_docs])
+Alias('upload', [uploaded_sphinx, uploaded_doxygen])
