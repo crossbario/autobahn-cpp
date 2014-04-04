@@ -1,3 +1,9 @@
+*.sublime-workspace
+website/build
+web/build
+web/reports*
+*.pyc
+
 # Compiled Object files
 *.slo
 *.lo
