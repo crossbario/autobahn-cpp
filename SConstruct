@@ -16,38 +16,87 @@
 ##
 ###############################################################################
 
-import os
+import os, sys, commands
 
-env = Environment(ENV = os.environ)
 
-USE_SHIT_COMPILER = False
+## This is our default build enviroment
+##
+env = Environment()
 
-if USE_SHIT_COMPILER:
-   env["CC"] = "gcc"
-   env["CXX"] = "g++"
-   env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wno-deprecated-declarations', '-Wl,--no-as-needed', '-pthread'])
-else:
-   env.Append(CXXFLAGS = ['-std=c++11', '-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
-#   env.Append(CXXFLAGS = ['-stdlib=libc++', '-Wall', '-Wno-deprecated-declarations', '-pthread'])
+
+## Toolchain configuration
+##
+if 'CXX' in os.environ:
+   env["CXX"] = os.environ['CXX']
+
+if env['CXX'].startswith('g++'):
+
+   GCC_VERSION = commands.getoutput(env['CXX'] + ' -dumpversion')
+   if GCC_VERSION < "4.3.0":
+      raise SCons.Errors.UserError, "GCC version {} detected with no or insufficient C++ 11 support detected".format(GCC_VERSION)
+
+   env.Append(CXXFLAGS = ['-std=c++11',
+                          '-O2',
+                          '-Wall',
+                          '-pedantic',
+                          '-Wno-deprecated-declarations',
+                          '-Wno-unused-local-typedefs',
+                          '-Wl,--no-as-needed',
+                          '-pthread'])
+
+   env.Append(LINKFLAGS = ['-pthread'])
+
+   print("Using GNU toolchain")
+
+elif env['CXX'].startswith('clang++'):
+
+   env.Append(CXXFLAGS = ['-std=c++11',
+                          '-stdlib=libc++',
+                          '-O2',
+                          '-Wall',
+                          '-pedantic',
+                          '-Wno-unused-value',
+                          '-Wno-deprecated',
+                          '-pthread'])
+
    env.Append(LINKFLAGS = ['-stdlib=libc++', '-pthread'])
-   env["CC"] = "clang"
-   env["CXX"] = "clang++"
 
-# -std=c++11 -stdlib=libc++
-#
+   print("Using clang toolchain")
 
-env.Append(CPPPATH = ['/home/oberstet/boost_1_55_0/'])
-env.Append(LIBPATH = ['/home/oberstet/boost_1_55_0/stage/lib'])
+else:
+   raise SCons.Errors.UserError, "Don't know how to configure build environment for toolchain {}".format(env['CXX'])
 
-env.Append(CPPPATH = ['#/include'])
-env.Append(CPPPATH = [os.path.join(os.environ['HOME'], 'msgpack_clang/include')])
-env.Append(LIBPATH = [os.path.join(os.environ['HOME'], 'msgpack_clang/lib')])
-#env.Append(LIBPATH = ['/usr/lib/x86_64-linux-gnu/'])
 
+## Boost
+##
+if os.environ.has_key('BOOST_ROOT'):
+   env.Append(CPPPATH = [os.environ['BOOST_ROOT']])
+   env.Append(LIBPATH = [os.path.join(os.environ['BOOST_ROOT'], 'stage', 'lib')])
+elif os.environ.has_key('BOOST_INCLUDES') and os.environ.has_key('BOOST_LIBS'):
+   env.Append(CPPPATH = [os.environ['BOOST_INCLUDES']])
+   env.Append(LIBPATH = [os.environ['BOOST_LIBS']])
+else:
+   raise SCons.Errors.UserError, "Neither BOOST_ROOT, nor BOOST_INCLUDES + BOOST_LIBS was set!"
+
+
+## MsgPack
+##
+if os.environ.has_key('MSGPACK_ROOT'):
+   env.Append(CPPPATH = [os.path.join(os.environ['MSGPACK_ROOT'], 'include')])
+   env.Append(LIBPATH = [os.path.join(os.environ['MSGPACK_ROOT'], 'lib')])
+elif os.environ.has_key('MSGPACK_INCLUDES') and os.environ.has_key('MSGPACK_LIBS'):
+   env.Append(CPPPATH = [os.environ['MSGPACK_INCLUDES']])
+   env.Append(LIBPATH = [os.environ['MSGPACK_LIBS']])
+else:
+   raise SCons.Errors.UserError, "Neither MSGPACK_ROOT, nor MSGPACK_INCLUDES + MSGPACK_LIBS was set!"
+
+
+## Autobahn
+##
+env.Append(CPPPATH = ['#/autobahn'])
+
+
+## Examples
+##
 Export('env')
-
-autobahn = SConscript('src/SConscript', variant_dir = 'build/src', duplicate = 0)
-
-Export('autobahn')
-
-tests = SConscript('test/SConscript', variant_dir = 'build/test', duplicate = 0)
+examples = SConscript('examples/SConscript', variant_dir = 'build/examples', duplicate = 0)

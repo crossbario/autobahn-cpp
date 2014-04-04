@@ -18,7 +18,12 @@
 
 import datetime
 
+from twisted.internet.defer import Deferred, \
+                                   inlineCallbacks, \
+                                   returnValue
+
 from autobahn.twisted.wamp import ApplicationSession
+from autobahn.twisted.util import sleep
 
 
 
@@ -35,17 +40,89 @@ class TestService(ApplicationSession):
 
    def onJoin(self, details):
 
+      def on_event(*args, **kwargs):
+         print "*"*80
+         print("Got event: {} {}".format(args, kwargs))
+         print "*"*80
+
+      self.subscribe(on_event, 'com.myapp.topic1')
+
+
+      @inlineCallbacks
+      def on_event2(*args, **kwargs):
+         print "*"*80, "TRYME"
+         res = yield self.call("com.myapp.cpp.add2", 3, 9)
+         print "+"*40, res
+
+      self.subscribe(on_event2, 'com.myapp.tryme')
+
+
       def utcnow():
          now = datetime.datetime.utcnow()
          return now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
       self.register(utcnow, 'com.timeservice.now')
 
+      def square(x):
+         return x * x
+
+      self.register(square, 'com.math.square')
+
+
+      @inlineCallbacks
+      def slowsquare(x, delay = 1):
+         print("slowsquare with delay = {}".format(delay))
+         yield sleep(delay)
+         returnValue(x * x)
+
+      self.register(slowsquare, 'com.math.slowsquare')
+
       def add2(a, b):
          return a + b
 
       self.register(add2, 'com.mathservice.add2')
 
+      def ping():
+         return
+
+      def add2(a, b):
+         return a + b
+
+      def stars(nick = "somebody", stars = 0):
+         return "{} starred {}x".format(nick, stars)
+
+      def orders(product, limit = 5):
+         return ["Product {}".format(i) for i in range(50)][:limit]
+
+      def arglen(*args, **kwargs):
+         return [len(args), len(kwargs)]
+
+      self.register(ping, 'com.arguments.ping')
+      self.register(add2, 'com.arguments.add2')
+      self.register(stars, 'com.arguments.stars')
+      self.register(orders, 'com.arguments.orders')
+      self.register(arglen, 'com.arguments.arglen')
+
+
+      def add_complex(a, ai, b, bi):
+         return CallResult(c = a + b, ci = ai + bi)
+
+      self.register(add_complex, 'com.myapp.add_complex')
+
+      def split_name(fullname):
+         forename, surname = fullname.split()
+         return CallResult(forename, surname)
+
+      self.register(split_name, 'com.myapp.split_name')
+
+
+      def numbers(start, end, prefix = "Number: "):
+         res = []
+         for i in range(start, end):
+            res.append(prefix + str(i))
+         return res
+
+      self.register(numbers, 'com.arguments.numbers')
 
 
 if __name__ == '__main__':

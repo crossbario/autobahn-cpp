@@ -17,20 +17,14 @@
 ###############################################################################
 
 Import('env')
-Import('autobahn')
 
-tests = []
-if False:
-   for i in range(6):
-      tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
-else:
-   i = 5
-   #tests.append(env.Program('test{}.cpp'.format(i + 1), LIBS = [autobahn, 'msgpack']))
-   #tests.append(env.Program('test5.cpp', LIBS = ['boost_system', 'boost_thread']))
-#   tests.append(env.Program('test5.cpp', LIBS = ['boost_thread', 'boost_system']))
-   tests.append(env.Program('test7c.cpp', LIBS = ['boost_thread', 'boost_system', 'msgpack', autobahn]))
-#   tests.append(env.Program('test7.cpp', LIBS = ['boost_thread', 'boost_system', 'msgpack', autobahn]))
-#   tests.append(env.Program('test8.cpp', LIBS = ['boost_thread', 'boost_system']))
-   #tests.append(env.Program('test6.cpp'))
+examples = ['test_when_all.cpp',
+            'test_future_with_asio.cpp',
+            ]
 
-Return('tests')
+prgs = []
+
+for e in examples:
+   prgs.append(env.Program(e, LIBS = ['boost_thread', 'boost_system', 'msgpack']))
+
+Return('prgs')
