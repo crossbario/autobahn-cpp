@@ -23,6 +23,8 @@
 
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <boost/filesystem.hpp>
+
 
 using namespace std;
 using namespace boost;
@@ -44,7 +46,17 @@ any add2(const anyvec& args, const anymap& kwargs) {
 
 int main (int argc, char** argv) {
 
-   cerr << "Running on " << BOOST_VERSION << endl;
+   if (argc < 2) {
+      cerr << "Usage: program <Unix domain socket path>" << endl;
+      return 1;
+   }
+
+   // read config from stdin .. this will block until EOF is read.
+   string stdin_contents((istreambuf_iterator<char>(cin)), istreambuf_iterator<char>());
+
+   cerr << "Read " << stdin_contents.size() << " bytes from stdin" << endl;
+
+   cerr << "Running on Boost version " << BOOST_VERSION << endl;
 
    try {
       // ASIO service object
@@ -54,8 +66,8 @@ int main (int argc, char** argv) {
       // the Unix domain socket we connect
       //
       stream_protocol::socket socket(io);
-      socket.connect(stream_protocol::endpoint("/tmp/router1"));
-      cerr << "Connected to server" << endl;
+      socket.connect(stream_protocol::endpoint(argv[1]));
+      cerr << "Connected to WAMP router." << endl;
 
       // create a WAMP session that talks over TCP
       //
