@@ -31,7 +31,18 @@ using namespace autobahn;
 using boost::asio::local::stream_protocol;
 
 
-int main () {
+any add2(const anyvec& args, const anymap& kwargs) {
+
+   cerr << "Someone is calling add2() .." << endl;
+
+   uint64_t x = any_cast<uint64_t> (args[0]);
+   uint64_t y = any_cast<uint64_t> (args[1]);
+   return x + y;
+}
+
+
+
+int main (int argc, char** argv) {
 
    cerr << "Running on " << BOOST_VERSION << endl;
 
@@ -46,7 +57,7 @@ int main () {
       socket.connect(stream_protocol::endpoint("/tmp/router1"));
       cerr << "Connected to server" << endl;
 
-      // create a WAMP session that talks over Unix domain sockets
+      // create a WAMP session that talks over TCP
       //
       bool debug = false;
       autobahn::session<stream_protocol::socket,
@@ -62,24 +73,27 @@ int main () {
 
          cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-         // call a remote procedure ..
-         //         
-         //auto c1 = session.call("com.mathservice.add2", {23, 777}).then([&](future<any> f) {
-         auto c1 = session.call("com.myapp.cpp.add2", {23, 777}).then([&](future<any> f) {
+         // register a free standing function for remoting
+         //
+         auto r1 = session.provide("com.myapp.cpp.add2", &add2);
 
-            // call result received
-            //
-            std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
-         });
+         r1.then([](future<registration> reg) {
+            cerr << "Registered with registration ID " << reg.get().id << endl;
+         }).wait();
 
-         c1.then([&](decltype(c1)) {
-            // leave the session and stop I/O loop
-            //
-            session.leave().then([&](future<string> reason) {
-               cerr << "Session left (" << reason.get() << ")" << endl;
-               io.stop();
-            }).wait();
-         });
+
+         // register a lambda for remoting
+         //
+         session.provide("com.myapp.cpp.square",
+
+            [](const anyvec& args, const anymap& kwargs) {
+
+               cerr << "Someone is calling my lambda function .." << endl;
+
+               uint64_t x = any_cast<uint64_t> (args[0]);
+               return x * x;
+            }
+         ).wait();
       });
 
       cerr << "Starting ASIO I/O loop .." << endl;
