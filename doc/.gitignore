@@ -1,5 +1,6 @@
 _gen
 _build
 _doxygen
+_upload*
 *.pyc
 *.bak

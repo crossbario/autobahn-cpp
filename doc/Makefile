@@ -50,7 +50,7 @@ clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf _doxygen
 	rm -rf _build
-	rm -rf _upload
+	rm -rf _upload*
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
