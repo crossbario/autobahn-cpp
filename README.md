@@ -10,7 +10,7 @@
 The API and implementation make use of modern C++ 11 and new asynchronous idioms using (upcoming) features of the standard C++ library, in particular **Futures**, [**Continuations**](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf) and **Lambdas**.
 
 > [Continuations](http://en.wikipedia.org/wiki/Continuation) are *one* way of managing control flow in an asynchronous program. Other styles include: asynchronous [Callbacks](http://en.wikipedia.org/wiki/Callback_%28computer_programming%29), [Coroutines](http://en.wikipedia.org/wiki/Coroutine) (`yield` or `await`), Actors ([Erlang/OTP](http://www.scala-lang.org/), [Scala](http://www.scala-lang.org/)/[Akka](http://akka.io/) or [Rust](http://www.scala-lang.org/)) and [Transactional memory](http://en.wikipedia.org/wiki/Transactional_Synchronization_Extensions).
-> 
+>
 
 **Autobahn**|Cpp supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Unix domain sockets** or **pipes** (`stdio`). The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
@@ -21,7 +21,7 @@ The API and implementation make use of modern C++ 11 and new asynchronous idioms
 
 For getting help, questions or feedback, get in touch on the **[mailing list](https://groups.google.com/forum/#!forum/autobahnws)**, **[Twitter](https://twitter.com/autobahnws)** or **IRC `#autobahn`** (Freenode).
 
- 
+
 ## Show me some code!
 
 Here is how programming with C++ and **Autobahn**|Cpp looks like.
@@ -129,7 +129,7 @@ cd boost_1_55_0/
 ```
 
 > Note: The `-j 4` option will allow use of 4 cores for building.
-> 
+>
 
 To build with GCC instead of clang:
 
@@ -293,7 +293,7 @@ Get in touch on IRC `#autobahn` on `chat.freenode.net`, follow us on [Twitter](h
 * [Asynchronous API in C++ and the Continuation Monad](https://www.fpcomplete.com/blog/2012/06/asynchronous-api-in-c-and-the-continuation-monad)
 
 
-## Closures Cheetsheet
+## Closures Cheatsheet
 
 * `[]` Capture nothing (or, a scorched earth strategy?)
 * `[&]` Capture any referenced variable by reference
