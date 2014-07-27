@@ -17,6 +17,7 @@ To enable this, WAMP implements both the Remote Procedure Call (RPC) and  and th
    :maxdepth: 2
    :hidden:
 
+   Home <self>
    gettingstarted
    examples
    reference
