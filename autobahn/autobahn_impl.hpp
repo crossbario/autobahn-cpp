@@ -513,6 +513,9 @@ namespace autobahn {
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs) {
+       for (auto& raw_args : raw_kwargs) {
+           kwargs[raw_args.first] = unpack_any(raw_args.second);
+       }
    }
 
 
@@ -539,20 +542,25 @@ namespace autobahn {
             return boost::any();
 
          case msgpack::type::ARRAY:
-            // FIXME
             {
                anyvec out_vec;
                std::vector<msgpack::object> in_vec;
+
                obj.convert(&in_vec);
-               for (int i = 0; i < in_vec.size(); ++i) {
-                  out_vec.push_back(unpack_any(in_vec[i]));
-               }
+               unpack_anyvec(in_vec, out_vec);
+
                return out_vec;
-               //std::cerr << "unprocess ARRAY" << std::endl;
             }
 
          case msgpack::type::MAP:
-            // FIXME
+            {
+               anymap out_map;
+               std::map<std::string, msgpack::object> in_map;
+
+               obj.convert(&in_map);
+               unpack_anymap(in_map, out_map);
+               return out_map;
+            }
 
          default:
             return boost::any();
