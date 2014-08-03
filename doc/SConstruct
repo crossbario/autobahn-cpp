@@ -18,7 +18,8 @@
 
 ## Image file names to process
 SVG_FILES = [
-   "autobahncpp.svg"
+   "autobahncpp.svg",
+   "autobahn.svg"
 ]
 
 ## Directory with image files to process
