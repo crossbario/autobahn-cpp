@@ -14,21 +14,7 @@
 
 import sys
 import os
-
-try:
-   import sphinx_rtd_theme
-except ImportError:
-   sphinx_rtd_theme = None
-
-try:
-   from sphinxcontrib import spelling
-except ImportError:
-   spelling = None
-
-try:
-   import sphinx_bootstrap_theme
-except ImportError:
-   sphinx_bootstrap_theme = None
+import sphinx_bootstrap_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -44,15 +30,17 @@ except ImportError:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
-#    'breathe'
+   'sphinx.ext.autodoc',
+   'sphinx.ext.doctest',
+   'sphinx.ext.intersphinx',
+   'sphinx.ext.viewcode',
+   'sphinx.ext.ifconfig',
+   'sphinxcontrib.spelling'
 ]
 
-if spelling is not None:
-   extensions.append('sphinxcontrib.spelling')
+spelling_lang = 'en_US'
+spelling_show_suggestions = False
+spelling_word_list_filename = 'spelling_wordlist.txt'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -90,7 +78,7 @@ release = '0.1.0'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'work']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -129,8 +117,8 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #html_theme = 'default'
 # sys.path.append(os.path.abspath('_themes'))
-# html_theme_path = ['_themes']
-# html_theme = 'kr'
+html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 ## Sphinx-Bootstrap Theme
 ##
@@ -142,7 +130,6 @@ if sphinx_bootstrap_theme:
    html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
    # (Optional) Logo. Should be small enough to fit the navbar (ideally 24x24).
    # Path should be relative to the ``_static`` files directory.
-   html_logo = "_static/img/gen/autobahncpp.svg"
 
    html_theme_options = {
        # Navigation bar title. (Default: ``project`` value)
@@ -206,17 +193,12 @@ if sphinx_bootstrap_theme:
 
        # Choose Bootstrap version.
        # Values: "3" (default) or "2" (in quotes)
-       #'bootstrap_version': "3",
+       'bootstrap_version': "3",
    }
 
 # if sphinx_rtd_theme:
 #    html_theme = "sphinx_rtd_theme"
 #    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
-if not html_theme:
-   #html_theme = "default"
-   html_theme = 'sphinxdoc'
-
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -248,6 +230,13 @@ if not html_theme:
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+## additional variables which become accessible in RST (e.g. .. ifconfig:: not no_network)
+##
+def setup(app):
+   app.add_config_value('no_network', False, True)
+
+no_network = None
+
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
@@ -256,7 +245,18 @@ html_static_path = ['_static']
 # additional variables which become accessible in the template engine's context for
 # all pages
 # html_context = {'widgeturl': 'http://192.168.1.147:8090/widget'}
-html_context = {'widgeturl': 'https://demo.crossbar.io/clandeckwidget'}
+html_context = {
+   #'widgeturl': 'https://demo.crossbar.io/clandeckwidget'
+   #'widgeturl': 'http://127.0.0.1:8090/widget'
+   'widgeturl': None,
+   'no_network': False,
+   #'cstatic': 'http://127.0.0.1:8888',
+   'cstatic': '//tavendo-common-static.s3-eu-west-1.amazonaws.com',
+}
+
+# (Optional) Logo. Should be small enough to fit the navbar (ideally 24x24).
+# Path should be relative to the ``_static`` files directory.
+html_logo = None
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -417,3 +417,9 @@ rst_epilog = """
 #    :doc:`Overview </index>` :doc:`Getting Started </gettingstarted>`  :doc:`/examples` :doc:`API Reference <reference>` :doc:`table_of_contents`
 
 # """
+
+
+# http://stackoverflow.com/questions/5599254/how-to-use-sphinxs-autodoc-to-document-a-classs-init-self-method
+autoclass_content = 'both'
+
+autodoc_member_order = 'bysource'
