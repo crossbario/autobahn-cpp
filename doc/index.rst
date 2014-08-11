@@ -21,7 +21,6 @@ To enable this, WAMP implements both the Remote Procedure Call (RPC) and  and th
    gettingstarted
    examples
    reference
-   table_of_contents
 
 
 Indices and tables
