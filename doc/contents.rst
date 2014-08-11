@@ -11,6 +11,7 @@ Site Contents
 
    index
    gettingstarted
+   building
    examples
    reference
 
