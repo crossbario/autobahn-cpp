@@ -22,6 +22,7 @@
 
 
 #include <cstdint>
+#include <exception>
 #include <iostream>
 #include <vector>
 #include <map>
@@ -778,9 +779,40 @@ namespace autobahn {
             }
 
          }
+
+         // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
+         // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri, Arguments|list]
+         // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri, Arguments|list, ArgumentsKw|dict]
+
+         // FIXME: implement Autobahn-specific exception with error URI
+         catch (const std::exception& e) {
+            // we can at least describe the error with e.what()
+            //
+            m_packer.pack_array(7);
+            m_packer.pack(static_cast<int> (msg_code::ERROR));
+            m_packer.pack(static_cast<int> (msg_code::INVOCATION));
+            m_packer.pack(request_id);
+            m_packer.pack_map(0);
+            m_packer.pack(std::string("wamp.error.runtime_error"));
+            m_packer.pack_array(0);
+
+            m_packer.pack_map(1);
+
+            m_packer.pack(std::string("what"));
+            m_packer.pack(std::string(e.what()));
+
+            send();
+         }
          catch (...) {
-            // FIXME: send ERROR
-            std::cerr << "INVOCATION failed" << std::endl;
+            // no information available on actual error
+            //
+            m_packer.pack_array(5);
+            m_packer.pack(static_cast<int> (msg_code::ERROR));
+            m_packer.pack(static_cast<int> (msg_code::INVOCATION));
+            m_packer.pack(request_id);
+            m_packer.pack_map(0);
+            m_packer.pack(std::string("wamp.error.runtime_error"));
+            send();
          }
 
       } else {
