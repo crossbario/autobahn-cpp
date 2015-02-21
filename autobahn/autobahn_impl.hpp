@@ -16,20 +16,17 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#if !(defined(_WIN32) || defined(WIN32))
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <stdlib.h>
+#endif 
 
+#include <stdlib.h>
 
 #include <cstdint>
 #include <exception>
 #include <iostream>
-#include <vector>
-#include <map>
-#include <string>
 #include <sstream>
-#include <stdexcept>
-
 
 namespace autobahn {
 
@@ -196,7 +193,7 @@ namespace autobahn {
       }
 
       m_request_id += 1;
-      m_register_requests[m_request_id] = register_request_t(endpoint);
+	  m_register_requests.emplace(m_request_id, register_request_t(endpoint));
 
       // [REGISTER, Request|id, Options|dict, Procedure|uri]
 
@@ -507,7 +504,7 @@ namespace autobahn {
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args) {
-      for (int i = 0; i < raw_args.size(); ++i) {
+      for (size_t i = 0; i < raw_args.size(); ++i) {
          args.push_back(unpack_any(raw_args[i]));
       }
    }
