@@ -31,8 +31,9 @@
 
 #if defined(_WIN32) || defined(WIN32)
 #define WIN32_LEAN_AND_MEAN
-#define MSGPACK_USE_LEGACY_NAME_AS_FLOAT
 #endif
+
+#define MSGPACK_USE_LEGACY_NAME_AS_FLOAT
 
 #include <msgpack.hpp>
 
