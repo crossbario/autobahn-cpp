@@ -374,6 +374,7 @@ namespace autobahn {
          /// Receive one message from istream in m_unpacker.
          inline void receive_msg();
 
+         void got_handshake_reply(const boost::system::error_code& error);
 
          void got_msg_header(const boost::system::error_code& error);
 
