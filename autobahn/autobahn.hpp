@@ -33,7 +33,9 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#define MSGPACK_USE_LEGACY_NAME_AS_FLOAT
+// We don't need the following anymore, since
+// https://github.com/tavendo/AutobahnCpp/pull/33 was merged
+//#define MSGPACK_USE_LEGACY_NAME_AS_FLOAT
 
 #include <msgpack.hpp>
 
