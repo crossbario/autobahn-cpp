@@ -60,9 +60,35 @@ namespace autobahn {
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::start() {
-      receive_msg();
+     // Send the initial handshake packet informing the server which
+     // serialization format we wish to use, and our maximum message size
+     m_buffer_msg_len[0] = 0x7F;
+     m_buffer_msg_len[1] = 0xF2;   // Specify msgpack serialization
+     m_buffer_msg_len[2] = 0x0;
+     m_buffer_msg_len[3] = 0x0;     
+     boost::asio::write(m_out, boost::asio::buffer(m_buffer_msg_len, sizeof(m_buffer_msg_len)));
+     
+     // Read the 4-byte reply from the server
+     boost::asio::async_read(m_in,
+			     boost::asio::buffer(m_buffer_msg_len, sizeof(m_buffer_msg_len)),
+			     bind(&session<IStream, OStream>::got_handshake_reply, this, boost::asio::placeholders::error));
+
+     // Begin the receive loop for other incoming messages
+     receive_msg();
    }
 
+   template<typename IStream, typename OStream>
+   void session<IStream, OStream>::got_handshake_reply(const boost::system::error_code& error) {
+     if (m_debug) {
+       std::cerr << "Got handshake reply from server" << std::endl;
+     }
+     if ((m_buffer_msg_len[0] != 0x7F) ||
+	 ((m_buffer_msg_len[1] & 0x0F) != 2) ||
+	 (m_buffer_msg_len[2] != 0x0) ||
+	 (m_buffer_msg_len[3] != 0)) {
+       throw protocol_error("Server returned invalid handshake reply");
+     }
+   }
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::stop() {
