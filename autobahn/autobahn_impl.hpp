@@ -537,7 +537,7 @@ namespace autobahn {
          case msgpack::type::BOOLEAN:
             return boost::any(obj.as<bool>());
 
-         case msgpack::type::DOUBLE:
+         case msgpack::type::FLOAT:
             return boost::any(obj.as<double>());
 
          case msgpack::type::NIL:
