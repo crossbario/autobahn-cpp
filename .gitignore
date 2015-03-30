@@ -19,3 +19,5 @@ web/reports*
 *.a
 .sconsign.dblite
 build
+doc/_upload*
+doc/_doxygen*

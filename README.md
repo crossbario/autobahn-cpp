@@ -102,59 +102,52 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 
 ### Build tools
 
-Install some libs and build tools:
+Install some libs and build tools (these are for Ubuntu):
 
-```shell
+```console
 sudo apt-get install libbz2-dev libssl-dev ruby libtool autoconf scons
 ```
 
-### clang
+### Clang
 
-Install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/):
+If you want to work with Clang (rather than GCC), which is recommended, install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/) (these are for Ubuntu):
 
-```shell
+```console
 sudo apt-get install clang-3.4 libc++1 libc++-dev
 ```
 
 ### Boost
 
-To build Boost 1.55 (current release) from sources, get source code package for the latest Boost release from [here](http://www.boost.org/) and
+Most of the time, your distro's Boost libraries will be outdated. Don't waste time with the latter: to build the latest Boost 1.57 (current release as of 2015/03) from sources
 
-```shell
-cd $HOME
-tar xvjf Downloads/boost_1_55_0.tar.bz2
-cd boost_1_55_0/
-./bootstrap.sh
+```console
+cd ~
+wget http://downloads.sourceforge.net/project/boost/boost/1.57.0/boost_1_57_0.tar.bz2
+tar xvjf boost_1_57_0.tar.bz2
+cd boost_1_57_0
+./bootstrap.sh --with-toolset=clang
 ./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
 
 > Note: The `-j 4` option will allow use of 4 cores for building.
 >
 
-To build with GCC instead of clang:
+To build using GCC instead of Clang:
 
-```shell
+```console
+./bootstrap.sh --with-toolset=gcc
 ./b2 toolset=gcc -j 4
-```
-
-To build Boost trunk (needed for `when_all`, `when_any`)
-
-```shell
-cd $HOME
-git clone --recursive git@github.com:boostorg/boost.git
-cd boost/
-./bootstrap.sh
-./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
 
 ### MsgPack-C
 
-Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and build with clang:
+Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and build with Clang:
 
-```shell
+```console
 cd $HOME
 git clone https://github.com/msgpack/msgpack-c.git
 cd msgpack-c
+git checkout cpp-1.0.1
 ./bootstrap
 CXX=`which clang++` CC=`which clang` CXXFLAGS="-std=c++11 -stdlib=libc++" \
    LDFLAGS="-stdlib=libc++" ./configure --prefix=$HOME/msgpack_clang
@@ -162,10 +155,11 @@ make
 make install
 ```
 
+> On FreeBSD, you need to `pkg install autotools` and invoke `gmake` instead of `make`.
+
 To build with GCC instead of clang:
 
-
-```shell
+```console
 ./configure --prefix=$HOME/msgpack_gcc
 ```
 
@@ -173,7 +167,7 @@ To build with GCC instead of clang:
 
 To get **Autobahn**|Cpp library and examples, clone the repo
 
-```shell
+```console
 cd $HOME
 git clone git@github.com:tavendo/AutobahnCpp.git
 cd AutobahnCpp
@@ -202,7 +196,7 @@ The Autobahn|Cpp repository contains a number of [examples](https://github.com/t
 For building the examples, add the following to your `~/.profile`:
 
 
-```shell
+```console
 ## Use clang
 ##
 export CC='clang'
@@ -219,7 +213,7 @@ export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
 
 For building with GCC, use the following
 
-```shell
+```console
 ## Use GNU
 ##
 export CC='gcc'
@@ -236,7 +230,7 @@ export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
 
 Now build all examples:
 
-```shell
+```console
 cd autobahn/examples
 scons -j 4
 ```
@@ -252,20 +246,20 @@ To run this, you need [Python](http://python.org) and [pip](http://www.pip-insta
 
 Then, to install **Autobahn|Python**
 
-```shell
+```console
 pip install autobahn[twisted]
 ```
 
 Start the example router in a first terminal
 
-```shell
+```console
 cd autobahn/examples
 python server.py
 ```
 
 Then start one of the built C++ examples in a second terminal
 
-```shell
+```console
 cd autobahn
 ./build/examples/call1
 ```
