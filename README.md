@@ -113,7 +113,7 @@ sudo apt-get install libbz2-dev libssl-dev ruby libtool autoconf scons
 If you want to work with Clang (rather than GCC), which is recommended, install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/) (these are for Ubuntu):
 
 ```console
-sudo apt-get install clang-3.4 libc++1 libc++-dev
+sudo apt-get install clang libc++1 libc++-dev
 ```
 
 ### Boost
