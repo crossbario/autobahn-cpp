@@ -128,6 +128,7 @@ namespace autobahn {
       uint64_t id;
    };
 
+   typedef anymap provide_options;
 
    /*!
     * A WAMP session.
@@ -253,29 +254,13 @@ namespace autobahn {
           *
           * \param procedure The URI under which the procedure is to be exposed.
           * \param endpoint The endpoint to be exposed as a remotely callable procedure.
+          * \param options Options when registering a procedure.
           * \return A future that resolves to a autobahn::registration
           */
-         inline boost::future<registration> provide(const std::string& procedure, endpoint_t endpoint);
-
-         inline boost::future<registration> provide_v(const std::string& procedure, endpoint_v_t endpoint);
-
-         inline boost::future<registration> provide_m(const std::string& procedure, endpoint_m_t endpoint);
-
-         inline boost::future<registration> provide_vm(const std::string& procedure, endpoint_vm_t endpoint);
-
-         inline boost::future<registration> provide_f(const std::string& procedure, endpoint_f_t endpoint);
-
-         inline boost::future<registration> provide_fv(const std::string& procedure, endpoint_fv_t endpoint);
-
-         inline boost::future<registration> provide_fm(const std::string& procedure, endpoint_fm_t endpoint);
-
-         inline boost::future<registration> provide_fvm(const std::string& procedure, endpoint_fvm_t endpoint);
+         template<typename E>
+         inline boost::future<registration> provide(const std::string& procedure, E endpoint, const provide_options& options = provide_options());
 
       private:
-
-         template<typename E>
-         inline boost::future<registration> _provide(const std::string& procedure, E endpoint);
-
 
          //////////////////////////////////////////////////////////////////////////////////////
          /// Caller

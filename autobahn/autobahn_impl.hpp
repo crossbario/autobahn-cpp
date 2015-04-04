@@ -169,72 +169,24 @@ namespace autobahn {
    }
 
 
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_t> (endpoint));
-   }
-
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide_v(const std::string& procedure, endpoint_v_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_v_t> (endpoint));
-   }
-
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide_m(const std::string& procedure, endpoint_m_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_m_t> (endpoint));
-   }
-
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide_vm(const std::string& procedure, endpoint_vm_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_vm_t> (endpoint));
-   }
-
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide_f(const std::string& procedure, endpoint_f_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_f_t> (endpoint));
-   }
-
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide_fv(const std::string& procedure, endpoint_fv_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_fv_t> (endpoint));
-   }
-
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide_fm(const std::string& procedure, endpoint_fm_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_fm_t> (endpoint));
-   }
-
-
-   template<typename IStream, typename OStream>
-   boost::future<registration> session<IStream, OStream>::provide_fvm(const std::string& procedure, endpoint_fvm_t endpoint) {
-      return _provide(procedure, static_cast<endpoint_fvm_t> (endpoint));
-   }
-
-
    template<typename IStream, typename OStream>
    template<typename E>
-   boost::future<registration> session<IStream, OStream>::_provide(const std::string& procedure, E endpoint) {
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, E endpoint, const provide_options& options) {
 
       if (!m_session_id) {
          throw no_session_error();
       }
 
       m_request_id += 1;
-	  m_register_requests.emplace(m_request_id, register_request_t(endpoint));
+	   m_register_requests.emplace(m_request_id, register_request_t(endpoint));
 
       // [REGISTER, Request|id, Options|dict, Procedure|uri]
 
       m_packer.pack_array(4);
       m_packer.pack(static_cast<int> (msg_code::REGISTER));
       m_packer.pack(m_request_id);
-      m_packer.pack_map(0);
+      //m_packer.pack_map(0);
+      pack_any(options);
       m_packer.pack(procedure);
       send();
 
@@ -803,8 +755,9 @@ namespace autobahn {
                done.wait();
 
             } else {
+
                // FIXME
-               std::cerr << "FIX ME INVOCATION " << std::endl;
+               std::cerr << "Could not process invocation - unimplemented endpoint type" << std::endl;
                std::cerr << typeid(endpoint_t).name() << std::endl;
                std::cerr << ((endpoint->second).type()).name() << std::endl;
             }
