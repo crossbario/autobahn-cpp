@@ -19,7 +19,7 @@
 #if !(defined(_WIN32) || defined(WIN32))
 #include <arpa/inet.h>
 #include <unistd.h>
-#endif 
+#endif
 
 #include <stdlib.h>
 
@@ -73,23 +73,44 @@ namespace autobahn {
          boost::asio::buffer(m_buffer_msg_len, sizeof(m_buffer_msg_len)),
          bind(&session<IStream, OStream>::got_handshake_reply, this, boost::asio::placeholders::error)
       );
+
+      return m_handshake.get_future();
    }
 
    template<typename IStream, typename OStream>
    void session<IStream, OStream>::got_handshake_reply(const boost::system::error_code& error) {
+      // If there is an error trying to receive the handshake reply then set
+      // the handshake promise to false to indicate that the session could
+      // not be started.
+      if (error) {
+         if (m_debug) {
+            std::cerr << "RawSocket handshake system error: " << error << std::endl;
+         }
+
+         m_handshake.set_value(false);
+         return;
+      }
+
       if (m_debug) {
          std::cerr << "RawSocket handshake reply received" << std::endl;
       }
+
       if (m_buffer_msg_len[0] != 0x7F) {
+         m_handshake.set_value(false);
          throw protocol_error("invalid magic byte in RawSocket handshake response");
       }
       if (((m_buffer_msg_len[1] & 0x0F) != 0x02)) {
+         m_handshake.set_value(false);
          // FIXME: this isn't exactly a "protocol error" => invent new exception
          throw protocol_error("RawSocket handshake reply: server does not speak MsgPack encoding");
       }
       if (m_debug) {
          std::cerr << "RawSocket handshake reply is valid: start WAMP message send-receive loop" << std::endl;
       }
+
+      // It is now safe to try and join the session so set the handshake promise
+      // indicating that the session has been started.
+      m_handshake.set_value(true);
 
       // enter WAMP message send-receive ..
       //

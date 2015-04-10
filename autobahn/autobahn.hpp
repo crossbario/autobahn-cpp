@@ -151,7 +151,7 @@ namespace autobahn {
           * of this session.
           */
          inline
-         void start();
+         boost::future<bool> start();
 
          /*!
           * Closes the IStream and the OStream provided to the constructor
@@ -261,6 +261,10 @@ namespace autobahn {
          inline boost::future<registration> provide(const std::string& procedure, E endpoint, const provide_options& options = provide_options());
 
       private:
+
+         //////////////////////////////////////////////////////////////////////////////////////
+         /// Rawsocket Handshake
+         boost::promise<bool> m_handshake;
 
          //////////////////////////////////////////////////////////////////////////////////////
          /// Caller
