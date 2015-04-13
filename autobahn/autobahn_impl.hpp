@@ -56,7 +56,7 @@ namespace autobahn {
 */
 
    template<typename IStream, typename OStream>
-   void session<IStream, OStream>::start() {
+   boost::future<bool> session<IStream, OStream>::start() {
 
       // Send the initial handshake packet informing the server which
       // serialization format we wish to use, and our maximum message size
