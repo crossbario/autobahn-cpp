@@ -41,19 +41,7 @@ namespace autobahn {
         m_session_id(0),
         m_request_id(0)
    {
-//      receive_msg();
    }
-
-/*
-   void session<IStream, OStream>::stop(int exit_code) {
-      std::cerr << "stopping .." << std::endl;
-      m_stopped = true;
-      close(STDIN_FILENO);
-      close(STDOUT_FILENO);
-      close(STDERR_FILENO);
-      exit(exit_code);
-   }
-*/
 
    template<typename IStream, typename OStream>
    boost::future<bool> session<IStream, OStream>::start() {
@@ -132,8 +120,6 @@ namespace autobahn {
 
    template<typename IStream, typename OStream>
    boost::future<uint64_t> session<IStream, OStream>::join(const std::string& realm) {
-//   boost::shared_future<uint64_t> session<IStream, OStream>::join(const std::string& realm) {
-
       // [HELLO, Realm|uri, Details|dict]
 
       m_packer.pack_array(3);
@@ -160,9 +146,6 @@ namespace autobahn {
 
       send();
 
-//      return m_session_join.get_future().share();
-//      return boost::shared_future<uint64_t>(m_session_join.get_future());
-//      return std::move(m_session_join.get_future());
       return m_session_join.get_future();
    }
 
@@ -189,24 +172,68 @@ namespace autobahn {
       return m_subscribe_requests[m_request_id].m_res.get_future();
    }
 
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_t>(endpoint), options);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_v_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_v_t>(endpoint), options);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_m_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_m_t>(endpoint), options);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_vm_t>(endpoint), options);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_f_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_f_t>(endpoint), options);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_fv_t>(endpoint), options);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_fm_t>(endpoint), options);
+   }
+
+
+   template<typename IStream, typename OStream>
+   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options) {
+      return _provide(procedure, static_cast<endpoint_fvm_t>(endpoint), options);
+   }
 
    template<typename IStream, typename OStream>
    template<typename E>
-   boost::future<registration> session<IStream, OStream>::provide(const std::string& procedure, E endpoint, const provide_options& options) {
-
+   boost::future<registration> session<IStream, OStream>::_provide(const std::string& procedure, E endpoint, const provide_options& options) {
       if (!m_session_id) {
          throw no_session_error();
       }
 
       m_request_id += 1;
-	   m_register_requests.emplace(m_request_id, register_request_t(endpoint));
+	  m_register_requests.emplace(m_request_id, register_request_t(endpoint));
 
       // [REGISTER, Request|id, Options|dict, Procedure|uri]
 
       m_packer.pack_array(4);
       m_packer.pack(static_cast<int> (msg_code::REGISTER));
       m_packer.pack(m_request_id);
-      //m_packer.pack_map(0);
       pack_any(options);
       m_packer.pack(procedure);
       send();

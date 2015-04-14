@@ -257,10 +257,19 @@ namespace autobahn {
           * \param options Options when registering a procedure.
           * \return A future that resolves to a autobahn::registration
           */
-         template<typename E>
-         inline boost::future<registration> provide(const std::string& procedure, E endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_t endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_v_t endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_m_t endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_f_t endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options = provide_options());
+         inline boost::future<registration> provide(const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options = provide_options());
 
       private:
+
+         template<typename E>
+         inline boost::future<registration> _provide(const std::string& procedure, E endpoint, const provide_options& options);
 
          //////////////////////////////////////////////////////////////////////////////////////
          /// Rawsocket Handshake
