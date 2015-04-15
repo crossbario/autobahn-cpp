@@ -16,16 +16,39 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+namespace autobahn {
 
-#include "wamp_session.hpp"
+inline wamp_register_request::wamp_register_request()
+    : m_endpoint()
+    , m_response()
+{
+}
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+inline wamp_register_request::wamp_register_request(boost::any endpoint)
+    : m_endpoint(endpoint)
+    , m_response()
+{
+}
 
-#endif // AUTOBAHN_HPP
+inline wamp_register_request::wamp_register_request(wamp_register_request&& other)
+    : m_endpoint(std::move(other.m_endpoint))
+    , m_response(std::move(other.m_response))
+{
+}
+
+inline boost::any wamp_register_request::endpoint() const
+{
+    return m_endpoint;
+}
+
+inline boost::promise<wamp_registration>& wamp_register_request::response()
+{
+    return m_response;
+}
+
+inline void wamp_register_request::set_response(const wamp_registration& registration)
+{
+    m_response.set_value(registration);
+}
+
+} // namespace autobahn

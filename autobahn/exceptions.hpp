@@ -16,16 +16,21 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_EXCEPTIONS_HPP
+#define AUTOBAHN_EXCEPTIONS_HPP
 
-#include "wamp_session.hpp"
+namespace autobahn {
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+class protocol_error : public std::runtime_error {
+  public:
+     protocol_error(const std::string& message) : std::runtime_error(message) {};
+};
 
-#endif // AUTOBAHN_HPP
+class no_session_error : public std::runtime_error {
+  public:
+     no_session_error() : std::runtime_error("session not joined") {};
+};
+
+} // namespace autobahn
+
+#endif // AUTOBAHN_EXCEPTIONS_HPP

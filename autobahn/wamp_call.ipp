@@ -16,16 +16,21 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+namespace autobahn {
 
-#include "wamp_session.hpp"
+inline wamp_call::wamp_call()
+    : m_response()
+{
+}
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+inline boost::promise<boost::any>& wamp_call::response()
+{
+    return m_response;
+}
 
-#endif // AUTOBAHN_HPP
+inline void wamp_call::set_response(const boost::any& value)
+{
+    m_response.set_value(value);
+}
+
+} // namespace autobahn
