@@ -16,13 +16,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <string>
 
 using namespace std;
 using namespace boost;
@@ -49,7 +47,7 @@ int main () {
       // create a WAMP session that talks over Unix domain sockets
       //
       bool debug = false;
-      autobahn::session<stream_protocol::socket,
+      autobahn::wamp_session<stream_protocol::socket,
                         stream_protocol::socket> session(io, socket, socket, debug);
 
       // start the WAMP session on the transport that has been connected
@@ -63,7 +61,7 @@ int main () {
          cerr << "Session joined to realm with session ID " << s.get() << endl;
 
          // call a remote procedure ..
-         //         
+         //
          //auto c1 = session.call("com.mathservice.add2", {23, 777}).then([&](future<any> f) {
          auto c1 = session.call("com.myapp.cpp.add2", {23, 777}).then([&](future<any> f) {
 

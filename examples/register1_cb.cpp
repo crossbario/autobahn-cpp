@@ -16,15 +16,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <boost/filesystem.hpp>
-
+#include <iostream>
+#include <string>
 
 using namespace std;
 using namespace boost;
@@ -72,7 +69,7 @@ int main (int argc, char** argv) {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<stream_protocol::socket,
+      autobahn::wamp_session<stream_protocol::socket,
                         stream_protocol::socket> session(io, socket, socket, debug);
 
       // start the WAMP session on the transport that has been connected
@@ -89,8 +86,8 @@ int main (int argc, char** argv) {
          //
          auto r1 = session.provide("com.myapp.cpp.add2", &add2);
 
-         r1.then([](future<registration> reg) {
-            cerr << "Registered with registration ID " << reg.get().id << endl;
+         r1.then([](future<wamp_registration> reg) {
+            cerr << "Registered with registration ID " << reg.get().id() << endl;
          }).wait();
 
 

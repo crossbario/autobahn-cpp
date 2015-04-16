@@ -16,13 +16,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <string>
 
 using namespace std;
 using namespace boost;
@@ -63,8 +61,7 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      autobahn::wamp_session<tcp::socket,tcp::socket> session(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -96,8 +93,8 @@ int main () {
                   //
                   auto r1 = session.provide("com.myapp.cpp.add2", &add2);
 
-                  r1.then([](future<registration> reg) {
-                     cerr << "Registered with registration ID " << reg.get().id << endl;
+                  r1.then([](future<wamp_registration> reg) {
+                     cerr << "Registered with registration ID " << reg.get().id() << endl;
                   }).wait();
 
 

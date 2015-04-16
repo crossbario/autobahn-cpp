@@ -16,20 +16,17 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <string>
 
 using namespace std;
 using namespace boost;
 using namespace autobahn;
 
 using boost::asio::ip::tcp;
-
 
 int main () {
 
@@ -52,7 +49,7 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
+      autobahn::wamp_session<tcp::socket,
                         tcp::socket> session(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)

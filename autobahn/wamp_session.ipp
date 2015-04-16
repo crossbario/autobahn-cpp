@@ -39,7 +39,7 @@
 namespace autobahn {
 
 template<typename IStream, typename OStream>
-session<IStream, OStream>::session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug)
+wamp_session<IStream, OStream>::wamp_session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug)
     : m_debug(debug)
     , m_stopped(false)
     , m_io(io)
@@ -52,7 +52,7 @@ session<IStream, OStream>::session(boost::asio::io_service& io, IStream& in, OSt
 }
 
 template<typename IStream, typename OStream>
-boost::future<bool> session<IStream, OStream>::start()
+boost::future<bool> wamp_session<IStream, OStream>::start()
 {
     // Send the initial handshake packet informing the server which
     // serialization format we wish to use, and our maximum message size
@@ -66,14 +66,14 @@ boost::future<bool> session<IStream, OStream>::start()
     boost::asio::async_read(
         m_in,
         boost::asio::buffer(m_buffer_message_length, sizeof(m_buffer_message_length)),
-        bind(&session<IStream, OStream>::got_handshake_reply, this, boost::asio::placeholders::error)
+        bind(&wamp_session<IStream, OStream>::got_handshake_reply, this, boost::asio::placeholders::error)
     );
 
     return m_handshake.get_future();
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::got_handshake_reply(const boost::system::error_code& error)
+void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::error_code& error)
 {
     // If there is an error trying to receive the handshake reply then set
     // the handshake promise to false to indicate that the session could
@@ -114,7 +114,7 @@ void session<IStream, OStream>::got_handshake_reply(const boost::system::error_c
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::stop()
+void wamp_session<IStream, OStream>::stop()
 {
     m_stopped = true;
     try {
@@ -128,7 +128,7 @@ void session<IStream, OStream>::stop()
 }
 
 template<typename IStream, typename OStream>
-boost::future<uint64_t> session<IStream, OStream>::join(const std::string& realm)
+boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& realm)
 {
     // [HELLO, Realm|uri, Details|dict]
     m_packer.pack_array(3);
@@ -159,7 +159,7 @@ boost::future<uint64_t> session<IStream, OStream>::join(const std::string& realm
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_subscription> session<IStream, OStream>::subscribe(const std::string& topic, handler_t handler)
+boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(const std::string& topic, handler_t handler)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -179,56 +179,56 @@ boost::future<wamp_subscription> session<IStream, OStream>::subscribe(const std:
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_v(
         const std::string& procedure, endpoint_v_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_v_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_m(
         const std::string& procedure, endpoint_m_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_m_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_vm(
         const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_vm_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_f(
         const std::string& procedure, endpoint_f_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_f_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_fv(
         const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_fv_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_fm(
         const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_fm_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> session<IStream, OStream>::provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_fvm(
         const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_fvm_t>(endpoint), options);
@@ -236,7 +236,7 @@ boost::future<wamp_registration> session<IStream, OStream>::provide(
 
 template<typename IStream, typename OStream>
 template<typename E>
-boost::future<wamp_registration> session<IStream, OStream>::_provide(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::_provide(
         const std::string& procedure, E endpoint, const provide_options& options)
 {
     if (!m_session_id) {
@@ -256,7 +256,7 @@ boost::future<wamp_registration> session<IStream, OStream>::_provide(
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::publish(const std::string& topic)
+void wamp_session<IStream, OStream>::publish(const std::string& topic)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -272,7 +272,7 @@ void session<IStream, OStream>::publish(const std::string& topic)
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::publish(const std::string& topic, const anyvec& args)
+void wamp_session<IStream, OStream>::publish(const std::string& topic, const anyvec& args)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -293,7 +293,7 @@ void session<IStream, OStream>::publish(const std::string& topic, const anyvec& 
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::publish(
+void wamp_session<IStream, OStream>::publish(
         const std::string& topic, const anyvec& args, const anymap& kwargs)
 {
 
@@ -317,7 +317,7 @@ void session<IStream, OStream>::publish(
 }
 
 template<typename IStream, typename OStream>
-boost::future<boost::any> session<IStream, OStream>::call(const std::string& procedure)
+boost::future<boost::any> wamp_session<IStream, OStream>::call(const std::string& procedure)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -336,7 +336,7 @@ boost::future<boost::any> session<IStream, OStream>::call(const std::string& pro
 }
 
 template<typename IStream, typename OStream>
-boost::future<boost::any> session<IStream, OStream>::call(
+boost::future<boost::any> wamp_session<IStream, OStream>::call(
         const std::string& procedure, const anyvec& args)
 {
     if (!m_session_id) {
@@ -361,7 +361,7 @@ boost::future<boost::any> session<IStream, OStream>::call(
 }
 
 template<typename IStream, typename OStream>
-boost::future<boost::any> session<IStream, OStream>::call(
+boost::future<boost::any> wamp_session<IStream, OStream>::call(
         const std::string& procedure, const anyvec& args, const anymap& kwargs)
 {
     if (!m_session_id) {
@@ -387,7 +387,7 @@ boost::future<boost::any> session<IStream, OStream>::call(
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::pack_any(const boost::any& value)
+void wamp_session<IStream, OStream>::pack_any(const boost::any& value)
 {
     if (value.empty()) {
         m_packer.pack_nil();
@@ -434,14 +434,14 @@ void session<IStream, OStream>::pack_any(const boost::any& value)
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_welcome(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_welcome(const wamp_message& message)
 {
     m_session_id = message[1].as<uint64_t>();
     m_session_join.set_value(m_session_id);
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_goodbye(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_goodbye(const wamp_message& message)
 {
     m_session_id = 0;
 
@@ -464,7 +464,7 @@ void session<IStream, OStream>::process_goodbye(const wamp_message& message)
 }
 
 template<typename IStream, typename OStream>
-boost::future<std::string> session<IStream, OStream>::leave(const std::string& reason)
+boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::string& reason)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -484,7 +484,7 @@ boost::future<std::string> session<IStream, OStream>::leave(const std::string& r
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args)
+void wamp_session<IStream, OStream>::unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args)
 {
     for (size_t i = 0; i < raw_args.size(); ++i) {
         args.push_back(unpack_any(raw_args[i]));
@@ -492,7 +492,7 @@ void session<IStream, OStream>::unpack_anyvec(std::vector<msgpack::object>& raw_
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::unpack_anymap(
+void wamp_session<IStream, OStream>::unpack_anymap(
         std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs)
 {
      for (auto& raw_args : raw_kwargs) {
@@ -501,7 +501,7 @@ void session<IStream, OStream>::unpack_anymap(
 }
 
 template<typename IStream, typename OStream>
-boost::any session<IStream, OStream>::unpack_any(msgpack::object& obj)
+boost::any wamp_session<IStream, OStream>::unpack_any(msgpack::object& obj)
 {
     switch (obj.type) {
         case msgpack::type::STR:
@@ -544,7 +544,7 @@ boost::any session<IStream, OStream>::unpack_any(msgpack::object& obj)
 
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_error(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
 {
     // [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri]
     // [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri, Arguments|list]
@@ -633,7 +633,7 @@ void session<IStream, OStream>::process_error(const wamp_message& message)
 
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_invocation(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_invocation(const wamp_message& message)
 {
     // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict]
     // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
@@ -779,7 +779,7 @@ void session<IStream, OStream>::process_invocation(const wamp_message& message)
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_call_result(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_call_result(const wamp_message& message)
 {
     // [RESULT, CALL.Request|id, Details|dict]
     // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
@@ -826,7 +826,7 @@ void session<IStream, OStream>::process_call_result(const wamp_message& message)
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_subscribed(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_subscribed(const wamp_message& message)
 {
     // [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
     if (message.size() != 3) {
@@ -854,7 +854,7 @@ void session<IStream, OStream>::process_subscribed(const wamp_message& message)
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_event(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
 {
     // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict]
     // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list]
@@ -934,7 +934,7 @@ void session<IStream, OStream>::process_event(const wamp_message& message)
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::process_registered(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_registered(const wamp_message& message)
 {
     // [REGISTERED, REGISTER.Request|id, Registration|id]
 
@@ -962,7 +962,7 @@ void session<IStream, OStream>::process_registered(const wamp_message& message)
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::receive_message()
+void wamp_session<IStream, OStream>::receive_message()
 {
     if (m_debug) {
         std::cerr << "RX preparing to receive message .." << std::endl;
@@ -971,11 +971,11 @@ void session<IStream, OStream>::receive_message()
     // read 4 octets msg length prefix ..
     boost::asio::async_read(m_in,
         boost::asio::buffer(m_buffer_message_length, sizeof(m_buffer_message_length)),
-        bind(&session<IStream, OStream>::got_message_header, this, boost::asio::placeholders::error));
+        bind(&wamp_session<IStream, OStream>::got_message_header, this, boost::asio::placeholders::error));
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::got_message_header(const boost::system::error_code& error)
+void wamp_session<IStream, OStream>::got_message_header(const boost::system::error_code& error)
 {
     if (!error) {
         m_message_length = ntohl(*((uint32_t*) &m_buffer_message_length));
@@ -989,7 +989,7 @@ void session<IStream, OStream>::got_message_header(const boost::system::error_co
 
         boost::asio::async_read(m_in,
             boost::asio::buffer(m_unpacker.buffer(), m_message_length),
-            bind(&session<IStream, OStream>::got_message_body, this, boost::asio::placeholders::error));
+            bind(&wamp_session<IStream, OStream>::got_message_body, this, boost::asio::placeholders::error));
     } else {
         // TODO: Well this is no good. The session will basically just become unresponsive
         // at this point as we will no longer be trying to asynchronously receive messages.
@@ -998,7 +998,7 @@ void session<IStream, OStream>::got_message_header(const boost::system::error_co
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::got_message_body(const boost::system::error_code& error)
+void wamp_session<IStream, OStream>::got_message_body(const boost::system::error_code& error)
 {
     if (!error) {
         if (m_debug) {
@@ -1030,7 +1030,7 @@ void session<IStream, OStream>::got_message_body(const boost::system::error_code
 
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::got_message(const msgpack::object& obj) {
+void wamp_session<IStream, OStream>::got_message(const msgpack::object& obj) {
 
     if (obj.type != msgpack::type::ARRAY) {
         throw protocol_error("invalid message structure - message is not an array");
@@ -1117,7 +1117,7 @@ void session<IStream, OStream>::got_message(const msgpack::object& obj) {
 }
 
 template<typename IStream, typename OStream>
-void session<IStream, OStream>::send()
+void wamp_session<IStream, OStream>::send()
 {
     if (!m_stopped) {
         if (m_debug) {

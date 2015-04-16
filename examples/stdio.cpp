@@ -16,18 +16,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <string>
 
 using namespace std;
 using namespace boost;
 using namespace autobahn;
-
 
 int main () {
 
@@ -44,7 +41,7 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<asio::posix::stream_descriptor,
+      autobahn::wamp_session<asio::posix::stream_descriptor,
                         asio::posix::stream_descriptor> session(io, stdin, stdout, debug);
 
       // start the WAMP session on the transport that has been connected

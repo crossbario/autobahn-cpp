@@ -16,11 +16,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
+#include <iostream>
 
 using namespace std;
 using namespace boost;
@@ -48,7 +46,7 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
+      autobahn::wamp_session<tcp::socket,
                         tcp::socket> session(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
@@ -81,8 +79,8 @@ int main () {
                      [](const anyvec& args, const anymap& kwargs) {
                         cerr << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
                      }
-                  ).then([](future<subscription> sub) {
-                     cerr << "Subscribed with subscription ID " << sub.get().id << endl;
+                  ).then([](future<wamp_subscription> sub) {
+                     cerr << "Subscribed with subscription ID " << sub.get().id() << endl;
                   });
 
                   f1.wait();

@@ -16,13 +16,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <string>
 
 using namespace std;
 using namespace boost;
@@ -52,7 +50,7 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
+      autobahn::wamp_session<tcp::socket,
                         tcp::socket> session(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
@@ -112,7 +110,7 @@ int main () {
 
                   // do something when all remote procedure calls have finished
                   //
-                  auto finish = when_all(std::move(c1), std::move(c2), std::move(c3));
+                  auto finish = boost::when_all(std::move(c1), std::move(c2), std::move(c3));
 
                   finish.then([&](decltype(finish)) {
 

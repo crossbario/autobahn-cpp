@@ -16,14 +16,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
+#include <autobahn/autobahn.hpp>
+#include <boost/asio.hpp>
 #include <chrono>
 #include <functional>
-
-#include "autobahn.hpp"
-
-#include <boost/asio.hpp>
+#include <iostream>
+#include <string>
 
 using namespace std;
 using namespace boost;
@@ -51,7 +49,7 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
+      autobahn::wamp_session<tcp::socket,
                         tcp::socket> session(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)

@@ -58,7 +58,7 @@ class wamp_subscribe_request;
 
 /// Representation of a WAMP session.
 template<typename IStream, typename OStream>
-class session
+class wamp_session
 {
 public:
 
@@ -68,7 +68,7 @@ public:
      * \param in The input stream to run this session on.
      * \param out THe output stream to run this session on.
      */
-    session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug = false);
+    wamp_session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug = false);
 
     /*!
      * Start listening on the IStream provided to the constructor
@@ -179,13 +179,13 @@ public:
      * \return A future that resolves to a autobahn::registration
      */
     inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_v_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_m_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_f_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide_v(const std::string& procedure, endpoint_v_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide_m(const std::string& procedure, endpoint_m_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide_vm(const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide_f(const std::string& procedure, endpoint_f_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide_fv(const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide_fm(const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide_fvm(const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options = provide_options());
 
 private:
 
