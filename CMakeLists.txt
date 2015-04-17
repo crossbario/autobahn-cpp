@@ -41,7 +41,9 @@ set(PUBLIC_HEADERS
     autobahn/wamp_subscribe_request.hpp
     autobahn/wamp_subscribe_request.ipp
     autobahn/wamp_subscription.hpp
-    autobahn/wamp_subscription.ipp)
+    autobahn/wamp_subscription.ipp
+    autobahn/wamp_unsubscribe_request.hpp
+    autobahn/wamp_unsubscribe_request.ipp)
 
 foreach(h ${PUBLIC_HEADERS})
     get_filename_component(HEADER_INCLUDE_DIRECTORY include/${h} DIRECTORY)

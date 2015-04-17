@@ -24,6 +24,7 @@
 #include "wamp_register_request.hpp"
 #include "wamp_subscribe_request.hpp"
 #include "wamp_subscription.hpp"
+#include "wamp_unsubscribe_request.hpp"
 
 #if !(defined(_WIN32) || defined(WIN32))
 #include <arpa/inet.h>
@@ -159,7 +160,8 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(const std::string& topic, handler_t handler)
+boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
+        const std::string& topic, handler_t handler)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -175,6 +177,25 @@ boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(const
     send();
 
     auto result = m_subscribe_requests.emplace(m_request_id, wamp_subscribe_request(handler));
+    return result.first->second.response().get_future();
+}
+
+template<typename IStream, typename OStream>
+boost::future<void> wamp_session<IStream, OStream>::unsubscribe(const wamp_subscription& subscription)
+{
+    if (!m_session_id) {
+        throw no_session_error();
+    }
+
+    // [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
+    m_packer.pack_array(3);
+    m_packer.pack(static_cast<int>(message_type::UNSUBSCRIBE));
+    m_packer.pack(++m_request_id);
+    m_packer.pack(subscription.id());
+
+    send();
+
+    auto result = m_unsubscribe_requests.emplace(m_request_id, wamp_unsubscribe_request());
     return result.first->second.response().get_future();
 }
 
@@ -854,6 +875,28 @@ void wamp_session<IStream, OStream>::process_subscribed(const wamp_message& mess
 }
 
 template<typename IStream, typename OStream>
+void wamp_session<IStream, OStream>::process_unsubscribed(const wamp_message& message)
+{
+    // [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
+    if (message.size() != 2) {
+        throw protocol_error("invalid UNSUBSCRIBED message structure - length must be 2");
+    }
+
+    if (message[1].type != msgpack::type::POSITIVE_INTEGER) {
+        throw protocol_error("invalid SUBSCRIBED message structure - UNSUBSCRIBED.Request must be an integer");
+    }
+
+    uint64_t request_id = message[1].as<uint64_t>();
+    auto unsubscribe_request_itr = m_unsubscribe_requests.find(request_id);
+    if (unsubscribe_request_itr != m_unsubscribe_requests.end()) {
+        unsubscribe_request_itr->second.set_response();
+        m_unsubscribe_requests.erase(request_id);
+    } else {
+        throw protocol_error("bogus UNSUBSCRIBED message for non-pending request ID");
+    }
+}
+
+template<typename IStream, typename OStream>
 void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
 {
     // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict]
@@ -1084,7 +1127,7 @@ void wamp_session<IStream, OStream>::got_message(const msgpack::object& obj) {
         case message_type::UNSUBSCRIBE:
             throw protocol_error("received UNSUBSCRIBE message unexpected for WAMP client roles");
         case message_type::UNSUBSCRIBED:
-            // FIXME
+            process_unsubscribed(message);
             break;
         case message_type::EVENT:
             process_event(message);

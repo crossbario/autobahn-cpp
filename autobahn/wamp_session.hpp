@@ -51,10 +51,11 @@
 namespace autobahn {
 
 class wamp_call;
-class wamp_registration;
 class wamp_register_request;
-class wamp_subscription;
+class wamp_registration;
 class wamp_subscribe_request;
+class wamp_subscription;
+class wamp_unsubscribe_request;
 
 /// Representation of a WAMP session.
 template<typename IStream, typename OStream>
@@ -140,6 +141,15 @@ public:
     boost::future<wamp_subscription> subscribe(const std::string& topic, handler_t handler);
 
     /*!
+     * Unubscribe a handler to previosuly subscribed topic.
+     *
+     * \param subscription The subscription to unsubscribe from.
+     * \return A future that synchronizes to the unsubscribed response.
+     */
+    inline
+    boost::future<void> unsubscribe(const wamp_subscription& subscription);
+
+    /*!
      * Calls a remote procedure with no arguments.
      *
      * \param procedure The URI of the remote procedure to call.
@@ -204,6 +214,9 @@ private:
     /// Process a WAMP SUBSCRIBED message.
     inline void process_subscribed(const wamp_message& message);
 
+    /// Process a WAMP UNSUBSCRIBED message.
+    inline void process_unsubscribed(const wamp_message& message);
+
     /// Process a WAMP EVENT message.
     inline void process_event(const wamp_message& message);
 
@@ -215,7 +228,6 @@ private:
 
     /// Process a WAMP GOODBYE message.
     inline void process_goodbye(const wamp_message& message);
-
 
     /// Unpacks any MsgPack object into boost::any value.
     inline boost::any unpack_any(msgpack::object& obj);
@@ -298,6 +310,9 @@ private:
 
     /// Map of outstanding WAMP subscribe requests (request ID -> subscribe request).
     std::map<uint64_t, wamp_subscribe_request> m_subscribe_requests;
+
+    /// Map of outstanding WAMP unsubscribe requests (request ID -> unsubscribe request).
+    std::map<uint64_t, wamp_unsubscribe_request> m_unsubscribe_requests;
 
     /// Map of subscribed handlers (subscription ID -> handler)
     std::multimap<uint64_t, handler_t> m_subscription_handlers;
