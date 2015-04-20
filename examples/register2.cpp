@@ -126,13 +126,13 @@ int main () {
                      }
                   );
 
-                  auto r2 = session.provide_v("com.myapp.cpp.add_diff_mul", &add_diff_mul)
+                  auto r2 = session.provide("com.myapp.cpp.add_diff_mul", &add_diff_mul)
                      .then([](future<wamp_registration> reg) {
                         cerr << "Registered add_diff_mul() with registration ID " << reg.get().id() << endl;
                      }
                   );
 
-                  auto r3 = session.provide_fvm("com.myapp.cpp.somemath", &somemath)
+                  auto r3 = session.provide("com.myapp.cpp.somemath", &somemath)
                      .then([](future<wamp_registration> reg) {
                         cerr << "Registered somemath() with registration ID " << reg.get().id() << endl;
                      }

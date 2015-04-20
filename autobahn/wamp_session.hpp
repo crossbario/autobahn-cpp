@@ -188,14 +188,30 @@ public:
      * \param options Options when registering a procedure.
      * \return A future that resolves to a autobahn::registration
      */
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide_v(const std::string& procedure, endpoint_v_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide_m(const std::string& procedure, endpoint_m_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide_vm(const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide_f(const std::string& procedure, endpoint_f_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide_fv(const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide_fm(const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide_fvm(const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_v_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_m_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_f_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options = provide_options());
+    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options = provide_options());
+
+    // Use a special fallback template here to avoid ambiguous overloads.
+    template<
+        typename E,
+        typename std::enable_if<
+            std::is_assignable<endpoint_t, E>::value &&
+                !std::is_assignable<endpoint_v_t, E>::value &&
+                !std::is_assignable<endpoint_m_t, E>::value &&
+                !std::is_assignable<endpoint_vm_t, E>::value &&
+                !std::is_assignable<endpoint_f_t, E>::value &&
+                !std::is_assignable<endpoint_fv_t, E>::value &&
+                !std::is_assignable<endpoint_fm_t, E>::value &&
+                !std::is_assignable<endpoint_fvm_t, E>::value,
+            int
+        >::type = 0
+    >
+    inline boost::future<wamp_registration> provide(const std::string& procedure, E endpoint, const provide_options& options = provide_options());
 
 private:
 

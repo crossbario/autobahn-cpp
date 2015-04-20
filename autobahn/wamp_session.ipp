@@ -200,56 +200,70 @@ boost::future<void> wamp_session<IStream, OStream>::unsubscribe(const wamp_subsc
 }
 
 template<typename IStream, typename OStream>
+template<
+    typename E,
+    typename std::enable_if<
+        std::is_assignable<endpoint_t, E>::value &&
+            !std::is_assignable<endpoint_v_t, E>::value &&
+            !std::is_assignable<endpoint_m_t, E>::value &&
+            !std::is_assignable<endpoint_vm_t, E>::value &&
+            !std::is_assignable<endpoint_f_t, E>::value &&
+            !std::is_assignable<endpoint_fv_t, E>::value &&
+            !std::is_assignable<endpoint_fm_t, E>::value &&
+            !std::is_assignable<endpoint_fvm_t, E>::value,
+        int
+    >::type
+>
 boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_t endpoint, const provide_options& options)
+        const std::string& procedure, E endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_v(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_v_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_v_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_m(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_m_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_m_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_vm(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_vm_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_f(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_f_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_f_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_fv(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_fv_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_fm(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_fm_t>(endpoint), options);
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide_fvm(
+boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options)
 {
     return _provide(procedure, static_cast<endpoint_fvm_t>(endpoint), options);
