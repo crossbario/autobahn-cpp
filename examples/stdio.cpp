@@ -35,14 +35,14 @@ int main () {
       //
       asio::io_service io;
 
-      asio::posix::stream_descriptor stdin(io, ::dup(STDIN_FILENO));
-      asio::posix::stream_descriptor stdout(io, ::dup(STDOUT_FILENO));
+      asio::posix::stream_descriptor in(io, ::dup(STDIN_FILENO));
+      asio::posix::stream_descriptor out(io, ::dup(STDOUT_FILENO));
 
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
       autobahn::wamp_session<asio::posix::stream_descriptor,
-                        asio::posix::stream_descriptor> session(io, stdin, stdout, debug);
+                        asio::posix::stream_descriptor> session(io, in, out, debug);
 
       // start the WAMP session on the transport that has been connected
       //
