@@ -23,8 +23,8 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
-#include <msgpack.hpp>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 using namespace std;
@@ -85,31 +85,31 @@ int main () {
 
                   // issue a number of remote procedure calls ..
                   //
-                  msgpack::type::tuple<uint64_t, uint64_t> c0_args(2, 9);
+                  std::tuple<uint64_t, uint64_t> c0_args(2, 9);
                   auto c0 = session.call("com.mathservice.add2", c0_args)
                      .then([](future<wamp_call_result> result) {
-                        msgpack::type::tuple<uint64_t> result_arguments;
+                        std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
-                        cerr << "Call 0 result: " << result_arguments.get<0>() << endl;
+                        cerr << "Call 0 result: " << std::get<0>(result_arguments) << endl;
                   });
 
                   c0.wait();
 
-                  msgpack::type::tuple<uint64_t> c1_args(2);
+                  std::tuple<uint64_t> c1_args(2);
                   std::unordered_map<std::string, uint64_t> c1_kw_args = {{"delay", 3}};
                   auto c1 = session.call("com.math.slowsquare", c1_args, c1_kw_args)
                      .then([](future<wamp_call_result> result) {
-                        msgpack::type::tuple<uint64_t> result_arguments;
+                        std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
-                        cerr << "Call 1 result: " << result_arguments.get<0>() << endl;
+                        cerr << "Call 1 result: " << std::get<0>(result_arguments) << endl;
                   });
 
-                  msgpack::type::tuple<uint64_t> c2_args(3);
+                  std::tuple<uint64_t> c2_args(3);
                   auto c2 = session.call("com.math.slowsquare", c2_args)
                      .then([&session](future<wamp_call_result> result) {
-                        msgpack::type::tuple<uint64_t> result_arguments;
+                        std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
-                        cerr << "Call 2 result: " << result_arguments.get<0>() << endl;
+                        cerr << "Call 2 result: " << std::get<0>(result_arguments) << endl;
                   });
 
                   // do something when all remote procedure calls have finished

@@ -21,6 +21,7 @@
 #include <boost/version.hpp>
 #include <iostream>
 #include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -67,9 +68,9 @@ int main () {
             [&](future<wamp_call_result> result) {
                // call result received
                //
-               msgpack::type::tuple<uint64_t> result_arguments;
+               std::tuple<uint64_t> result_arguments;
                result.get().arguments().convert(result_arguments);
-               std::cerr << "Got RPC result " << result_arguments.get<0>() << std::endl;
+               std::cerr << "Got RPC result " << std::get<0>(result_arguments) << std::endl;
          });
 
          c1.then([&](decltype(c1)) {

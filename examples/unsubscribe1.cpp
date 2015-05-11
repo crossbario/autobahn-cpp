@@ -19,7 +19,7 @@
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <iostream>
-#include <msgpack.hpp>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -77,9 +77,9 @@ int main () {
 
                   auto f1 = session.subscribe("com.myapp.topic1",
                      [](const wamp_event_context& context) {
-                        msgpack::type::tuple<uint64_t> event_arguments;
+                        std::tuple<uint64_t> event_arguments;
                         context.arguments().convert(event_arguments);
-                        cerr << "Got event: " << arguments.get<0>() << endl;
+                        cerr << "Got event: " << std::get<0>(event_arguments) << endl;
                      });
                   auto f2 = f1.then([](future<wamp_subscription> sub) {
                      cerr << "Subscribed with subscription ID " << sub.get().id() << endl;

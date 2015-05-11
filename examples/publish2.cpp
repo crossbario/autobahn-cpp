@@ -22,6 +22,7 @@
 #include <functional>
 #include <iostream>
 #include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -86,7 +87,7 @@ int main () {
                   //
                   dopub = [&]() {
                      timer.async_wait([&](system::error_code) {
-                        msgpack::type::tuple<uint64_t> arguments(count);
+                        std::tuple<uint64_t> arguments(count);
                         std::map<std::string, std::string> kw_arguments = {{"foo", string("bar")}};
                         session.publish("com.myapp.topic2", arguments, kw_arguments);
 

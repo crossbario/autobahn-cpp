@@ -80,7 +80,7 @@ int main () {
                      [](const wamp_event_context& context) {
                         msgpack::type::tuple<uint64_t> event_arguments;
                         context.arguments().convert(event_arguments);
-                        cerr << "Got event: " << event_arguments.get<0>() << endl;
+                        cerr << "Got event: " << std::get<0>(event_arguments) << endl;
                      }
                   ).then([](future<wamp_subscription> sub) {
                      cerr << "Subscribed with subscription ID " << sub.get().id() << endl;

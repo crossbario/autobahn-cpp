@@ -20,8 +20,8 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
-#include <msgpack.hpp>
 #include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -82,36 +82,36 @@ int main () {
 
                   // call a remote procedure with positional arguments
                   //
-                  msgpack::type::tuple<uint64_t, uint64_t> c1_args(23, 777);
+                  std::tuple<uint64_t, uint64_t> c1_args(23, 777);
                   auto c1 = session.call("com.mathservice.add2", c1_args)
                      .then([&](future<wamp_call_result> result) {
-                        msgpack::type::tuple<uint64_t> result_arguments;
+                        std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
-                        cerr << "Call 1 result: " << result_arguments.get<0>() << endl;
+                        cerr << "Call 1 result: " << std::get<0>(result_arguments) << endl;
                      }
                   );
 
                   // call a remote procedure with keyword arguments
                   //
-                  msgpack::type::tuple<> c2_args;
+                  std::tuple<> c2_args;
                   std::unordered_map<std::string, uint64_t> c2_kw_args = {{"stars", 10}};
                   auto c2 = session.call("com.arguments.stars", c1_args, c2_kw_args)
                      .then([&](future<wamp_call_result> result) {
-                        msgpack::type::tuple<std::string> result_arguments;
+                        std::tuple<std::string> result_arguments;
                         result.get().arguments().convert(result_arguments);
-                        cerr << "Call 2 result: " << result_arguments.get<0>() << endl;
+                        cerr << "Call 2 result: " << std::get<0>(result_arguments) << endl;
                      }
                   );
 
                   // call a remote procedure with positional and keyword arguments
                   //
-                  msgpack::type::tuple<uint64_t, uint64_t> c3_args(1, 7);
+                  std::tuple<uint64_t, uint64_t> c3_args(1, 7);
                   std::unordered_map<std::string, std::string> c3_kw_args = {{"prefix", string("Hello number: ")}};
                   auto c3 = session.call("com.arguments.numbers", c3_args, c3_kw_args)
                      .then([](boost::future<wamp_call_result> result) {
-                        msgpack::type::tuple<std::vector<std::string>> result_arguments;
+                        std::tuple<std::vector<std::string>> result_arguments;
                         result.get().arguments().convert(result_arguments);
-                        auto& v = result_arguments.get<0>();
+                        auto& v = std::get<0>(result_arguments);
                         for (size_t i = 0; i < v.size(); ++i) {
                            cerr << v[i] << endl;
                         }

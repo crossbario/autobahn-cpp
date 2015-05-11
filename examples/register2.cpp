@@ -20,8 +20,8 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
-#include <msgpack.hpp>
 #include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -33,11 +33,11 @@ using boost::asio::ip::tcp;
 void numbers(wamp_invocation_context& context)
 {
    cerr << "Someone is calling numbers() .." << endl;
-   msgpack::type::tuple<uint64_t, uint64_t> arguments;
+   std::tuple<uint64_t, uint64_t> arguments;
    context.arguments().convert(arguments);
 
-   uint64_t start = arguments.get<0>();
-   uint64_t end = arguments.get<1>();
+   uint64_t start = std::get<0>(arguments);
+   uint64_t end = std::get<1>(arguments);
 
    std::vector<uint64_t> result;
    for (uint64_t i = start; i < end; ++i) {
@@ -52,13 +52,13 @@ void numbers(wamp_invocation_context& context)
 void add_diff_mul(wamp_invocation_context& context)
 {
    cerr << "Someone is calling add_diff_mul() .." << endl;
-   msgpack::type::tuple<uint64_t, uint64_t> arguments;
+   std::tuple<uint64_t, uint64_t> arguments;
    context.arguments().convert(arguments);
 
-   uint64_t x = arguments.get<0>();
-   uint64_t y = arguments.get<1>();
+   uint64_t x = std::get<0>(arguments);
+   uint64_t y = std::get<1>(arguments);
 
-   msgpack::type::tuple<uint64_t, uint64_t, uint64_t> result(
+   std::tuple<uint64_t, uint64_t, uint64_t> result(
          x + y, x > y ? x - y : y - x, x * y);
     context.result().set_arguments(result);
 }

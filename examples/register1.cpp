@@ -20,8 +20,8 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
-#include <msgpack.hpp>
 #include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -33,11 +33,11 @@ void add2(wamp_invocation_context& context)
 {
    cerr << "Someone is calling add2() .." << endl;
    cerr << "Someone is calling add2() .." << endl;
-   msgpack::type::tuple<uint64_t, uint64_t> arguments;
+   std::tuple<uint64_t, uint64_t> arguments;
    context.arguments().convert(arguments);
 
-   msgpack::type::tuple<uint16_t> result(
-            arguments.get<0>() + arguments.get<1>());
+   std::tuple<uint16_t> result(
+            std::get<0>(arguments) + std::get<1>(arguments));
    context.result().set_arguments(result);
 }
 
@@ -103,11 +103,11 @@ int main () {
                   session.provide("com.myapp.cpp.square",
                      [](wamp_invocation_context& context) {
                         cerr << "Someone is calling my lambda function .." << endl;
-                        msgpack::type::tuple<uint64_t, uint64_t> arguments;
+                        std::tuple<uint64_t, uint64_t> arguments;
                         context.arguments().convert(arguments);
 
-                        msgpack::type::tuple<uint16_t> result(
-                                arguments.get<0>() * arguments.get<1>());
+                        std::tuple<uint16_t> result(
+                                std::get<0>(arguments) * std::get<1>(arguments));
                         context.result().set_arguments(result);
                      }
                   ).wait();

@@ -20,8 +20,8 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
-#include <msgpack.hpp>
 #include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -80,14 +80,14 @@ int main () {
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // call a remote procedure ..
-                  msgpack::type::tuple<uint64_t, uint64_t> arguments(23, 777);
+                  std::tuple<uint64_t, uint64_t> arguments(23, 777);
                   auto c1 = session.call("com.mathservice.add2", arguments).then(
                      [&](future<wamp_call_result> result) {
                         // call result received
                         //
-                        msgpack::type::tuple<uint64_t> result_arguments;
+                        std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
-                        std::cerr << "Got RPC result " << result_arguments.get<0>() << std::endl;
+                        std::cerr << "Got RPC result " << std::get<0>(result_arguments) << std::endl;
                   });
 
                   c1.then([&](decltype(c1)) {

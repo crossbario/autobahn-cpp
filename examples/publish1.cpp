@@ -21,8 +21,8 @@
 #include <chrono>
 #include <functional>
 #include <iostream>
-#include <msgpack.hpp>
 #include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -81,7 +81,7 @@ int main () {
 
                   // publish event with positional payload
                   //
-                  msgpack::type::tuple<uint64_t, bool, std::string>
+                  std::tuple<uint64_t, bool, std::string>
                         arguments(23, true, std::string("hello"));
                   session.publish("com.myapp.topic2", arguments);
 
