@@ -76,9 +76,9 @@ int main () {
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   auto f1 = session.subscribe("com.myapp.topic1",
-                     [](const wamp_event_context& context) {
+                     [](const wamp_event& event) {
                         std::tuple<uint64_t> event_arguments;
-                        context.arguments().convert(event_arguments);
+                        event.arguments().convert(event_arguments);
                         cerr << "Got event: " << std::get<0>(event_arguments) << endl;
                      });
                   auto f2 = f1.then([](future<wamp_subscription> sub) {

@@ -18,28 +18,28 @@
 
 namespace autobahn {
 
-inline wamp_event_context::wamp_event_context()
+inline wamp_event::wamp_event()
     : m_arguments(EMPTY_ARGUMENTS)
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
 {
 }
 
-inline const msgpack::object& wamp_event_context::arguments() const
+inline const msgpack::object& wamp_event::arguments() const
 {
     return m_arguments;
 }
 
-inline const msgpack::object& wamp_event_context::kw_arguments() const
+inline const msgpack::object& wamp_event::kw_arguments() const
 {
     return m_kw_arguments;
 }
 
-void wamp_event_context::set_arguments(const msgpack::object& arguments)
+inline void wamp_event::set_arguments(const msgpack::object& arguments)
 {
     m_arguments = arguments;
 }
 
-void wamp_event_context::set_kw_arguments(const msgpack::object& kw_arguments)
+inline void wamp_event::set_kw_arguments(const msgpack::object& kw_arguments)
 {
     m_kw_arguments = kw_arguments;
 }

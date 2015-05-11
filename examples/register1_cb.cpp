@@ -30,26 +30,26 @@ using namespace autobahn;
 
 using boost::asio::local::stream_protocol;
 
-void add2(wamp_invocation_context& context)
+void add2(wamp_invocation& invocation)
 {
    cerr << "Someone is calling add2() .." << endl;
    std::tuple<uint64_t, uint64_t> arguments;
-   context.arguments().convert(arguments);
+   invocation.arguments().convert(arguments);
 
    std::tuple<uint16_t> result(
             std::get<0>(arguments) + std::get<1>(arguments));
-   context.result().set_arguments(result);
+   invocation.result().set_arguments(result);
 }
 
-void square(wamp_invocation_context& context)
+void square(wamp_invocation& invocation)
 {
    cerr << "Someone is calling my lambda function .." << endl;
    std::tuple<uint64_t, uint64_t> arguments;
-   context.arguments().convert(arguments);
+   invocation.arguments().convert(arguments);
 
    std::tuple<uint16_t> result(
             std::get<0>(arguments) * std::get<1>(arguments));
-   context.result().set_arguments(result);
+   invocation.result().set_arguments(result);
 }
 
 int main (int argc, char** argv) {

@@ -30,11 +30,11 @@ set(PUBLIC_HEADERS
     autobahn/wamp_call.ipp
     autobahn/wamp_call_result.hpp
     autobahn/wamp_call_result.ipp
-    autobahn/wamp_event_context.hpp
-    autobahn/wamp_event_context.ipp
+    autobahn/wamp_event.hpp
+    autobahn/wamp_event.ipp
     autobahn/wamp_event_handler.hpp
-    autobahn/wamp_invocation_context.hpp
-    autobahn/wamp_invocation_context.ipp
+    autobahn/wamp_invocation.hpp
+    autobahn/wamp_invocation.ipp
     autobahn/wamp_invocation_result.hpp
     autobahn/wamp_invocation_result.ipp
     autobahn/wamp_message.hpp

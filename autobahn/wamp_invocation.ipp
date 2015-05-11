@@ -16,33 +16,38 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_WAMP_EVENT_CONTEXT_HPP
-#define AUTOBAHN_WAMP_EVENT_CONTEXT_HPP
-
-#include "wamp_arguments.hpp"
-
-#include <msgpack.hpp>
-
 namespace autobahn {
 
-class wamp_event_context
+inline wamp_invocation::wamp_invocation()
+    : m_arguments(EMPTY_ARGUMENTS)
+    , m_kw_arguments(EMPTY_KW_ARGUMENTS)
+    , m_result()
 {
-public:
-    wamp_event_context();
+}
 
-    const msgpack::object& arguments() const;
-    const msgpack::object& kw_arguments() const;
+inline const msgpack::object& wamp_invocation::arguments() const
+{
+    return m_arguments;
+}
 
-    void set_arguments(const msgpack::object& arguments);
-    void set_kw_arguments(const msgpack::object& kw_arguments);
+inline const msgpack::object& wamp_invocation::kw_arguments() const
+{
+    return m_kw_arguments;
+}
 
-private:
-    msgpack::object m_arguments;
-    msgpack::object m_kw_arguments;
-};
+inline void wamp_invocation::set_arguments(const msgpack::object& arguments)
+{
+    m_arguments = arguments;
+}
+
+inline void wamp_invocation::set_kw_arguments(const msgpack::object& kw_arguments)
+{
+    m_kw_arguments = kw_arguments;
+}
+
+inline wamp_invocation_result& wamp_invocation::result()
+{
+    return m_result;
+}
 
 } // namespace autobahn
-
-#include "wamp_event_context.ipp"
-
-#endif // AUTOBAHN_WAMP_EVENT_CONTEXT_HPP

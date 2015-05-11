@@ -16,38 +16,37 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef AUTOBAHN_WAMP_INVOCATION_HPP
+#define AUTOBAHN_WAMP_INVOCATION_HPP
+
+#include "wamp_arguments.hpp"
+#include "wamp_invocation_result.hpp"
+
+#include <msgpack.hpp>
+
 namespace autobahn {
 
-inline wamp_invocation_context::wamp_invocation_context()
-    : m_arguments(EMPTY_ARGUMENTS)
-    , m_kw_arguments(EMPTY_KW_ARGUMENTS)
-    , m_result()
+class wamp_invocation
 {
-}
+public:
+    wamp_invocation();
 
-inline const msgpack::object& wamp_invocation_context::arguments() const
-{
-    return m_arguments;
-}
+    const msgpack::object& arguments() const;
+    const msgpack::object& kw_arguments() const;
 
-inline const msgpack::object& wamp_invocation_context::kw_arguments() const
-{
-    return m_kw_arguments;
-}
+    void set_arguments(const msgpack::object& arguments);
+    void set_kw_arguments(const msgpack::object& kw_arguments);
 
-void wamp_invocation_context::set_arguments(const msgpack::object& arguments)
-{
-    m_arguments = arguments;
-}
+    wamp_invocation_result& result();
 
-void wamp_invocation_context::set_kw_arguments(const msgpack::object& kw_arguments)
-{
-    m_kw_arguments = kw_arguments;
-}
-
-wamp_invocation_result& wamp_invocation_context::result()
-{
-    return m_result;
-}
+private:
+    msgpack::object m_arguments;
+    msgpack::object m_kw_arguments;
+    wamp_invocation_result m_result;
+};
 
 } // namespace autobahn
+
+#include "wamp_invocation.ipp"
+
+#endif // AUTOBAHN_WAMP_INVOCATION_HPP

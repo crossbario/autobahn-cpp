@@ -16,20 +16,19 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_WAMP_INVOCATION_CONTEXT_HPP
-#define AUTOBAHN_WAMP_INVOCATION_CONTEXT_HPP
+#ifndef AUTOBAHN_WAMP_EVENT_HPP
+#define AUTOBAHN_WAMP_EVENT_HPP
 
 #include "wamp_arguments.hpp"
-#include "wamp_invocation_result.hpp"
 
 #include <msgpack.hpp>
 
 namespace autobahn {
 
-class wamp_invocation_context
+class wamp_event
 {
 public:
-    wamp_invocation_context();
+    wamp_event();
 
     const msgpack::object& arguments() const;
     const msgpack::object& kw_arguments() const;
@@ -37,16 +36,13 @@ public:
     void set_arguments(const msgpack::object& arguments);
     void set_kw_arguments(const msgpack::object& kw_arguments);
 
-    wamp_invocation_result& result();
-
 private:
     msgpack::object m_arguments;
     msgpack::object m_kw_arguments;
-    wamp_invocation_result m_result;
 };
 
 } // namespace autobahn
 
-#include "wamp_invocation_context.ipp"
+#include "wamp_event.ipp"
 
-#endif // AUTOBAHN_WAMP_INVOCATION_CONTEXT_HPP
+#endif // AUTOBAHN_WAMP_EVENT_HPP

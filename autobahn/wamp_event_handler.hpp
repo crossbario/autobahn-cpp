@@ -19,12 +19,12 @@
 #ifndef AUTOBAHN_WAMP_EVENT_HANDLER_HPP
 #define AUTOBAHN_WAMP_EVENT_HANDLER_HPP
 
-#include "wamp_event_context.hpp"
+#include "wamp_event.hpp"
 
 namespace autobahn {
 
 /// Handler type for use with wamp_session::subscribe
-typedef std::function<void(const wamp_event_context&)> wamp_event_handler;
+typedef std::function<void(const wamp_event&)> wamp_event_handler;
 
 } // namespace autobahn
 

@@ -20,12 +20,12 @@
 #define AUTOBAHN_WAMP_PROCEDURE_HPP
 
 #include "wamp_arguments.hpp"
-#include "wamp_invocation_context.hpp"
+#include "wamp_invocation.hpp"
 
 namespace autobahn {
 
 /// Handler type for use with wamp_session::provide
-typedef std::function<void(wamp_invocation_context&)> wamp_procedure;
+typedef std::function<void(wamp_invocation&)> wamp_procedure;
 
 typedef wamp_kw_arguments provide_options;
 

@@ -30,11 +30,11 @@ using namespace autobahn;
 using boost::asio::ip::tcp;
 
 /// Procedure that returns a single positional result (being a vector)
-void numbers(wamp_invocation_context& context)
+void numbers(wamp_invocation& invocation)
 {
    cerr << "Someone is calling numbers() .." << endl;
    std::tuple<uint64_t, uint64_t> arguments;
-   context.arguments().convert(arguments);
+   invocation.arguments().convert(arguments);
 
    uint64_t start = std::get<0>(arguments);
    uint64_t end = std::get<1>(arguments);
@@ -44,23 +44,23 @@ void numbers(wamp_invocation_context& context)
       result.push_back(i);
    }
 
-   context.result().set_arguments(result);
+   invocation.result().set_arguments(result);
 }
 
 
 /// Procedure that returns 3 positional results (each being a scalar)
-void add_diff_mul(wamp_invocation_context& context)
+void add_diff_mul(wamp_invocation& invocation)
 {
    cerr << "Someone is calling add_diff_mul() .." << endl;
    std::tuple<uint64_t, uint64_t> arguments;
-   context.arguments().convert(arguments);
+   invocation.arguments().convert(arguments);
 
    uint64_t x = std::get<0>(arguments);
    uint64_t y = std::get<1>(arguments);
 
    std::tuple<uint64_t, uint64_t, uint64_t> result(
          x + y, x > y ? x - y : y - x, x * y);
-    context.result().set_arguments(result);
+   invocation.result().set_arguments(result);
 }
 
 int main () {

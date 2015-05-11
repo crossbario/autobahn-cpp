@@ -18,8 +18,9 @@
 
 #include "exceptions.hpp"
 #include "wamp_call.hpp"
-#include "wamp_invocation_context.hpp"
 #include "wamp_call_result.hpp"
+#include "wamp_event.hpp"
+#include "wamp_invocation.hpp"
 #include "wamp_invocation_result.hpp"
 #include "wamp_message_type.hpp"
 #include "wamp_publication.hpp"
@@ -508,18 +509,18 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
             throw protocol_error("INVOCATION.Details must be a map");
         }
 
-        wamp_invocation_context invocation_context;
+        wamp_invocation invocation;
         if (message.size() > 4) {
             if (message[4].type != msgpack::type::ARRAY) {
                 throw protocol_error("INVOCATION.Arguments must be an array/vector");
             }
-            invocation_context.set_arguments(message[4]);
+            invocation.set_arguments(message[4]);
 
             if (message.size() > 5) {
                 if (message[5].type != msgpack::type::MAP) {
                     throw protocol_error("INVOCATION.KwArguments must be a map");
                 }
-                invocation_context.set_kw_arguments(message[5]);
+                invocation.set_kw_arguments(message[5]);
             }
         }
 
@@ -530,14 +531,14 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
             if (m_debug) {
                 std::cerr << "Invoking procedure registered under " << registration_id << std::endl;
             }
-            procedure_itr->second(invocation_context);
+            procedure_itr->second(invocation);
 
             m_packer.pack_array(4);
             m_packer.pack(static_cast<int>(message_type::YIELD));
             m_packer.pack(request_id);
             m_packer.pack_map(0);
 
-            auto& result = invocation_context.result();
+            auto& result = invocation.result();
             if (result.arguments().type != msgpack::type::NIL) {
                 m_packer.pack(result.arguments());
                 if (result.kw_arguments().type != msgpack::type::NIL) {
@@ -714,18 +715,18 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
             throw protocol_error("EVENT - Details must be a dictionary");
         }
 
-        wamp_event_context context;
+        wamp_event event;
         if (message.size() > 4) {
             if (message[4].type != msgpack::type::ARRAY) {
                 throw protocol_error("EVENT - EVENT.Arguments must be a list");
             }
-            context.set_arguments(message[4]);
+            event.set_arguments(message[4]);
 
             if (message.size() > 5) {
                 if (message[5].type != msgpack::type::MAP) {
                     throw protocol_error("EVENT - EVENT.ArgumentsKw must be a dictionary");
                 }
-                context.set_kw_arguments(message[5]);
+                event.set_kw_arguments(message[5]);
             }
         }
 
@@ -733,7 +734,7 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
             // now trigger the user supplied event handler ..
             //
             while (subscription_handlers_itr != subscription_handlers_end) {
-                 (subscription_handlers_itr->second)(context);
+                 (subscription_handlers_itr->second)(event);
                  ++subscription_handlers_itr;
             }
         } catch (...) {
