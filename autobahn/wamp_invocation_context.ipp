@@ -18,10 +18,10 @@
 
 namespace autobahn {
 
-inline wamp_invocation_context::wamp_invocation_context(msgpack::zone* zone)
+inline wamp_invocation_context::wamp_invocation_context()
     : m_arguments(EMPTY_ARGUMENTS)
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
-    , m_result(zone)
+    , m_result()
 {
 }
 

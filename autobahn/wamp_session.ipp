@@ -508,7 +508,7 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
             throw protocol_error("INVOCATION.Details must be a map");
         }
 
-        wamp_invocation_context invocation_context(&m_zone);
+        wamp_invocation_context invocation_context;
         if (message.size() > 4) {
             if (message[4].type != msgpack::type::ARRAY) {
                 throw protocol_error("INVOCATION.Arguments must be an array/vector");

@@ -26,7 +26,7 @@ namespace autobahn {
 class wamp_invocation_result
 {
 public:
-    wamp_invocation_result(msgpack::zone* zone);
+    wamp_invocation_result();
 
     const msgpack::object& arguments() const;
     const msgpack::object& kw_arguments() const;
@@ -37,7 +37,7 @@ public:
     void set_kw_arguments(const KW_ARGUMENTS& kw_arguments);
 
 private:
-    msgpack::zone* m_zone;
+    msgpack::zone m_zone;
     msgpack::object m_arguments;
     msgpack::object m_kw_arguments;
 };

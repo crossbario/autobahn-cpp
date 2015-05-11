@@ -251,9 +251,6 @@ private:
     char m_buffer_message_length[4];
     uint32_t m_message_length;
 
-    /// MsgPack zone allocator.
-    msgpack::zone m_zone;
-
     /// MsgPack serialization buffer.
     msgpack::sbuffer m_buffer;
 

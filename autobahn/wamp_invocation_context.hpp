@@ -29,7 +29,7 @@ namespace autobahn {
 class wamp_invocation_context
 {
 public:
-    wamp_invocation_context(msgpack::zone* zone);
+    wamp_invocation_context();
 
     const msgpack::object& arguments() const;
     const msgpack::object& kw_arguments() const;
