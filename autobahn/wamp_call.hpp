@@ -19,12 +19,15 @@
 #ifndef AUTOBAHN_WAMP_CALL_HPP
 #define AUTOBAHN_WAMP_CALL_HPP
 
+#include "wamp_call_result.hpp"
+
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
 #define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
-#include <boost/any.hpp>
 #include <boost/thread/future.hpp>
+
+#include <msgpack.hpp>
 
 namespace autobahn {
 
@@ -34,11 +37,11 @@ class wamp_call
 public:
     wamp_call();
 
-    boost::promise<boost::any>& response();
-    void set_response(const boost::any& value);
+    boost::promise<wamp_call_result>& result();
+    void set_result(const wamp_call_result& value);
 
 private:
-    boost::promise<boost::any> m_response;
+    boost::promise<wamp_call_result> m_result;
 };
 
 } // namespace autobahn

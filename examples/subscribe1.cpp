@@ -19,6 +19,7 @@
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <iostream>
+#include <msgpack.hpp>
 
 using namespace std;
 using namespace boost;
@@ -76,8 +77,10 @@ int main () {
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   auto f1 = session.subscribe("com.myapp.topic1",
-                     [](const anyvec& args, const anymap& kwargs) {
-                        cerr << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
+                     [](const wamp_event_context& context) {
+                        msgpack::type::tuple<uint64_t> event_arguments;
+                        context.arguments().convert(event_arguments);
+                        cerr << "Got event: " << event_arguments.get<0>() << endl;
                      }
                   ).then([](future<wamp_subscription> sub) {
                      cerr << "Subscribed with subscription ID " << sub.get().id() << endl;

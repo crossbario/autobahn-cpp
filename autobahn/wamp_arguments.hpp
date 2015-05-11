@@ -16,33 +16,22 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef AUTOBAHN_WAMP_ARGUMENTS_HPP
+#define AUTOBAHN_WAMP_ARGUMENTS_HPP
+
+#include <msgpack.hpp>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 namespace autobahn {
 
-inline wamp_subscribe_request::wamp_subscribe_request()
-    : m_handler()
-    , m_response()
-{
-}
+using wamp_arguments = std::vector<msgpack::object>;
+using wamp_kw_arguments = std::unordered_map<std::string, msgpack::object>;
 
-inline wamp_subscribe_request::wamp_subscribe_request(const wamp_event_handler& handler)
-    : m_handler(handler)
-    , m_response()
-{
-}
-
-inline const wamp_event_handler& wamp_subscribe_request::handler() const
-{
-    return m_handler;
-}
-
-inline boost::promise<wamp_subscription>& wamp_subscribe_request::response()
-{
-    return m_response;
-}
-
-inline void wamp_subscribe_request::set_response(const wamp_subscription& subscription)
-{
-    m_response.set_value(subscription);
-}
+static const msgpack::object EMPTY_ARGUMENTS(wamp_arguments(), nullptr);
+static const msgpack::object EMPTY_KW_ARGUMENTS(wamp_kw_arguments(), nullptr);
 
 } // namespace autobahn
+
+#endif // AUTOBAHN_WAMP_ARGUMENTS_HPP

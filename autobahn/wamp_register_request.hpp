@@ -19,13 +19,13 @@
 #ifndef AUTOBAHN_WAMP_REGISTER_REQUEST_HPP
 #define AUTOBAHN_WAMP_REGISTER_REQUEST_HPP
 
+#include "wamp_procedure.hpp"
 #include "wamp_registration.hpp"
 
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
 #define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
-#include <boost/any.hpp>
 #include <boost/thread/future.hpp>
 
 namespace autobahn {
@@ -35,16 +35,16 @@ class wamp_register_request
 {
 public:
     wamp_register_request();
-    wamp_register_request(boost::any endpoint);
+    wamp_register_request(const wamp_procedure& procedure);
     wamp_register_request(wamp_register_request&& other);
 
-    boost::any endpoint() const;
+    const wamp_procedure& procedure() const;
     boost::promise<wamp_registration>& response();
-    void set_endpoint(boost::any endpoint) const;
+    void set_procedure(wamp_procedure procedure) const;
     void set_response(const wamp_registration& registration);
 
 private:
-    boost::any m_endpoint;
+    wamp_procedure m_procedure;
     boost::promise<wamp_registration> m_response;
 };
 

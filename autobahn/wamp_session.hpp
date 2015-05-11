@@ -19,14 +19,15 @@
 #ifndef AUTOBAHN_SESSION_HPP
 #define AUTOBAHN_SESSION_HPP
 
-#include "wamp_endpoints.hpp"
+#include "wamp_call_result.hpp"
+#include "wamp_event_handler.hpp"
 #include "wamp_message.hpp"
+#include "wamp_procedure.hpp"
 
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
 #define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
-#include <boost/any.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread/future.hpp>
 #include <cstdint>
@@ -74,15 +75,16 @@ public:
     /*!
      * Start listening on the IStream provided to the constructor
      * of this session.
+     *
+     * \return A future that resolves to true if the session was successfully
+     *         started and false otherwise.
      */
-    inline
     boost::future<bool> start();
 
     /*!
      * Closes the IStream and the OStream provided to the constructor
      * of this session.
      */
-    inline
     void stop();
 
     /*!
@@ -91,7 +93,6 @@ public:
      * \param realm The realm to join on the WAMP router connected to.
      * \return A future that resolves with the session ID when the realm was joined.
      */
-    inline
     boost::future<uint64_t> join(const std::string& realm);
 
     /*!
@@ -100,7 +101,6 @@ public:
      * \param reason An optional WAMP URI providing a reason for leaving.
      * \return A future that resolves with the reason sent by the peer.
      */
-    inline
     boost::future<std::string> leave(const std::string& reason = std::string("wamp.error.close_realm"));
 
     /*!
@@ -108,27 +108,26 @@ public:
      *
      * \param topic The URI of the topic to publish to.
      */
-    inline
     void publish(const std::string& topic);
 
     /*!
      * Publish an event with positional payload to a topic.
      *
      * \param topic The URI of the topic to publish to.
-     * \param args The positional payload for the event.
+     * \param arguments The positional payload for the event.
      */
-    inline
-    void publish(const std::string& topic, const anyvec& args);
+    template <typename ARGUMENTS>
+    void publish(const std::string& topic, const ARGUMENTS& arguments);
 
     /*!
      * Publish an event with both positional and keyword payload to a topic.
      *
      * \param topic The URI of the topic to publish to.
-     * \param args The positional payload for the event.
-     * \param kwargs The keyword payload for the event.
+     * \param arguments The positional payload for the event.
+     * \param kw_arguments The keyword payload for the event.
      */
-    inline
-    void publish(const std::string& topic, const anyvec& args, const anymap& kwargs);
+    template <typename ARGUMENTS, typename KW_ARGUMENTS>
+    void publish(const std::string& topic, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments);
 
     /*!
      * Subscribe a handler to a topic to receive events.
@@ -137,8 +136,8 @@ public:
      * \param handler The handler that will receive events under the subscription.
      * \return A future that resolves to a autobahn::subscription
      */
-    inline
-    boost::future<wamp_subscription> subscribe(const std::string& topic, handler_t handler);
+    boost::future<wamp_subscription> subscribe(
+            const std::string& topic, const wamp_event_handler& handler);
 
     /*!
      * Unubscribe a handler to previosuly subscribed topic.
@@ -146,7 +145,6 @@ public:
      * \param subscription The subscription to unsubscribe from.
      * \return A future that synchronizes to the unsubscribed response.
      */
-    inline
     boost::future<void> unsubscribe(const wamp_subscription& subscription);
 
     /*!
@@ -155,113 +153,78 @@ public:
      * \param procedure The URI of the remote procedure to call.
      * \return A future that resolves to the result of the remote procedure call.
      */
-    inline
-    boost::future<boost::any> call(const std::string& procedure);
+    boost::future<wamp_call_result> call(const std::string& procedure);
 
     /*!
      * Calls a remote procedure with positional arguments.
      *
      * \param procedure The URI of the remote procedure to call.
-     * \param args The positional arguments for the call.
+     * \param arguments The positional arguments for the call.
      * \return A future that resolves to the result of the remote procedure call.
      */
-    inline
-    boost::future<boost::any> call(const std::string& procedure, const anyvec& args);
+    template <typename ARGUMENTS>
+    boost::future<wamp_call_result> call(
+            const std::string& procedure, const ARGUMENTS& arguments);
 
     /*!
      * Calls a remote procedure with positional and keyword arguments.
      *
      * \param procedure The URI of the remote procedure to call.
-     * \param args The positional arguments for the call.
-     * \param kwargs The keyword arguments for the call.
+     * \param arguments The positional arguments for the call.
+     * \param kw_arguments The keyword arguments for the call.
      * \return A future that resolves to the result of the remote procedure call.
      */
-    inline
-    boost::future<boost::any> call(const std::string& procedure, const anyvec& args, const anymap& kwargs);
-
+    template<typename ARGUMENTS, typename KW_ARGUMENTS>
+    boost::future<wamp_call_result> call(
+            const std::string& procedure, const ARGUMENTS& args, const KW_ARGUMENTS& kwargs);
 
     /*!
-     * Register an endpoint as a procedure that can be called remotely.
+     * Register an procedure as a procedure that can be called remotely.
      *
-     * \param procedure The URI under which the procedure is to be exposed.
-     * \param endpoint The endpoint to be exposed as a remotely callable procedure.
+     * \param uri The URI under which the procedure is to be exposed.
+     * \param procedure The procedure to be exposed as a remotely callable procedure.
      * \param options Options when registering a procedure.
      * \return A future that resolves to a autobahn::registration
      */
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_v_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_m_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_f_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options = provide_options());
-    inline boost::future<wamp_registration> provide(const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options = provide_options());
-
-    // Use a special fallback template here to avoid ambiguous overloads.
-    template<
-        typename E,
-        typename std::enable_if<
-            std::is_assignable<endpoint_t, E>::value &&
-                !std::is_assignable<endpoint_v_t, E>::value &&
-                !std::is_assignable<endpoint_m_t, E>::value &&
-                !std::is_assignable<endpoint_vm_t, E>::value &&
-                !std::is_assignable<endpoint_f_t, E>::value &&
-                !std::is_assignable<endpoint_fv_t, E>::value &&
-                !std::is_assignable<endpoint_fm_t, E>::value &&
-                !std::is_assignable<endpoint_fvm_t, E>::value,
-            int
-        >::type = 0
-    >
-    inline boost::future<wamp_registration> provide(const std::string& procedure, E endpoint, const provide_options& options = provide_options());
+    boost::future<wamp_registration> provide(
+            const std::string& uri,
+            const wamp_procedure& procedure,
+            const provide_options& options = provide_options());
 
 private:
 
-    template<typename E>
-    inline boost::future<wamp_registration> _provide(const std::string& procedure, E endpoint, const provide_options& options);
-
     /// Process a WAMP ERROR message.
-    inline void process_error(const wamp_message& message);
+    void process_error(const wamp_message& message);
 
     /// Process a WAMP HELLO message.
-    inline void process_welcome(const wamp_message& message);
+    void process_welcome(const wamp_message& message);
 
     /// Process a WAMP RESULT message.
-    inline void process_call_result(const wamp_message& message);
+    void process_call_result(const wamp_message& message);
 
     /// Process a WAMP SUBSCRIBED message.
-    inline void process_subscribed(const wamp_message& message);
+    void process_subscribed(const wamp_message& message);
 
     /// Process a WAMP UNSUBSCRIBED message.
-    inline void process_unsubscribed(const wamp_message& message);
+    void process_unsubscribed(const wamp_message& message);
 
     /// Process a WAMP EVENT message.
-    inline void process_event(const wamp_message& message);
+    void process_event(const wamp_message& message);
 
     /// Process a WAMP REGISTERED message.
-    inline void process_registered(const wamp_message& message);
+    void process_registered(const wamp_message& message);
 
     /// Process a WAMP INVOCATION message.
-    inline void process_invocation(const wamp_message& message);
+    void process_invocation(const wamp_message& message);
 
     /// Process a WAMP GOODBYE message.
-    inline void process_goodbye(const wamp_message& message);
-
-    /// Unpacks any MsgPack object into boost::any value.
-    inline boost::any unpack_any(msgpack::object& obj);
-
-    /// Unpacks MsgPack array into anyvec.
-    inline void unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args);
-
-    /// Unpacks MsgPack map into anymap.
-    inline void unpack_anymap(std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs);
-
-    /// Pack any value into serializion buffer.
-    inline void pack_any(const boost::any& value);
+    void process_goodbye(const wamp_message& message);
 
     /// Send out message serialized in serialization buffer to ostream.
-    inline void send();
+    void send();
 
     /// Receive one message from istream in m_unpacker.
-    inline void receive_message();
+    void receive_message();
 
     void got_handshake_reply(const boost::system::error_code& error);
 
@@ -287,6 +250,9 @@ private:
 
     char m_buffer_message_length[4];
     uint32_t m_message_length;
+
+    /// MsgPack zone allocator.
+    msgpack::zone m_zone;
 
     /// MsgPack serialization buffer.
     msgpack::sbuffer m_buffer;
@@ -331,7 +297,7 @@ private:
     std::map<uint64_t, wamp_unsubscribe_request> m_unsubscribe_requests;
 
     /// Map of subscribed handlers (subscription ID -> handler)
-    std::multimap<uint64_t, handler_t> m_subscription_handlers;
+    std::multimap<uint64_t, wamp_event_handler> m_subscription_handlers;
 
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -340,8 +306,8 @@ private:
     /// Map of outstanding WAMP register requests (request ID -> register request).
     std::map<uint64_t, wamp_register_request> m_register_requests;
 
-    /// Map of registered endpoints (registration ID -> endpoint)
-    std::map<uint64_t, boost::any> m_endpoints;
+    /// Map of registered procedures (registration ID -> procedure)
+    std::map<uint64_t, wamp_procedure> m_procedures;
 
     /// An unserialized, raw WAMP message.
     wamp_message m_message;

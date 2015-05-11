@@ -19,18 +19,18 @@
 namespace autobahn {
 
 inline wamp_call::wamp_call()
-    : m_response()
+    : m_result()
 {
 }
 
-inline boost::promise<boost::any>& wamp_call::response()
+inline boost::promise<wamp_call_result>& wamp_call::result()
 {
-    return m_response;
+    return m_result;
 }
 
-inline void wamp_call::set_response(const boost::any& value)
+inline void wamp_call::set_result(const wamp_call_result& value)
 {
-    m_response.set_value(value);
+    m_result.set_value(value);
 }
 
 } // namespace autobahn

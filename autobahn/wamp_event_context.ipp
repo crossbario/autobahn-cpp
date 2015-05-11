@@ -18,31 +18,30 @@
 
 namespace autobahn {
 
-inline wamp_subscribe_request::wamp_subscribe_request()
-    : m_handler()
-    , m_response()
+inline wamp_event_context::wamp_event_context()
+    : m_arguments(EMPTY_ARGUMENTS)
+    , m_kw_arguments(EMPTY_KW_ARGUMENTS)
 {
 }
 
-inline wamp_subscribe_request::wamp_subscribe_request(const wamp_event_handler& handler)
-    : m_handler(handler)
-    , m_response()
+inline const msgpack::object& wamp_event_context::arguments() const
 {
+    return m_arguments;
 }
 
-inline const wamp_event_handler& wamp_subscribe_request::handler() const
+inline const msgpack::object& wamp_event_context::kw_arguments() const
 {
-    return m_handler;
+    return m_kw_arguments;
 }
 
-inline boost::promise<wamp_subscription>& wamp_subscribe_request::response()
+void wamp_event_context::set_arguments(const msgpack::object& arguments)
 {
-    return m_response;
+    m_arguments = arguments;
 }
 
-inline void wamp_subscribe_request::set_response(const wamp_subscription& subscription)
+void wamp_event_context::set_kw_arguments(const msgpack::object& kw_arguments)
 {
-    m_response.set_value(subscription);
+    m_kw_arguments = kw_arguments;
 }
 
 } // namespace autobahn

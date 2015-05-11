@@ -20,6 +20,7 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <msgpack.hpp>
 #include <string>
 
 using namespace std;
@@ -28,17 +29,17 @@ using namespace autobahn;
 
 using boost::asio::ip::tcp;
 
-
-any add2(const anyvec& args, const anymap& kwargs) {
-
+void add2(wamp_invocation_context& context)
+{
    cerr << "Someone is calling add2() .." << endl;
+   cerr << "Someone is calling add2() .." << endl;
+   msgpack::type::tuple<uint64_t, uint64_t> arguments;
+   context.arguments().convert(arguments);
 
-   uint64_t x = any_cast<uint64_t> (args[0]);
-   uint64_t y = any_cast<uint64_t> (args[1]);
-   return x + y;
+   msgpack::type::tuple<uint16_t> result(
+            arguments.get<0>() + arguments.get<1>());
+   context.result().set_arguments(result);
 }
-
-
 
 int main () {
 
@@ -92,7 +93,6 @@ int main () {
                   // register a free standing function for remoting
                   //
                   auto r1 = session.provide("com.myapp.cpp.add2", &add2);
-
                   r1.then([](future<wamp_registration> reg) {
                      cerr << "Registered with registration ID " << reg.get().id() << endl;
                   }).wait();
@@ -101,13 +101,14 @@ int main () {
                   // register a lambda for remoting
                   //
                   session.provide("com.myapp.cpp.square",
-
-                     [](const anyvec& args, const anymap& kwargs) {
-
+                     [](wamp_invocation_context& context) {
                         cerr << "Someone is calling my lambda function .." << endl;
+                        msgpack::type::tuple<uint64_t, uint64_t> arguments;
+                        context.arguments().convert(arguments);
 
-                        uint64_t x = any_cast<uint64_t> (args[0]);
-                        return x * x;
+                        msgpack::type::tuple<uint16_t> result(
+                                arguments.get<0>() * arguments.get<1>());
+                        context.result().set_arguments(result);
                      }
                   ).wait();
                });

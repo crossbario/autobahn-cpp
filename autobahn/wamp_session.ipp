@@ -18,6 +18,9 @@
 
 #include "exceptions.hpp"
 #include "wamp_call.hpp"
+#include "wamp_invocation_context.hpp"
+#include "wamp_call_result.hpp"
+#include "wamp_invocation_result.hpp"
 #include "wamp_message_type.hpp"
 #include "wamp_publication.hpp"
 #include "wamp_registration.hpp"
@@ -161,7 +164,7 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
 
 template<typename IStream, typename OStream>
 boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
-        const std::string& topic, handler_t handler)
+        const std::string& topic, const wamp_event_handler& handler)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -176,7 +179,8 @@ boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
 
     send();
 
-    auto result = m_subscribe_requests.emplace(m_request_id, wamp_subscribe_request(handler));
+    auto result = m_subscribe_requests.emplace(
+            m_request_id, wamp_subscribe_request(handler));
     return result.first->second.response().get_future();
 }
 
@@ -195,84 +199,14 @@ boost::future<void> wamp_session<IStream, OStream>::unsubscribe(const wamp_subsc
 
     send();
 
-    auto result = m_unsubscribe_requests.emplace(m_request_id, wamp_unsubscribe_request());
+    auto result = m_unsubscribe_requests.emplace(
+            m_request_id, wamp_unsubscribe_request());
     return result.first->second.response().get_future();
 }
 
 template<typename IStream, typename OStream>
-template<
-    typename E,
-    typename std::enable_if<
-        std::is_assignable<endpoint_t, E>::value &&
-            !std::is_assignable<endpoint_v_t, E>::value &&
-            !std::is_assignable<endpoint_m_t, E>::value &&
-            !std::is_assignable<endpoint_vm_t, E>::value &&
-            !std::is_assignable<endpoint_f_t, E>::value &&
-            !std::is_assignable<endpoint_fv_t, E>::value &&
-            !std::is_assignable<endpoint_fm_t, E>::value &&
-            !std::is_assignable<endpoint_fvm_t, E>::value,
-        int
-    >::type
->
 boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, E endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_v_t endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_v_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_m_t endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_m_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_vm_t endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_vm_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_f_t endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_f_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_fv_t endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_fv_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_fm_t endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_fm_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
-        const std::string& procedure, endpoint_fvm_t endpoint, const provide_options& options)
-{
-    return _provide(procedure, static_cast<endpoint_fvm_t>(endpoint), options);
-}
-
-template<typename IStream, typename OStream>
-template<typename E>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::_provide(
-        const std::string& procedure, E endpoint, const provide_options& options)
+        const std::string& name, const wamp_procedure& procedure, const provide_options& options)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -282,11 +216,11 @@ boost::future<wamp_registration> wamp_session<IStream, OStream>::_provide(
     m_packer.pack_array(4);
     m_packer.pack(static_cast<int>(message_type::REGISTER));
     m_packer.pack(++m_request_id);
-    pack_any(options);
-    m_packer.pack(procedure);
+    m_packer.pack(options);
+    m_packer.pack(name);
     send();
 
-    auto result = m_register_requests.emplace(m_request_id, wamp_register_request(endpoint));
+    auto result = m_register_requests.emplace(m_request_id, wamp_register_request(procedure));
     return result.first->second.response().get_future();
 }
 
@@ -307,14 +241,11 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic)
 }
 
 template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::publish(const std::string& topic, const anyvec& args)
+template <typename ARGUMENTS>
+void wamp_session<IStream, OStream>::publish(const std::string& topic, const ARGUMENTS& arguments)
 {
     if (!m_session_id) {
         throw no_session_error();
-    }
-
-    if (args.size() == 0) {
-        return publish(topic);
     }
 
     // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
@@ -323,21 +254,17 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic, const any
     m_packer.pack(++m_request_id);
     m_packer.pack_map(0);
     m_packer.pack(topic);
-    pack_any(args);
+    m_packer.pack(arguments);
     send();
 }
 
 template<typename IStream, typename OStream>
+template <typename ARGUMENTS, typename KW_ARGUMENTS>
 void wamp_session<IStream, OStream>::publish(
-        const std::string& topic, const anyvec& args, const anymap& kwargs)
+        const std::string& topic, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments)
 {
-
     if (!m_session_id) {
         throw no_session_error();
-    }
-
-    if (kwargs.size() == 0) {
-        return publish(topic, args);
     }
 
     // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
@@ -346,13 +273,13 @@ void wamp_session<IStream, OStream>::publish(
     m_packer.pack(++m_request_id);
     m_packer.pack_map(0);
     m_packer.pack(topic);
-    pack_any(args);
-    pack_any(kwargs);
+    m_packer.pack(arguments);
+    m_packer.pack(kw_arguments);
     send();
 }
 
 template<typename IStream, typename OStream>
-boost::future<boost::any> wamp_session<IStream, OStream>::call(const std::string& procedure)
+boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(const std::string& procedure)
 {
     if (!m_session_id) {
         throw no_session_error();
@@ -367,19 +294,16 @@ boost::future<boost::any> wamp_session<IStream, OStream>::call(const std::string
     send();
 
     auto result = m_calls.emplace(m_request_id, wamp_call());
-    return result.first->second.response().get_future();
+    return result.first->second.result().get_future();
 }
 
 template<typename IStream, typename OStream>
-boost::future<boost::any> wamp_session<IStream, OStream>::call(
-        const std::string& procedure, const anyvec& args)
+template<typename ARGUMENTS>
+boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
+        const std::string& procedure, const ARGUMENTS& arguments)
 {
     if (!m_session_id) {
         throw no_session_error();
-    }
-
-    if (args.size() == 0) {
-        return call(procedure);
     }
 
     // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
@@ -388,23 +312,20 @@ boost::future<boost::any> wamp_session<IStream, OStream>::call(
     m_packer.pack(++m_request_id);
     m_packer.pack_map(0);
     m_packer.pack(procedure);
-    pack_any(args);
+    m_packer.pack(arguments);
     send();
 
     auto result = m_calls.emplace(m_request_id, wamp_call());
-    return result.first->second.response().get_future();
+    return result.first->second.result().get_future();
 }
 
 template<typename IStream, typename OStream>
-boost::future<boost::any> wamp_session<IStream, OStream>::call(
-        const std::string& procedure, const anyvec& args, const anymap& kwargs)
+template<typename ARGUMENTS, typename KW_ARGUMENTS>
+boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
+        const std::string& procedure, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments)
 {
     if (!m_session_id) {
         throw no_session_error();
-    }
-
-    if (kwargs.size() == 0) {
-        return call(procedure, args);
     }
 
     // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
@@ -413,59 +334,12 @@ boost::future<boost::any> wamp_session<IStream, OStream>::call(
     m_packer.pack(++m_request_id);
     m_packer.pack_map(0);
     m_packer.pack(procedure);
-    pack_any(args);
-    pack_any(kwargs);
+    m_packer.pack(arguments);
+    m_packer.pack(kw_arguments);
     send();
 
     auto result = m_calls.emplace(m_request_id, wamp_call());
-    return result.first->second.response().get_future();
-}
-
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::pack_any(const boost::any& value)
-{
-    if (value.empty()) {
-        m_packer.pack_nil();
-    } else if (value.type() == typeid(anyvec)) {
-        anyvec v = boost::any_cast<anyvec>(value);
-        m_packer.pack_array(v.size());
-        anyvec::iterator it = v.begin();
-        while (it != v.end()) {
-            pack_any(*it);
-            ++it;
-        }
-    } else if (value.type() == typeid(anymap)) {
-        anymap m = boost::any_cast<anymap>(value);
-        m_packer.pack_map(m.size());
-        anymap::iterator it = m.begin();
-        while (it != m.end()) {
-            m_packer.pack(it->first); // std::string
-            pack_any(it->second);
-            ++it;
-        }
-    } else if (value.type() == typeid(int)) {
-        int val = boost::any_cast<int>(value);
-        m_packer.pack(val);
-    } else if (value.type() == typeid(uint64_t)) {
-        uint64_t val = boost::any_cast<uint64_t>(value);
-        m_packer.pack(val);
-    } else if (value.type() == typeid(bool)) {
-        bool val = boost::any_cast<bool>(value);
-        m_packer.pack(val);
-    } else if (value.type() == typeid(float)) {
-        float val = boost::any_cast<float>(value);
-        m_packer.pack(val);
-    } else if (value.type() == typeid(double)) {
-        double val = boost::any_cast<double>(value);
-        m_packer.pack(val);
-    } else if (value.type() == typeid(std::string)) {
-        std::string val = boost::any_cast<std::string>(value);
-        m_packer.pack(val);
-    } else {
-        // TODO: Revisit this as I suspect that we should be asserting
-        //       here or throwing some kind of exception.
-        std::cerr << "Warning: don't know how to pack type " << value.type().name() << std::endl;
-    }
+    return result.first->second.result().get_future();
 }
 
 template<typename IStream, typename OStream>
@@ -517,66 +391,6 @@ boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::stri
 
     return m_session_leave.get_future();
 }
-
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::unpack_anyvec(std::vector<msgpack::object>& raw_args, anyvec& args)
-{
-    for (size_t i = 0; i < raw_args.size(); ++i) {
-        args.push_back(unpack_any(raw_args[i]));
-    }
-}
-
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::unpack_anymap(
-        std::map<std::string, msgpack::object>& raw_kwargs, anymap& kwargs)
-{
-     for (auto& raw_args : raw_kwargs) {
-          kwargs[raw_args.first] = unpack_any(raw_args.second);
-     }
-}
-
-template<typename IStream, typename OStream>
-boost::any wamp_session<IStream, OStream>::unpack_any(msgpack::object& obj)
-{
-    switch (obj.type) {
-        case msgpack::type::STR:
-            return boost::any(obj.as<std::string>());
-        case msgpack::type::POSITIVE_INTEGER:
-            return boost::any(obj.as<uint64_t>());
-        case msgpack::type::NEGATIVE_INTEGER:
-            return boost::any(obj.as<int64_t>());
-        case msgpack::type::BOOLEAN:
-            return boost::any(obj.as<bool>());
-        case msgpack::type::FLOAT:
-            return boost::any(obj.as<double>());
-        case msgpack::type::NIL:
-            return boost::any();
-        case msgpack::type::ARRAY:
-            {
-                anyvec out_vec;
-                std::vector<msgpack::object> in_vec;
-
-                obj.convert(&in_vec);
-                unpack_anyvec(in_vec, out_vec);
-
-                return out_vec;
-            }
-
-        case msgpack::type::MAP:
-            {
-                anymap out_map;
-                std::map<std::string, msgpack::object> in_map;
-
-                obj.convert(&in_map);
-                unpack_anymap(in_map, out_map);
-                return out_map;
-            }
-
-        default:
-            return boost::any();
-    }
-}
-
 
 template<typename IStream, typename OStream>
 void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
@@ -651,7 +465,7 @@ void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
 
                     // FIXME: forward all error info .. also not sure if this is the correct
                     // way to use set_exception()
-                    call_itr->second.response().set_exception(boost::copy_exception(std::runtime_error(error)));
+                    call_itr->second.result().set_exception(boost::copy_exception(std::runtime_error(error)));
 
                 } else {
                     throw protocol_error("bogus ERROR message for non-pending CALL request ID");
@@ -675,43 +489,37 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
     // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
     if (message.size() != 4 && message.size() != 5 && message.size() != 6) {
-        throw protocol_error("invalid INVOCATION message structure - length must be 4, 5 or 6");
+        throw protocol_error("INVOCATION message length must be 4, 5 or 6");
     }
 
     if (message[1].type != msgpack::type::POSITIVE_INTEGER) {
-        throw protocol_error("invalid INVOCATION message structure - INVOCATION.Request must be an integer");
+        throw protocol_error("INVOCATION.Request must be an integer");
     }
     uint64_t request_id = message[1].as<uint64_t>();
 
     if (message[2].type != msgpack::type::POSITIVE_INTEGER) {
-        throw protocol_error("invalid INVOCATION message structure - INVOCATION.Registration must be an integer");
+        throw protocol_error("INVOCATION.Registration must be an integer");
     }
     uint64_t registration_id = message[2].as<uint64_t>();
 
-    auto endpoint_itr = m_endpoints.find(registration_id);
-    if (endpoint_itr != m_endpoints.end()) {
-
+    auto procedure_itr = m_procedures.find(registration_id);
+    if (procedure_itr != m_procedures.end()) {
         if (message[3].type != msgpack::type::MAP) {
-            throw protocol_error("invalid INVOCATION message structure - Details must be a dictionary");
+            throw protocol_error("INVOCATION.Details must be a map");
         }
 
-        anyvec args;
-        anymap kwargs;
-
+        wamp_invocation_context invocation_context(&m_zone);
         if (message.size() > 4) {
-
             if (message[4].type != msgpack::type::ARRAY) {
-                throw protocol_error("invalid INVOCATION message structure - INVOCATION.Arguments must be a list");
+                throw protocol_error("INVOCATION.Arguments must be an array/vector");
             }
-
-            std::vector<msgpack::object> raw_args;
-            message[4].convert(&raw_args);
-            unpack_anyvec(raw_args, args);
+            invocation_context.set_arguments(message[4]);
 
             if (message.size() > 5) {
-                std::map<std::string, msgpack::object> raw_kwargs;
-                message[5].convert(&raw_kwargs);
-                unpack_anymap(raw_kwargs, kwargs);
+                if (message[5].type != msgpack::type::MAP) {
+                    throw protocol_error("INVOCATION.KwArguments must be a map");
+                }
+                invocation_context.set_kw_arguments(message[5]);
             }
         }
 
@@ -719,59 +527,27 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
         // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
         // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
         try {
-            if ((endpoint_itr->second).type() == typeid(endpoint_t)) {
-                if (m_debug) {
-                    std::cerr << "Invoking endpoint registered under " << registration_id << " as of type endpoint_t" << std::endl;
-                }
-
-                boost::any res = (boost::any_cast<endpoint_t>(endpoint_itr->second))(args, kwargs);
-
-                m_packer.pack_array(4);
-                m_packer.pack(static_cast<int>(message_type::YIELD));
-                m_packer.pack(request_id);
-                m_packer.pack_map(0);
-                m_packer.pack_array(1);
-                pack_any(res);
-                send();
-            } else if ((endpoint_itr->second).type() == typeid(endpoint_v_t)) {
-                if (m_debug) {
-                    std::cerr << "Invoking endpoint registered under " << registration_id << " as of type endpoint_v_t" << std::endl;
-                }
-
-                anyvec res = (boost::any_cast<endpoint_v_t>(endpoint_itr->second))(args, kwargs);
-
-                m_packer.pack_array(4);
-                m_packer.pack(static_cast<int>(message_type::YIELD));
-                m_packer.pack(request_id);
-                m_packer.pack_map(0);
-                pack_any(res);
-                send();
-            } else if ((endpoint_itr->second).type() == typeid(endpoint_fvm_t)) {
-                if (m_debug) {
-                    std::cerr << "Invoking endpoint registered under " << registration_id << " as of type endpoint_fvm_t" << std::endl;
-                }
-
-                boost::future<anyvecmap> f_res = ( boost::any_cast<endpoint_fvm_t>(endpoint_itr->second) )(args, kwargs);
-                auto done = f_res.then([&](decltype(f_res) f) {
-
-                    anyvecmap res = f.get();
-
-                    m_packer.pack_array(5);
-                    m_packer.pack(static_cast<int>(message_type::YIELD));
-                    m_packer.pack(request_id);
-                    m_packer.pack_map(0);
-                    pack_any(res.first);
-                    pack_any(res.second);
-                    send();
-                });
-
-                done.wait();
-            } else {
-                // FIXME
-                std::cerr << "Could not process invocation - unimplemented endpoint type" << std::endl;
-                std::cerr << typeid(endpoint_t).name() << std::endl;
-                std::cerr << ((endpoint_itr->second).type()).name() << std::endl;
+            if (m_debug) {
+                std::cerr << "Invoking procedure registered under " << registration_id << std::endl;
             }
+            procedure_itr->second(invocation_context);
+
+            m_packer.pack_array(4);
+            m_packer.pack(static_cast<int>(message_type::YIELD));
+            m_packer.pack(request_id);
+            m_packer.pack_map(0);
+
+            auto& result = invocation_context.result();
+            if (result.arguments().type != msgpack::type::NIL) {
+                m_packer.pack(result.arguments());
+                if (result.kw_arguments().type != msgpack::type::NIL) {
+                    m_packer.pack(result.kw_arguments());
+                }
+            } else if (result.kw_arguments().type != msgpack::type::NIL) {
+                m_packer.pack(EMPTY_ARGUMENTS);
+                m_packer.pack(result.kw_arguments());
+            }
+            send();
         }
 
         // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
@@ -821,40 +597,35 @@ void wamp_session<IStream, OStream>::process_call_result(const wamp_message& mes
     // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 
     if (message.size() != 3 && message.size() != 4 && message.size() != 5) {
-        throw protocol_error("invalid RESULT message structure - length must be 3, 4 or 5");
+        throw protocol_error("RESULT - length must be 3, 4 or 5");
     }
 
     if (message[1].type != msgpack::type::POSITIVE_INTEGER) {
-        throw protocol_error("invalid RESULT message structure - CALL.Request must be an integer");
+        throw protocol_error("RESULT - CALL.Request must be an id");
     }
 
     uint64_t request_id = message[1].as<uint64_t>();
     auto call_itr = m_calls.find(request_id);
     if (call_itr != m_calls.end()) {
         if (message[2].type != msgpack::type::MAP) {
-            throw protocol_error("invalid RESULT message structure - Details must be a dictionary");
+            throw protocol_error("RESULT - Details must be a dictionary");
         }
 
+        wamp_call_result result;
         if (message.size() > 3) {
             if (message[3].type != msgpack::type::ARRAY) {
-                throw protocol_error("invalid RESULT message structure - YIELD.Arguments must be a list");
+                throw protocol_error("RESULT - YIELD.Arguments must be a list");
             }
+            result.set_arguments(message[3]);
 
-            std::vector<msgpack::object> raw_args;
-            message[3].convert(&raw_args);
-
-            anyvec args;
-            unpack_anyvec(raw_args, args);
-
-            if (args.size() > 0) {
-                call_itr->second.set_response(args[0]);
-            } else {
-                call_itr->second.set_response(boost::any());
+            if (message.size() > 4) {
+                if (message[4].type != msgpack::type::MAP) {
+                    throw protocol_error("RESULT - YIELD.ArgumentsKw must be a dictionary");
+                }
+                result.set_kw_arguments(message[4]);
             }
-        } else {
-            // empty result
-            call_itr->second.set_response(boost::any());
         }
+        call_itr->second.set_result(result);
     } else {
         throw protocol_error("bogus RESULT message for non-pending request ID");
     }
@@ -865,18 +636,18 @@ void wamp_session<IStream, OStream>::process_subscribed(const wamp_message& mess
 {
     // [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
     if (message.size() != 3) {
-        throw protocol_error("invalid SUBSCRIBED message structure - length must be 3");
+        throw protocol_error("SUBSCRIBED - length must be 3");
     }
 
     if (message[1].type != msgpack::type::POSITIVE_INTEGER) {
-        throw protocol_error("invalid SUBSCRIBED message structure - SUBSCRIBED.Request must be an integer");
+        throw protocol_error("SUBSCRIBED - SUBSCRIBED.Request must be an integer");
     }
 
     uint64_t request_id = message[1].as<uint64_t>();
     auto subscribe_request_itr = m_subscribe_requests.find(request_id);
     if (subscribe_request_itr != m_subscribe_requests.end()) {
         if (message[2].type != msgpack::type::POSITIVE_INTEGER) {
-            throw protocol_error("invalid SUBSCRIBED message structure - SUBSCRIBED.Subscription must be an integer");
+            throw protocol_error("SUBSCRIBED - SUBSCRIBED.Subscription must be an integer");
         }
 
         uint64_t subscription_id = message[2].as<uint64_t>();
@@ -884,7 +655,7 @@ void wamp_session<IStream, OStream>::process_subscribed(const wamp_message& mess
         subscribe_request_itr->second.set_response(wamp_subscription(subscription_id));
         m_subscribe_requests.erase(request_id);
     } else {
-        throw protocol_error("bogus SUBSCRIBED message for non-pending request ID");
+        throw protocol_error("SUBSCRIBED - no pending request ID");
     }
 }
 
@@ -893,11 +664,11 @@ void wamp_session<IStream, OStream>::process_unsubscribed(const wamp_message& me
 {
     // [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
     if (message.size() != 2) {
-        throw protocol_error("invalid UNSUBSCRIBED message structure - length must be 2");
+        throw protocol_error("UNSUBSCRIBED - length must be 2");
     }
 
     if (message[1].type != msgpack::type::POSITIVE_INTEGER) {
-        throw protocol_error("invalid SUBSCRIBED message structure - UNSUBSCRIBED.Request must be an integer");
+        throw protocol_error("UNSUBSCRIBED - UNSUBSCRIBED.Request must be an integer");
     }
 
     uint64_t request_id = message[1].as<uint64_t>();
@@ -906,7 +677,7 @@ void wamp_session<IStream, OStream>::process_unsubscribed(const wamp_message& me
         unsubscribe_request_itr->second.set_response();
         m_unsubscribe_requests.erase(request_id);
     } else {
-        throw protocol_error("bogus UNSUBSCRIBED message for non-pending request ID");
+        throw protocol_error("UNSUBSCRIBED - no pending request ID");
     }
 }
 
@@ -918,11 +689,11 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
     // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentsKw|dict]
 
     if (message.size() != 4 && message.size() != 5 && message.size() != 6) {
-        throw protocol_error("invalid EVENT message structure - length must be 4, 5 or 6");
+        throw protocol_error("EVENT - length must be 4, 5 or 6");
     }
 
     if (message[1].type != msgpack::type::POSITIVE_INTEGER) {
-        throw protocol_error("invalid EVENT message structure - SUBSCRIBED.Subscription must be an integer");
+        throw protocol_error("EVENT - SUBSCRIBED.Subscription must be an integer");
     }
 
     uint64_t subscription_id = message[1].as<uint64_t>();
@@ -934,35 +705,27 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
             subscription_handlers_itr != subscription_handlers_end) {
 
         if (message[2].type != msgpack::type::POSITIVE_INTEGER) {
-            throw protocol_error("invalid EVENT message structure - PUBLISHED.Publication|id must be an integer");
+            throw protocol_error("EVENT - PUBLISHED.Publication must be an id");
         }
 
         //uint64_t publication_id = message[2].as<uint64_t>();
 
         if (message[3].type != msgpack::type::MAP) {
-            throw protocol_error("invalid EVENT message structure - Details must be a dictionary");
+            throw protocol_error("EVENT - Details must be a dictionary");
         }
 
-        anyvec args;
-        anymap kwargs;
-
+        wamp_event_context context;
         if (message.size() > 4) {
             if (message[4].type != msgpack::type::ARRAY) {
-                throw protocol_error("invalid EVENT message structure - EVENT.Arguments must be a list");
+                throw protocol_error("EVENT - EVENT.Arguments must be a list");
             }
-
-            std::vector<msgpack::object> raw_args;
-            message[4].convert(&raw_args);
-            unpack_anyvec(raw_args, args);
+            context.set_arguments(message[4]);
 
             if (message.size() > 5) {
                 if (message[5].type != msgpack::type::MAP) {
-                    throw protocol_error("invalid EVENT message structure - EVENT.Arguments must be a list");
+                    throw protocol_error("EVENT - EVENT.ArgumentsKw must be a dictionary");
                 }
-
-                std::map<std::string, msgpack::object> raw_kwargs;
-                message[5].convert(&raw_kwargs);
-                unpack_anymap(raw_kwargs, kwargs);
+                context.set_kw_arguments(message[5]);
             }
         }
 
@@ -970,13 +733,12 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
             // now trigger the user supplied event handler ..
             //
             while (subscription_handlers_itr != subscription_handlers_end) {
-                 (subscription_handlers_itr->second)(args, kwargs);
+                 (subscription_handlers_itr->second)(context);
                  ++subscription_handlers_itr;
             }
-
         } catch (...) {
             if (m_debug) {
-                std::cerr << "Warning: event handler fired exception" << std::endl;
+                std::cerr << "Warning: event handler threw exception" << std::endl;
             }
         }
 
@@ -985,7 +747,7 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
         // We may have just unsubscribed, the this EVENT might be have
         // already been in-flight.
         if (m_debug) {
-            std::cerr << "Skipping EVENT for non-existent subscription ID " << subscription_id << std::endl;
+            std::cerr << "EVENT - non-existent subscription ID " << subscription_id << std::endl;
         }
     }
 }
@@ -996,25 +758,25 @@ void wamp_session<IStream, OStream>::process_registered(const wamp_message& mess
     // [REGISTERED, REGISTER.Request|id, Registration|id]
 
     if (message.size() != 3) {
-        throw protocol_error("invalid REGISTERED message structure - length must be 3");
+        throw protocol_error("REGISTERED - length must be 3");
     }
 
     if (message[1].type != msgpack::type::POSITIVE_INTEGER) {
-        throw protocol_error("invalid REGISTERED message structure - REGISTERED.Request must be an integer");
+        throw protocol_error("REGISTERED - REGISTERED.Request must be an integer");
     }
 
     uint64_t request_id = message[1].as<uint64_t>();
     auto register_request_itr = m_register_requests.find(request_id);
     if (register_request_itr != m_register_requests.end()) {
         if (message[2].type != msgpack::type::POSITIVE_INTEGER) {
-            throw protocol_error("invalid REGISTERED message structure - REGISTERED.Registration must be an integer");
+            throw protocol_error("REGISTERED - REGISTERED.Registration must be an integer");
         }
 
         uint64_t registration_id = message[2].as<uint64_t>();
-        m_endpoints[registration_id] = register_request_itr->second.endpoint();
+        m_procedures[registration_id] = register_request_itr->second.procedure();
         register_request_itr->second.set_response(wamp_registration(registration_id));
     } else {
-        throw protocol_error("bogus REGISTERED message for non-pending request ID");
+        throw protocol_error("REGISTERED - no pending request ID");
     }
 }
 

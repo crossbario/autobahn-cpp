@@ -20,6 +20,7 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <msgpack.hpp>
 #include <string>
 
 using namespace std;
@@ -29,44 +30,38 @@ using namespace autobahn;
 using boost::asio::ip::tcp;
 
 /// Procedure that returns a single positional result (being a vector)
-any numbers(const anyvec& args, const anymap& kwargs) {
-
+void numbers(wamp_invocation_context& context)
+{
    cerr << "Someone is calling numbers() .." << endl;
+   msgpack::type::tuple<uint64_t, uint64_t> arguments;
+   context.arguments().convert(arguments);
 
-   uint64_t start = any_cast<uint64_t> (args[0]);
-   uint64_t end = any_cast<uint64_t> (args[1]);
+   uint64_t start = arguments.get<0>();
+   uint64_t end = arguments.get<1>();
 
-   anyvec res;
+   std::vector<uint64_t> result;
    for (uint64_t i = start; i < end; ++i) {
-      res.push_back(i);
+      result.push_back(i);
    }
-   return res;
+
+   context.result().set_arguments(result);
 }
 
 
 /// Procedure that returns 3 positional results (each being a scalar)
-anyvec add_diff_mul(const anyvec& args, const anymap& kwargs) {
-
+void add_diff_mul(wamp_invocation_context& context)
+{
    cerr << "Someone is calling add_diff_mul() .." << endl;
+   msgpack::type::tuple<uint64_t, uint64_t> arguments;
+   context.arguments().convert(arguments);
 
-   uint64_t x = any_cast<uint64_t> (args[0]);
-   uint64_t y = any_cast<uint64_t> (args[1]);
+   uint64_t x = arguments.get<0>();
+   uint64_t y = arguments.get<1>();
 
-   return {x + y, x > y ? x - y : y - x, x * y};
+   msgpack::type::tuple<uint64_t, uint64_t, uint64_t> result(
+         x + y, x > y ? x - y : y - x, x * y);
+    context.result().set_arguments(result);
 }
-
-
-/// Procedure that returns a future which resolves with both positional and keyword results
-future<anyvecmap> somemath(const anyvec& args, const anymap& kwargs) {
-
-   cerr << "Someone is calling somemath() .." << endl;
-
-   uint64_t x = any_cast<uint64_t> (args[0]);
-   uint64_t y = any_cast<uint64_t> (args[1]);
-   return make_ready_future(std::make_pair(anyvec({x + y, 2 * x}), anymap({{"foo", 23}, {"bar", string("baz")}})));
-}
-
-
 
 int main () {
 
@@ -132,15 +127,9 @@ int main () {
                      }
                   );
 
-                  auto r3 = session.provide("com.myapp.cpp.somemath", &somemath)
-                     .then([](future<wamp_registration> reg) {
-                        cerr << "Registered somemath() with registration ID " << reg.get().id() << endl;
-                     }
-                  );
-
                   // do something when we are finished with all registrations ..
                   //
-                  auto done = when_all(std::move(r1), std::move(r2), std::move(r3));
+                  auto done = when_all(std::move(r1), std::move(r2));
 
                   done.then([](decltype(done)) {
 

@@ -21,6 +21,7 @@
 #include <chrono>
 #include <functional>
 #include <iostream>
+#include <msgpack.hpp>
 #include <string>
 
 using namespace std;
@@ -80,7 +81,9 @@ int main () {
 
                   // publish event with positional payload
                   //
-                  session.publish("com.myapp.topic2", {23, true, std::string("hello")});
+                  msgpack::type::tuple<uint64_t, bool, std::string>
+                        arguments(23, true, std::string("hello"));
+                  session.publish("com.myapp.topic2", arguments);
 
                   cerr << "Event published" << endl;
 

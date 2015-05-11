@@ -16,33 +16,16 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef AUTOBAHN_WAMP_EVENT_HANDLER_HPP
+#define AUTOBAHN_WAMP_EVENT_HANDLER_HPP
+
+#include "wamp_event_context.hpp"
+
 namespace autobahn {
 
-inline wamp_subscribe_request::wamp_subscribe_request()
-    : m_handler()
-    , m_response()
-{
-}
-
-inline wamp_subscribe_request::wamp_subscribe_request(const wamp_event_handler& handler)
-    : m_handler(handler)
-    , m_response()
-{
-}
-
-inline const wamp_event_handler& wamp_subscribe_request::handler() const
-{
-    return m_handler;
-}
-
-inline boost::promise<wamp_subscription>& wamp_subscribe_request::response()
-{
-    return m_response;
-}
-
-inline void wamp_subscribe_request::set_response(const wamp_subscription& subscription)
-{
-    m_response.set_value(subscription);
-}
+/// Handler type for use with wamp_session::subscribe
+typedef std::function<void(const wamp_event_context&)> wamp_event_handler;
 
 } // namespace autobahn
+
+#endif // AUTOBAHN_WAMP_EVENT_HANDLER_HPP

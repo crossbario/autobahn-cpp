@@ -19,26 +19,26 @@
 namespace autobahn {
 
 inline wamp_register_request::wamp_register_request()
-    : m_endpoint()
+    : m_procedure()
     , m_response()
 {
 }
 
-inline wamp_register_request::wamp_register_request(boost::any endpoint)
-    : m_endpoint(endpoint)
+inline wamp_register_request::wamp_register_request(const wamp_procedure& procedure)
+    : m_procedure(procedure)
     , m_response()
 {
 }
 
 inline wamp_register_request::wamp_register_request(wamp_register_request&& other)
-    : m_endpoint(std::move(other.m_endpoint))
+    : m_procedure(std::move(other.m_procedure))
     , m_response(std::move(other.m_response))
 {
 }
 
-inline boost::any wamp_register_request::endpoint() const
+inline const wamp_procedure& wamp_register_request::procedure() const
 {
-    return m_endpoint;
+    return m_procedure;
 }
 
 inline boost::promise<wamp_registration>& wamp_register_request::response()

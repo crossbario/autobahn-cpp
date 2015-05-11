@@ -15,12 +15,17 @@
 //  limitations under the License.
 //
 ///////////////////////////////////////////////////////////////////////////////
+#define BOOST_THREAD_PROVIDES_FUTURE
+#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
+#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <msgpack.hpp>
 #include <string>
+#include <unordered_map>
 
 using namespace std;
 using namespace boost;
@@ -80,35 +85,31 @@ int main () {
 
                   // issue a number of remote procedure calls ..
                   //
-                  auto c0 = session.call("com.mathservice.add2", {2, 9})
-                     .then([](future<any> f) {
-
-                     uint64_t res = any_cast<uint64_t> (f.get());
-                     cerr << "Call 0 result: " << res << endl;
+                  msgpack::type::tuple<uint64_t, uint64_t> c0_args(2, 9);
+                  auto c0 = session.call("com.mathservice.add2", c0_args)
+                     .then([](future<wamp_call_result> result) {
+                        msgpack::type::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 0 result: " << result_arguments.get<0>() << endl;
                   });
 
                   c0.wait();
 
-                  auto c1 = session.call("com.math.slowsquare", {2}, {{"delay", 3}})
-                     .then([](future<any> f) {
-
-                     uint64_t res = any_cast<uint64_t> (f.get());
-                     cerr << "Call 1 result: " << res << endl;
+                  msgpack::type::tuple<uint64_t> c1_args(2);
+                  std::unordered_map<std::string, uint64_t> c1_kw_args = {{"delay", 3}};
+                  auto c1 = session.call("com.math.slowsquare", c1_args, c1_kw_args)
+                     .then([](future<wamp_call_result> result) {
+                        msgpack::type::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 1 result: " << result_arguments.get<0>() << endl;
                   });
 
-                  auto c2 = session.call("com.math.slowsquare", {3})
-                     .then([&session](future<any> f) {
-
-                     uint64_t res = any_cast<uint64_t> (f.get());
-                     cerr << "Call 2 result: " << res << endl;
-
-                     auto c3 = session.call("com.math.slowsquare", {4}, {{"delay", 3}})
-                        .then([](future<any> f) {
-
-                        uint64_t res = any_cast<uint64_t> (f.get());
-                        cerr << "Call 3 result: " << res << endl;
-                     });
-                     c3.wait();
+                  msgpack::type::tuple<uint64_t> c2_args(3);
+                  auto c2 = session.call("com.math.slowsquare", c2_args)
+                     .then([&session](future<wamp_call_result> result) {
+                        msgpack::type::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 2 result: " << result_arguments.get<0>() << endl;
                   });
 
                   // do something when all remote procedure calls have finished

@@ -20,6 +20,7 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <msgpack.hpp>
 #include <string>
 
 using namespace std;
@@ -79,12 +80,14 @@ int main () {
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // call a remote procedure ..
-                  //
-                  auto c1 = session.call("com.mathservice.add2", {23, 777}).then([&](future<any> f) {
-
-                     // call result received
-                     //
-                     std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
+                  msgpack::type::tuple<uint64_t, uint64_t> arguments(23, 777);
+                  auto c1 = session.call("com.mathservice.add2", arguments).then(
+                     [&](future<wamp_call_result> result) {
+                        // call result received
+                        //
+                        msgpack::type::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        std::cerr << "Got RPC result " << result_arguments.get<0>() << std::endl;
                   });
 
                   c1.then([&](decltype(c1)) {

@@ -25,11 +25,21 @@ find_package(Threads REQUIRED)
 set(PUBLIC_HEADERS
     autobahn/autobahn.hpp
     autobahn/exceptions.hpp
+    autobahn/wamp_arguments.hpp
     autobahn/wamp_call.hpp
     autobahn/wamp_call.ipp
-    autobahn/wamp_endpoints.hpp
+    autobahn/wamp_call_result.hpp
+    autobahn/wamp_call_result.ipp
+    autobahn/wamp_event_context.hpp
+    autobahn/wamp_event_context.ipp
+    autobahn/wamp_event_handler.hpp
+    autobahn/wamp_invocation_context.hpp
+    autobahn/wamp_invocation_context.ipp
+    autobahn/wamp_invocation_result.hpp
+    autobahn/wamp_invocation_result.ipp
     autobahn/wamp_message.hpp
     autobahn/wamp_message_type.hpp
+    autobahn/wamp_procedure.hpp
     autobahn/wamp_publication.hpp
     autobahn/wamp_publication.ipp
     autobahn/wamp_register_request.hpp

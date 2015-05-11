@@ -16,33 +16,31 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef AUTOBAHN_WAMP_CALL_RESULT_HPP
+#define AUTOBAHN_WAMP_CALL_RESULT_HPP
+
+#include <msgpack.hpp>
+
 namespace autobahn {
 
-inline wamp_subscribe_request::wamp_subscribe_request()
-    : m_handler()
-    , m_response()
+class wamp_call_result
 {
-}
+public:
+    wamp_call_result();
 
-inline wamp_subscribe_request::wamp_subscribe_request(const wamp_event_handler& handler)
-    : m_handler(handler)
-    , m_response()
-{
-}
+    const msgpack::object& arguments() const;
+    const msgpack::object& kw_arguments() const;
 
-inline const wamp_event_handler& wamp_subscribe_request::handler() const
-{
-    return m_handler;
-}
+    void set_arguments(const msgpack::object& arguments);
+    void set_kw_arguments(const msgpack::object& kw_arguments);
 
-inline boost::promise<wamp_subscription>& wamp_subscribe_request::response()
-{
-    return m_response;
-}
-
-inline void wamp_subscribe_request::set_response(const wamp_subscription& subscription)
-{
-    m_response.set_value(subscription);
-}
+private:
+    msgpack::object m_arguments;
+    msgpack::object m_kw_arguments;
+};
 
 } // namespace autobahn
+
+#include "wamp_call_result.ipp"
+
+#endif // AUTOBAHN_WAMP_CALL_RESULT_HPP
