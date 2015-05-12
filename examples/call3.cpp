@@ -95,7 +95,7 @@ int main () {
                   //
                   std::tuple<> c2_args;
                   std::unordered_map<std::string, uint64_t> c2_kw_args = {{"stars", 10}};
-                  auto c2 = session.call("com.arguments.stars", c1_args, c2_kw_args)
+                  auto c2 = session.call("com.arguments.stars", c2_args, c2_kw_args)
                      .then([&](future<wamp_call_result> result) {
                         std::tuple<std::string> result_arguments;
                         result.get().arguments().convert(result_arguments);
