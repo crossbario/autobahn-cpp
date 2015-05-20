@@ -38,7 +38,7 @@ public:
     wamp_call();
 
     boost::promise<wamp_call_result>& result();
-    void set_result(const wamp_call_result& value);
+    void set_result(wamp_call_result&& value);
 
 private:
     boost::promise<wamp_call_result> m_result;

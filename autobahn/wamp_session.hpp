@@ -200,7 +200,9 @@ private:
     void process_welcome(const wamp_message& message);
 
     /// Process a WAMP RESULT message.
-    void process_call_result(const wamp_message& message);
+    void process_call_result(
+            const wamp_message& message,
+            msgpack::unique_ptr<msgpack::zone>&& zone);
 
     /// Process a WAMP SUBSCRIBED message.
     void process_subscribed(const wamp_message& message);
@@ -232,7 +234,7 @@ private:
 
     void got_message_body(const boost::system::error_code& error);
 
-    void got_message(const msgpack::object& obj);
+    void got_message(const msgpack::object& object, msgpack::unique_ptr<msgpack::zone>&& zone);
 
 
     bool m_debug;

@@ -591,7 +591,8 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
 }
 
 template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_call_result(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_call_result(
+        const wamp_message& message, msgpack::unique_ptr<msgpack::zone>&& zone)
 {
     // [RESULT, CALL.Request|id, Details|dict]
     // [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
@@ -612,7 +613,7 @@ void wamp_session<IStream, OStream>::process_call_result(const wamp_message& mes
             throw protocol_error("RESULT - Details must be a dictionary");
         }
 
-        wamp_call_result result;
+        wamp_call_result result(std::move(zone));
         if (message.size() > 3) {
             if (message[3].type != msgpack::type::ARRAY) {
                 throw protocol_error("RESULT - YIELD.Arguments must be a list");
@@ -626,7 +627,7 @@ void wamp_session<IStream, OStream>::process_call_result(const wamp_message& mes
                 result.set_kw_arguments(message[4]);
             }
         }
-        call_itr->second.set_result(result);
+        call_itr->second.set_result(std::move(result));
     } else {
         throw protocol_error("bogus RESULT message for non-pending request ID");
     }
@@ -835,7 +836,7 @@ void wamp_session<IStream, OStream>::got_message_body(const boost::system::error
                 std::cerr << "RX WAMP message: " << obj << std::endl;
             }
 
-            got_message(obj);
+            got_message(obj, std::move(result.zone()));
         }
 
         if (!m_stopped) {
@@ -850,7 +851,9 @@ void wamp_session<IStream, OStream>::got_message_body(const boost::system::error
 
 
 template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::got_message(const msgpack::object& obj) {
+void wamp_session<IStream, OStream>::got_message(
+        const msgpack::object& obj, msgpack::unique_ptr<msgpack::zone>&& zone)
+{
 
     if (obj.type != msgpack::type::ARRAY) {
         throw protocol_error("invalid message structure - message is not an array");
@@ -914,7 +917,7 @@ void wamp_session<IStream, OStream>::got_message(const msgpack::object& obj) {
         case message_type::CANCEL:
             throw protocol_error("received CANCEL message unexpected for WAMP client roles");
         case message_type::RESULT:
-            process_call_result(message);
+            process_call_result(message, std::move(zone));
             break;
         case message_type::REGISTER:
             throw protocol_error("received REGISTER message unexpected for WAMP client roles");

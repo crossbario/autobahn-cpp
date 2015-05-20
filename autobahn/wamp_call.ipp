@@ -28,9 +28,9 @@ inline boost::promise<wamp_call_result>& wamp_call::result()
     return m_result;
 }
 
-inline void wamp_call::set_result(const wamp_call_result& value)
+inline void wamp_call::set_result(wamp_call_result&& value)
 {
-    m_result.set_value(value);
+    m_result.set_value(std::move(value));
 }
 
 } // namespace autobahn
