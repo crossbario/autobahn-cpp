@@ -21,6 +21,7 @@
 #include <chrono>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <tuple>
 
@@ -50,8 +51,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::wamp_session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<autobahn::wamp_session<
+            tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -75,11 +76,11 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
@@ -89,7 +90,7 @@ int main () {
                      timer.async_wait([&](system::error_code) {
                         std::tuple<uint64_t> arguments(count);
                         std::map<std::string, std::string> kw_arguments = {{"foo", string("bar")}};
-                        session.publish("com.myapp.topic2", arguments, kw_arguments);
+                        session->publish("com.myapp.topic2", arguments, kw_arguments);
 
                         cerr << "Event " << count << " published." << endl;
 

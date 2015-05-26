@@ -23,6 +23,7 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -54,8 +55,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::wamp_session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -75,18 +76,18 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // issue a number of remote procedure calls ..
                   //
                   std::tuple<uint64_t, uint64_t> c0_args(2, 9);
-                  auto c0 = session.call("com.mathservice.add2", c0_args)
+                  auto c0 = session->call("com.mathservice.add2", c0_args)
                      .then([](future<wamp_call_result> result) {
                         std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
@@ -97,7 +98,7 @@ int main () {
 
                   std::tuple<uint64_t> c1_args(2);
                   std::unordered_map<std::string, uint64_t> c1_kw_args = {{"delay", 3}};
-                  auto c1 = session.call("com.math.slowsquare", c1_args, c1_kw_args)
+                  auto c1 = session->call("com.math.slowsquare", c1_args, c1_kw_args)
                      .then([](future<wamp_call_result> result) {
                         std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
@@ -105,7 +106,7 @@ int main () {
                   });
 
                   std::tuple<uint64_t> c2_args(3);
-                  auto c2 = session.call("com.math.slowsquare", c2_args)
+                  auto c2 = session->call("com.math.slowsquare", c2_args)
                      .then([&session](future<wamp_call_result> result) {
                         std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
@@ -122,7 +123,7 @@ int main () {
 
                      // leave the session and stop I/O loop
                      //
-                     session.leave().then([&](future<string> reason) {
+                     session->leave().then([&](future<string> reason) {
                         cerr << "Session left (" << reason.get() << ")" << endl;
                         io.stop();
                      }).wait();

@@ -209,20 +209,31 @@ template<typename IStream, typename OStream>
 boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& name, const wamp_procedure& procedure, const provide_options& options)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto register_request = std::make_shared<wamp_register_request>(procedure);
+    auto weak_self = std::weak_ptr<wamp_session<IStream, OStream>>(this->shared_from_this());
 
-    // [REGISTER, Request|id, Options|dict, Procedure|uri]
-    m_packer.pack_array(4);
-    m_packer.pack(static_cast<int>(message_type::REGISTER));
-    m_packer.pack(++m_request_id);
-    m_packer.pack(options);
-    m_packer.pack(name);
-    send();
+    m_io.dispatch([=]() {
+        if (!m_session_id) {
+            throw no_session_error();
+        }
 
-    auto result = m_register_requests.emplace(m_request_id, wamp_register_request(procedure));
-    return result.first->second.response().get_future();
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
+
+        // [REGISTER, Request|id, Options|dict, Procedure|uri]
+        m_packer.pack_array(4);
+        m_packer.pack(static_cast<int>(message_type::REGISTER));
+        m_packer.pack(++m_request_id);
+        m_packer.pack(options);
+        m_packer.pack(name);
+        send();
+
+        m_register_requests.emplace(m_request_id, register_request);
+    });
+
+    return register_request->response().get_future();
 }
 
 template<typename IStream, typename OStream>
@@ -775,8 +786,8 @@ void wamp_session<IStream, OStream>::process_registered(const wamp_message& mess
         }
 
         uint64_t registration_id = message[2].as<uint64_t>();
-        m_procedures[registration_id] = register_request_itr->second.procedure();
-        register_request_itr->second.set_response(wamp_registration(registration_id));
+        m_procedures[registration_id] = register_request_itr->second->procedure();
+        register_request_itr->second->set_response(wamp_registration(registration_id));
     } else {
         throw protocol_error("REGISTERED - no pending request ID");
     }

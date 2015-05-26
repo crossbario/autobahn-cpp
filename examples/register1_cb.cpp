@@ -21,6 +21,7 @@
 #include <boost/version.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <tuple>
 
@@ -80,27 +81,28 @@ int main (int argc, char** argv) {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::wamp_session<stream_protocol::socket,
-                        stream_protocol::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<stream_protocol::socket,
+                stream_protocol::socket>>(io, socket, socket, debug);
 
       // start the WAMP session on the transport that has been connected
       //
-      session.start();
+      session->start();
 
       // join a realm with the WAMP session
       //
-      auto session_future = session.join("realm1").then([&](future<uint64_t> s) {
+      auto session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
          cerr << "Session joined to realm with session ID " << s.get() << endl;
 
          // register a free standing function for remoting
          //
-         auto r1 = session.provide("com.myapp.cpp.add2", &add2);
+         auto r1 = session->provide("com.myapp.cpp.add2", &add2);
          r1.then([](future<wamp_registration> reg) {
             cerr << "Registered with registration ID " << reg.get().id() << endl;
          }).wait();
 
-         auto r2 = session.provide("com.myapp.cpp.square", &square);
+         auto r2 = session->provide("com.myapp.cpp.square", &square);
          r2.then([](future<wamp_registration> reg) {
             cerr << "Registered with registration ID " << reg.get().id() << endl;
          }).wait();

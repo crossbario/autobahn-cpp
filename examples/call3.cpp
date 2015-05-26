@@ -20,6 +20,7 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <tuple>
 
@@ -51,8 +52,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::wamp_session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -72,18 +73,18 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // call a remote procedure with positional arguments
                   //
                   std::tuple<uint64_t, uint64_t> c1_args(23, 777);
-                  auto c1 = session.call("com.mathservice.add2", c1_args)
+                  auto c1 = session->call("com.mathservice.add2", c1_args)
                      .then([&](future<wamp_call_result> result) {
                         std::tuple<uint64_t> result_arguments;
                         result.get().arguments().convert(result_arguments);
@@ -95,7 +96,7 @@ int main () {
                   //
                   std::tuple<> c2_args;
                   std::unordered_map<std::string, uint64_t> c2_kw_args = {{"stars", 10}};
-                  auto c2 = session.call("com.arguments.stars", c2_args, c2_kw_args)
+                  auto c2 = session->call("com.arguments.stars", c2_args, c2_kw_args)
                      .then([&](future<wamp_call_result> result) {
                         std::tuple<std::string> result_arguments;
                         result.get().arguments().convert(result_arguments);
@@ -107,7 +108,7 @@ int main () {
                   //
                   std::tuple<uint64_t, uint64_t> c3_args(1, 7);
                   std::unordered_map<std::string, std::string> c3_kw_args = {{"prefix", string("Hello number: ")}};
-                  auto c3 = session.call("com.arguments.numbers", c3_args, c3_kw_args)
+                  auto c3 = session->call("com.arguments.numbers", c3_args, c3_kw_args)
                      .then([](boost::future<wamp_call_result> result) {
                         std::tuple<std::vector<std::string>> result_arguments;
                         result.get().arguments().convert(result_arguments);
@@ -127,7 +128,7 @@ int main () {
 
                      // leave the session and stop I/O loop
                      //
-                     session.leave().then([&](future<string> reason) {
+                     session->leave().then([&](future<string> reason) {
                         cerr << "Session left (" << reason.get() << ")" << endl;
                         io.stop();
                      }).wait();

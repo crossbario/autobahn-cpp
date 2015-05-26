@@ -20,6 +20,7 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <tuple>
 
@@ -50,8 +51,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::wamp_session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -71,17 +72,17 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // call a remote procedure ..
                   std::tuple<uint64_t, uint64_t> arguments(23, 777);
-                  auto c1 = session.call("com.mathservice.add2", arguments).then(
+                  auto c1 = session->call("com.mathservice.add2", arguments).then(
                      [&](future<wamp_call_result> result) {
                         // call result received
                         //
@@ -93,7 +94,7 @@ int main () {
                   c1.then([&](decltype(c1)) {
                      // leave the session and stop I/O loop
                      //
-                     session.leave().then([&](future<string> reason) {
+                     session->leave().then([&](future<string> reason) {
                         cerr << "Session left (" << reason.get() << ")" << endl;
                         io.stop();
                      }).wait();

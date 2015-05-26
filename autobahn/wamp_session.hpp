@@ -35,6 +35,7 @@
 #include <istream>
 #include <ostream>
 #include <map>
+#include <memory>
 #include <msgpack.hpp>
 #include <stdexcept>
 #include <string>
@@ -60,7 +61,7 @@ class wamp_unsubscribe_request;
 
 /// Representation of a WAMP session.
 template<typename IStream, typename OStream>
-class wamp_session
+class wamp_session : public std::enable_shared_from_this<wamp_session<IStream, OStream>>
 {
 public:
 
@@ -303,7 +304,7 @@ private:
     /// Callee
 
     /// Map of outstanding WAMP register requests (request ID -> register request).
-    std::map<uint64_t, wamp_register_request> m_register_requests;
+    std::map<uint64_t, std::shared_ptr<wamp_register_request>> m_register_requests;
 
     /// Map of registered procedures (registration ID -> procedure)
     std::map<uint64_t, wamp_procedure> m_procedures;

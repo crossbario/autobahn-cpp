@@ -20,6 +20,7 @@
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <tuple>
 
@@ -61,7 +62,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::wamp_session<tcp::socket,tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket,tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -81,17 +83,17 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // register a free standing function for remoting
                   //
-                  auto r1 = session.provide("com.myapp.cpp.add2", &add2);
+                  auto r1 = session->provide("com.myapp.cpp.add2", &add2);
                   r1.then([](future<wamp_registration> reg) {
                      cerr << "Registered with registration ID " << reg.get().id() << endl;
                   }).wait();
@@ -99,7 +101,7 @@ int main () {
 
                   // register a lambda for remoting
                   //
-                  session.provide("com.myapp.cpp.square",
+                  session->provide("com.myapp.cpp.square",
                      [](wamp_invocation& invocation) {
                         cerr << "Someone is calling my lambda function .." << endl;
                         std::tuple<uint64_t, uint64_t> arguments;
