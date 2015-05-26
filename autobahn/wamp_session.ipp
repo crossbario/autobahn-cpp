@@ -135,74 +135,132 @@ void wamp_session<IStream, OStream>::stop()
 template<typename IStream, typename OStream>
 boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& realm)
 {
-    // [HELLO, Realm|uri, Details|dict]
-    m_packer.pack_array(3);
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_packer.pack(static_cast<int> (message_type::HELLO));
-    m_packer.pack(realm);
+    m_io.dispatch([this, weak_self, realm]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
 
-    m_packer.pack_map(1);
-    m_packer.pack(std::string("roles"));
+        // [HELLO, Realm|uri, Details|dict]
+        m_packer.pack_array(3);
 
-    m_packer.pack_map(4);
+        m_packer.pack(static_cast<int> (message_type::HELLO));
+        m_packer.pack(realm);
 
-    m_packer.pack(std::string("caller"));
-    m_packer.pack_map(0);
+        m_packer.pack_map(1);
+        m_packer.pack(std::string("roles"));
 
-    m_packer.pack(std::string("callee"));
-    m_packer.pack_map(0);
+        m_packer.pack_map(4);
 
-    m_packer.pack(std::string("publisher"));
-    m_packer.pack_map(0);
+        m_packer.pack(std::string("caller"));
+        m_packer.pack_map(0);
 
-    m_packer.pack(std::string("subscriber"));
-    m_packer.pack_map(0);
+        m_packer.pack(std::string("callee"));
+        m_packer.pack_map(0);
 
-    send();
+        m_packer.pack(std::string("publisher"));
+        m_packer.pack_map(0);
+
+        m_packer.pack(std::string("subscriber"));
+        m_packer.pack_map(0);
+
+        send();
+    });
 
     return m_session_join.get_future();
+}
+
+template<typename IStream, typename OStream>
+boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::string& reason)
+{
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+
+    m_io.dispatch([this, weak_self, reason]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
+
+        if (!m_session_id) {
+            throw no_session_error();
+        }
+
+        m_goodbye_sent = true;
+        m_session_id = 0;
+
+        // [GOODBYE, Details|dict, Reason|uri]
+        m_packer.pack_array(3);
+        m_packer.pack(static_cast<int>(message_type::GOODBYE));
+        m_packer.pack_map(0);
+        m_packer.pack(reason);
+        send();
+    });
+
+    return m_session_leave.get_future();
 }
 
 template<typename IStream, typename OStream>
 boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
         const std::string& topic, const wamp_event_handler& handler)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+    auto subscribe_request = std::make_shared<wamp_subscribe_request>(handler);
 
-    // [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
-    m_packer.pack_array(4);
-    m_packer.pack(static_cast<int>(message_type::SUBSCRIBE));
-    m_packer.pack(++m_request_id);
-    m_packer.pack_map(0);
-    m_packer.pack(topic);
+    m_io.dispatch([this, weak_self, subscribe_request, topic]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
 
-    send();
+        if (!m_session_id) {
+            throw no_session_error();
+        }
 
-    auto result = m_subscribe_requests.emplace(
-            m_request_id, wamp_subscribe_request(handler));
-    return result.first->second.response().get_future();
+        // [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
+        m_packer.pack_array(4);
+        m_packer.pack(static_cast<int>(message_type::SUBSCRIBE));
+        m_packer.pack(++m_request_id);
+        m_packer.pack_map(0);
+        m_packer.pack(topic);
+
+        send();
+
+        m_subscribe_requests.emplace(m_request_id, subscribe_request);
+    });
+
+    return subscribe_request->response().get_future();
 }
 
 template<typename IStream, typename OStream>
 boost::future<void> wamp_session<IStream, OStream>::unsubscribe(const wamp_subscription& subscription)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+    auto unsubscribe_request = std::make_shared<wamp_unsubscribe_request>();
 
-    // [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
-    m_packer.pack_array(3);
-    m_packer.pack(static_cast<int>(message_type::UNSUBSCRIBE));
-    m_packer.pack(++m_request_id);
-    m_packer.pack(subscription.id());
+    m_io.dispatch([this, weak_self, unsubscribe_request, subscription]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
 
-    send();
+        if (!m_session_id) {
+            throw no_session_error();
+        }
 
-    auto result = m_unsubscribe_requests.emplace(
-            m_request_id, wamp_unsubscribe_request());
-    return result.first->second.response().get_future();
+        // [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
+        m_packer.pack_array(3);
+        m_packer.pack(static_cast<int>(message_type::UNSUBSCRIBE));
+        m_packer.pack(++m_request_id);
+        m_packer.pack(subscription.id());
+
+        send();
+
+        m_unsubscribe_requests.emplace(m_request_id, unsubscribe_request);
+    });
+
+    return unsubscribe_request->response().get_future();
 }
 
 template<typename IStream, typename OStream>
@@ -239,35 +297,53 @@ boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
 template<typename IStream, typename OStream>
 void wamp_session<IStream, OStream>::publish(const std::string& topic)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    // [PUBLISH, Request|id, Options|dict, Topic|uri]
-    m_packer.pack_array(4);
-    m_packer.pack(static_cast<int>(message_type::PUBLISH));
-    m_packer.pack(++m_request_id);
-    m_packer.pack_map(0);
-    m_packer.pack(topic);
-    send();
+    m_io.dispatch([this, weak_self, topic]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
+
+        if (!m_session_id) {
+            throw no_session_error();
+        }
+
+        // [PUBLISH, Request|id, Options|dict, Topic|uri]
+        m_packer.pack_array(4);
+        m_packer.pack(static_cast<int>(message_type::PUBLISH));
+        m_packer.pack(++m_request_id);
+        m_packer.pack_map(0);
+        m_packer.pack(topic);
+        send();
+    });
 }
 
 template<typename IStream, typename OStream>
 template <typename ARGUMENTS>
 void wamp_session<IStream, OStream>::publish(const std::string& topic, const ARGUMENTS& arguments)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
-    m_packer.pack_array(5);
-    m_packer.pack(static_cast<int>(message_type::PUBLISH));
-    m_packer.pack(++m_request_id);
-    m_packer.pack_map(0);
-    m_packer.pack(topic);
-    m_packer.pack(arguments);
-    send();
+    m_io.dispatch([this, weak_self, topic, arguments]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
+
+        if (!m_session_id) {
+            throw no_session_error();
+        }
+
+        // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
+        m_packer.pack_array(5);
+        m_packer.pack(static_cast<int>(message_type::PUBLISH));
+        m_packer.pack(++m_request_id);
+        m_packer.pack_map(0);
+        m_packer.pack(topic);
+        m_packer.pack(arguments);
+        send();
+    });
 }
 
 template<typename IStream, typename OStream>
@@ -275,38 +351,58 @@ template <typename ARGUMENTS, typename KW_ARGUMENTS>
 void wamp_session<IStream, OStream>::publish(
         const std::string& topic, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
-    m_packer.pack_array(6);
-    m_packer.pack(static_cast<int>(message_type::PUBLISH));
-    m_packer.pack(++m_request_id);
-    m_packer.pack_map(0);
-    m_packer.pack(topic);
-    m_packer.pack(arguments);
-    m_packer.pack(kw_arguments);
-    send();
+    m_io.dispatch([this, weak_self, topic, arguments, kw_arguments]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
+
+        if (!m_session_id) {
+            throw no_session_error();
+        }
+
+        // [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
+        m_packer.pack_array(6);
+        m_packer.pack(static_cast<int>(message_type::PUBLISH));
+        m_packer.pack(++m_request_id);
+        m_packer.pack_map(0);
+        m_packer.pack(topic);
+        m_packer.pack(arguments);
+        m_packer.pack(kw_arguments);
+        send();
+    });
 }
 
 template<typename IStream, typename OStream>
 boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(const std::string& procedure)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+    auto call = std::make_shared<wamp_call>();
 
-    // [CALL, Request|id, Options|dict, Procedure|uri]
-    m_packer.pack_array(4);
-    m_packer.pack(static_cast<int>(message_type::CALL));
-    m_packer.pack(++m_request_id);
-    m_packer.pack_map(0);
-    m_packer.pack(procedure);
-    send();
+    m_io.dispatch([this, weak_self, call, procedure]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
 
-    auto result = m_calls.emplace(m_request_id, wamp_call());
-    return result.first->second.result().get_future();
+        if (!m_session_id) {
+            throw no_session_error();
+        }
+
+        // [CALL, Request|id, Options|dict, Procedure|uri]
+        m_packer.pack_array(4);
+        m_packer.pack(static_cast<int>(message_type::CALL));
+        m_packer.pack(++m_request_id);
+        m_packer.pack_map(0);
+        m_packer.pack(procedure);
+        send();
+
+        m_calls.emplace(m_request_id, call);
+    });
+
+    return call->result().get_future();
 }
 
 template<typename IStream, typename OStream>
@@ -314,21 +410,32 @@ template<typename ARGUMENTS>
 boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
         const std::string& procedure, const ARGUMENTS& arguments)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+    auto call = std::make_shared<wamp_call>();
 
-    // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
-    m_packer.pack_array(5);
-    m_packer.pack(static_cast<int>(message_type::CALL));
-    m_packer.pack(++m_request_id);
-    m_packer.pack_map(0);
-    m_packer.pack(procedure);
-    m_packer.pack(arguments);
-    send();
+    m_io.dispatch([this, weak_self, call, procedure, arguments]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
 
-    auto result = m_calls.emplace(m_request_id, wamp_call());
-    return result.first->second.result().get_future();
+        if (!m_session_id) {
+            throw no_session_error();
+        }
+
+        // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
+        m_packer.pack_array(5);
+        m_packer.pack(static_cast<int>(message_type::CALL));
+        m_packer.pack(++m_request_id);
+        m_packer.pack_map(0);
+        m_packer.pack(procedure);
+        m_packer.pack(arguments);
+        send();
+
+        m_calls.emplace(m_request_id, call);
+    });
+
+    return call->result().get_future();
 }
 
 template<typename IStream, typename OStream>
@@ -336,22 +443,33 @@ template<typename ARGUMENTS, typename KW_ARGUMENTS>
 boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
         const std::string& procedure, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments)
 {
-    if (!m_session_id) {
-        throw no_session_error();
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+    auto call = std::make_shared<wamp_call>();
 
-    // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
-    m_packer.pack_array(6);
-    m_packer.pack(static_cast<int>(message_type::CALL));
-    m_packer.pack(++m_request_id);
-    m_packer.pack_map(0);
-    m_packer.pack(procedure);
-    m_packer.pack(arguments);
-    m_packer.pack(kw_arguments);
-    send();
+    m_io.dispatch([this, weak_self, call, procedure, arguments, kw_arguments]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
 
-    auto result = m_calls.emplace(m_request_id, wamp_call());
-    return result.first->second.result().get_future();
+        if (!m_session_id) {
+            throw no_session_error();
+        }
+
+        // [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
+        m_packer.pack_array(6);
+        m_packer.pack(static_cast<int>(message_type::CALL));
+        m_packer.pack(++m_request_id);
+        m_packer.pack_map(0);
+        m_packer.pack(procedure);
+        m_packer.pack(arguments);
+        m_packer.pack(kw_arguments);
+        send();
+
+        m_calls.emplace(m_request_id, call);
+    });
+
+    return call->result().get_future();
 }
 
 template<typename IStream, typename OStream>
@@ -382,26 +500,6 @@ void wamp_session<IStream, OStream>::process_goodbye(const wamp_message& message
 
     std::string reason = message[2].as<std::string>();
     m_session_leave.set_value(reason);
-}
-
-template<typename IStream, typename OStream>
-boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::string& reason)
-{
-    if (!m_session_id) {
-        throw no_session_error();
-    }
-
-    m_goodbye_sent = true;
-    m_session_id = 0;
-
-    // [GOODBYE, Details|dict, Reason|uri]
-    m_packer.pack_array(3);
-    m_packer.pack(static_cast<int>(message_type::GOODBYE));
-    m_packer.pack_map(0);
-    m_packer.pack(reason);
-    send();
-
-    return m_session_leave.get_future();
 }
 
 template<typename IStream, typename OStream>
@@ -477,7 +575,7 @@ void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
 
                     // FIXME: forward all error info .. also not sure if this is the correct
                     // way to use set_exception()
-                    call_itr->second.result().set_exception(boost::copy_exception(std::runtime_error(error)));
+                    call_itr->second->result().set_exception(boost::copy_exception(std::runtime_error(error)));
 
                 } else {
                     throw protocol_error("bogus ERROR message for non-pending CALL request ID");
@@ -638,7 +736,7 @@ void wamp_session<IStream, OStream>::process_call_result(
                 result.set_kw_arguments(message[4]);
             }
         }
-        call_itr->second.set_result(std::move(result));
+        call_itr->second->set_result(std::move(result));
     } else {
         throw protocol_error("bogus RESULT message for non-pending request ID");
     }
@@ -664,8 +762,8 @@ void wamp_session<IStream, OStream>::process_subscribed(const wamp_message& mess
         }
 
         uint64_t subscription_id = message[2].as<uint64_t>();
-        m_subscription_handlers.insert(std::make_pair(subscription_id, subscribe_request_itr->second.handler()));
-        subscribe_request_itr->second.set_response(wamp_subscription(subscription_id));
+        m_subscription_handlers.insert(std::make_pair(subscription_id, subscribe_request_itr->second->handler()));
+        subscribe_request_itr->second->set_response(wamp_subscription(subscription_id));
         m_subscribe_requests.erase(request_id);
     } else {
         throw protocol_error("SUBSCRIBED - no pending request ID");
@@ -687,7 +785,7 @@ void wamp_session<IStream, OStream>::process_unsubscribed(const wamp_message& me
     uint64_t request_id = message[1].as<uint64_t>();
     auto unsubscribe_request_itr = m_unsubscribe_requests.find(request_id);
     if (unsubscribe_request_itr != m_unsubscribe_requests.end()) {
-        unsubscribe_request_itr->second.set_response();
+        unsubscribe_request_itr->second->set_response();
         m_unsubscribe_requests.erase(request_id);
     } else {
         throw protocol_error("UNSUBSCRIBED - no pending request ID");

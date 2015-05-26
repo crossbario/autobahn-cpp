@@ -284,17 +284,17 @@ private:
     /// Caller
 
     /// Map of outstanding WAMP calls (request ID -> call).
-    std::map<uint64_t, wamp_call> m_calls;
+    std::map<uint64_t, std::shared_ptr<wamp_call>> m_calls;
 
 
     //////////////////////////////////////////////////////////////////////////////////////
     /// Subscriber
 
     /// Map of outstanding WAMP subscribe requests (request ID -> subscribe request).
-    std::map<uint64_t, wamp_subscribe_request> m_subscribe_requests;
+    std::map<uint64_t, std::shared_ptr<wamp_subscribe_request>> m_subscribe_requests;
 
     /// Map of outstanding WAMP unsubscribe requests (request ID -> unsubscribe request).
-    std::map<uint64_t, wamp_unsubscribe_request> m_unsubscribe_requests;
+    std::map<uint64_t, std::shared_ptr<wamp_unsubscribe_request>> m_unsubscribe_requests;
 
     /// Map of subscribed handlers (subscription ID -> handler)
     std::multimap<uint64_t, wamp_event_handler> m_subscription_handlers;
