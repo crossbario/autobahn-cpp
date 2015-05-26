@@ -209,17 +209,17 @@ template<typename IStream, typename OStream>
 boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
         const std::string& name, const wamp_procedure& procedure, const provide_options& options)
 {
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto register_request = std::make_shared<wamp_register_request>(procedure);
-    auto weak_self = std::weak_ptr<wamp_session<IStream, OStream>>(this->shared_from_this());
 
-    m_io.dispatch([=]() {
-        if (!m_session_id) {
-            throw no_session_error();
-        }
-
+    m_io.dispatch([this, weak_self, register_request, name, options]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
+        }
+
+        if (!m_session_id) {
+            throw no_session_error();
         }
 
         // [REGISTER, Request|id, Options|dict, Procedure|uri]
