@@ -224,7 +224,7 @@ private:
     void process_goodbye(const wamp_message& message);
 
     /// Send out message serialized in serialization buffer to ostream.
-    void send();
+    void send(const std::unique_ptr<msgpack::sbuffer>& buffer);
 
     /// Receive one message from istream in m_unpacker.
     void receive_message();
@@ -250,15 +250,8 @@ private:
     /// Output stream this session runs on.
     OStream& m_out;
 
-
     char m_buffer_message_length[4];
     uint32_t m_message_length;
-
-    /// MsgPack serialization buffer.
-    msgpack::sbuffer m_buffer;
-
-    /// MsgPacker serialization packer.
-    msgpack::packer<msgpack::sbuffer> m_packer;
 
     /// MsgPack unserialization unpacker.
     msgpack::unpacker m_unpacker;
@@ -270,8 +263,7 @@ private:
     boost::promise<uint64_t> m_session_join;
 
     /// Last request ID of outgoing WAMP requests.
-    uint64_t m_request_id;
-
+    std::atomic<uint64_t> m_request_id;
 
     bool m_goodbye_sent;
 
