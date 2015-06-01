@@ -224,7 +224,7 @@ private:
     void process_goodbye(const wamp_message& message);
 
     /// Send out message serialized in serialization buffer to ostream.
-    void send(const std::unique_ptr<msgpack::sbuffer>& buffer);
+    void send(const std::shared_ptr<msgpack::sbuffer>& buffer);
 
     /// Receive one message from istream in m_unpacker.
     void receive_message();
