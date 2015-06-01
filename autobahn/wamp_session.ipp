@@ -606,15 +606,30 @@ void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
 
     // Arguments|list
     if (message.size() > 5) {
-        if (message[5].type  != msgpack::type::ARRAY) {
+        if (message[5].type != msgpack::type::ARRAY) {
             throw protocol_error("invalid ERROR message structure - Arguments must be a list");
         }
     }
 
     // ArgumentsKw|list
     if (message.size() > 6) {
-        if (message[6].type  != msgpack::type::MAP) {
+        if (message[6].type != msgpack::type::MAP) {
             throw protocol_error("invalid ERROR message structure - ArgumentsKw must be a dictionary");
+        }
+        std::unordered_map<std::string, std::string> kw_args;
+        try {
+            message[6].convert(kw_args);
+            const auto itr = kw_args.find("what");
+            if (itr != kw_args.end()) {
+                error += ": ";
+                error += itr->second;
+            }
+        } catch (const std::exception& e) {
+            if (m_debug) {
+                std::cerr << "failed to parse error message keyword arguments" << std::endl;
+            }
+
+            error += ": unknown exception";
         }
     }
 
@@ -736,7 +751,6 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
             packer.pack_array(0);
 
             packer.pack_map(1);
-
             packer.pack(std::string("what"));
             packer.pack(std::string(e.what()));
 
