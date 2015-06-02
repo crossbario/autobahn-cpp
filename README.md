@@ -89,7 +89,7 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 
 ![](doc/_static/cpp_from_js.png)
 
-* [Example C++ code](https://github.com/tavendo/AutobahnCpp/blob/master/examples/register2.cpp)
+* [Example C++ code](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/register2.cpp)
 * [Example JavaScript code](https://github.com/tavendo/AutobahnCpp/blob/master/examples/index.html)
 
 ## Building
@@ -171,7 +171,7 @@ To get **Autobahn**|Cpp library and examples, clone the repo
 
 ```console
 cd $HOME
-git clone git@github.com:tavendo/AutobahnCpp.git
+git clone git@github.com:davidchappelle/AutobahnCpp.git
 cd AutobahnCpp
 ```
 
@@ -182,15 +182,15 @@ The library is "header-only", means there isn't anything to compile or build. Ju
 
 The Autobahn|Cpp repository contains a number of [examples](https://github.com/tavendo/AutobahnCpp/tree/master/examples) that demonstrate all 4 basic patterns of using WAMP:
 
-* [Call 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/call1.cpp)
-* [Call 2](https://github.com/tavendo/AutobahnCpp/blob/master/examples/call2.cpp)
-* [Call 3](https://github.com/tavendo/AutobahnCpp/blob/master/examples/call3.cpp)
-* [Register 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/register1.cpp)
-* [Register 2](https://github.com/tavendo/AutobahnCpp/blob/master/examples/register2.cpp)
-* [Publish 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish1.cpp)
-* [Publish 2](https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish2.cpp)
-* [Publish 3](https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish3.cpp)
-* [Subscribe 1](https://github.com/tavendo/AutobahnCpp/blob/master/examples/subscribe1.cpp)
+* [Call 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/call1.cpp)
+* [Call 2](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/call2.cpp)
+* [Call 3](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/call3.cpp)
+* [Register 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/register1.cpp)
+* [Register 2](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/register2.cpp)
+* [Publish 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/publish1.cpp)
+* [Publish 2](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/publish2.cpp)
+* [Publish 3](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/publish3.cpp)
+* [Subscribe 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/subscribe1.cpp)
 
 
 ### Building the Examples
