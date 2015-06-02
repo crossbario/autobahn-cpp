@@ -16,18 +16,16 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_MESSAGE_HPP
+#define AUTOBAHN_WAMP_MESSAGE_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+#include <msgpack.hpp>
+#include <vector>
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+namespace autobahn {
 
-#endif // AUTOBAHN_HPP
+typedef std::vector<msgpack::object> wamp_message;
+
+} // namespace autobahn
+
+#endif // AUTOBAHN_WAMP_MESSAGE_HPP

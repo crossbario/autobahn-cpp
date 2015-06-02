@@ -16,15 +16,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 #include <boost/filesystem.hpp>
-
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -32,17 +31,27 @@ using namespace autobahn;
 
 using boost::asio::local::stream_protocol;
 
-
-any add2(const anyvec& args, const anymap& kwargs) {
-
+void add2(wamp_invocation& invocation)
+{
    cerr << "Someone is calling add2() .." << endl;
+   std::tuple<uint64_t, uint64_t> arguments;
+   invocation.arguments().convert(arguments);
 
-   uint64_t x = any_cast<uint64_t> (args[0]);
-   uint64_t y = any_cast<uint64_t> (args[1]);
-   return x + y;
+   std::tuple<uint16_t> result(
+            std::get<0>(arguments) + std::get<1>(arguments));
+   invocation.result().set_arguments(result);
 }
 
+void square(wamp_invocation& invocation)
+{
+   cerr << "Someone is calling my lambda function .." << endl;
+   std::tuple<uint64_t, uint64_t> arguments;
+   invocation.arguments().convert(arguments);
 
+   std::tuple<uint16_t> result(
+            std::get<0>(arguments) * std::get<1>(arguments));
+   invocation.result().set_arguments(result);
+}
 
 int main (int argc, char** argv) {
 
@@ -72,40 +81,31 @@ int main (int argc, char** argv) {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<stream_protocol::socket,
-                        stream_protocol::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<stream_protocol::socket,
+                stream_protocol::socket>>(io, socket, socket, debug);
 
       // start the WAMP session on the transport that has been connected
       //
-      session.start();
+      session->start();
 
       // join a realm with the WAMP session
       //
-      auto session_future = session.join("realm1").then([&](future<uint64_t> s) {
+      auto session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
          cerr << "Session joined to realm with session ID " << s.get() << endl;
 
          // register a free standing function for remoting
          //
-         auto r1 = session.provide("com.myapp.cpp.add2", &add2);
-
-         r1.then([](future<registration> reg) {
-            cerr << "Registered with registration ID " << reg.get().id << endl;
+         auto r1 = session->provide("com.myapp.cpp.add2", &add2);
+         r1.then([](future<wamp_registration> reg) {
+            cerr << "Registered with registration ID " << reg.get().id() << endl;
          }).wait();
 
-
-         // register a lambda for remoting
-         //
-         session.provide("com.myapp.cpp.square",
-
-            [](const anyvec& args, const anymap& kwargs) {
-
-               cerr << "Someone is calling my lambda function .." << endl;
-
-               uint64_t x = any_cast<uint64_t> (args[0]);
-               return x * x;
-            }
-         ).wait();
+         auto r2 = session->provide("com.myapp.cpp.square", &square);
+         r2.then([](future<wamp_registration> reg) {
+            cerr << "Registered with registration ID " << reg.get().id() << endl;
+         }).wait();
       });
 
       cerr << "Starting ASIO I/O loop .." << endl;

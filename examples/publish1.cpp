@@ -16,14 +16,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
+#include <autobahn/autobahn.hpp>
+#include <boost/asio.hpp>
 #include <chrono>
 #include <functional>
-
-#include "autobahn.hpp"
-
-#include <boost/asio.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -51,8 +51,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -72,23 +72,25 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // publish event with positional payload
                   //
-                  session.publish("com.myapp.topic2", {23, true, std::string("hello")});
+                  std::tuple<uint64_t, bool, std::string>
+                        arguments(23, true, std::string("hello"));
+                  session->publish("com.myapp.topic2", arguments);
 
                   cerr << "Event published" << endl;
 
                   // leave the session and stop I/O loop
                   //
-                  session.leave().then([&](future<string> reason) {
+                  session->leave().then([&](future<string> reason) {
                      cerr << "Session left (" << reason.get() << ")" << endl;
                      io.stop();
                   }).wait();

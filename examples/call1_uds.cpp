@@ -16,13 +16,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -49,33 +48,35 @@ int main () {
       // create a WAMP session that talks over Unix domain sockets
       //
       bool debug = false;
-      autobahn::session<stream_protocol::socket,
-                        stream_protocol::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<autobahn::wamp_session<
+            stream_protocol::socket, stream_protocol::socket>>(io, socket, socket, debug);
 
       // start the WAMP session on the transport that has been connected
       //
-      session.start();
+      session->start();
 
       // join a realm with the WAMP session
       //
-      auto session_future = session.join("realm1").then([&](future<uint64_t> s) {
+      auto session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
          cerr << "Session joined to realm with session ID " << s.get() << endl;
 
          // call a remote procedure ..
-         //         
-         //auto c1 = session.call("com.mathservice.add2", {23, 777}).then([&](future<any> f) {
-         auto c1 = session.call("com.myapp.cpp.add2", {23, 777}).then([&](future<any> f) {
-
-            // call result received
-            //
-            std::cerr << "Got RPC result " << any_cast<uint64_t> (f.get()) << std::endl;
+         //
+         std::tuple<uint64_t, uint64_t> arguments(23, 777);
+         auto c1 = session->call("com.myapp.cpp.add2", arguments).then(
+            [&](future<wamp_call_result> result) {
+               // call result received
+               //
+               std::tuple<uint64_t> result_arguments;
+               result.get().arguments().convert(result_arguments);
+               std::cerr << "Got RPC result " << std::get<0>(result_arguments) << std::endl;
          });
 
          c1.then([&](decltype(c1)) {
             // leave the session and stop I/O loop
             //
-            session.leave().then([&](future<string> reason) {
+            session->leave().then([&](future<string> reason) {
                cerr << "Session left (" << reason.get() << ")" << endl;
                io.stop();
             }).wait();

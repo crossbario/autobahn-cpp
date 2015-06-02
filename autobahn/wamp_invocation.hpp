@@ -16,18 +16,37 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_INVOCATION_HPP
+#define AUTOBAHN_WAMP_INVOCATION_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+#include "wamp_arguments.hpp"
+#include "wamp_invocation_result.hpp"
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+#include <msgpack.hpp>
 
-#endif // AUTOBAHN_HPP
+namespace autobahn {
+
+class wamp_invocation
+{
+public:
+    wamp_invocation();
+
+    const msgpack::object& arguments() const;
+    const msgpack::object& kw_arguments() const;
+
+    void set_arguments(const msgpack::object& arguments);
+    void set_kw_arguments(const msgpack::object& kw_arguments);
+
+    wamp_invocation_result& result();
+
+private:
+    msgpack::object m_arguments;
+    msgpack::object m_kw_arguments;
+    wamp_invocation_result m_result;
+};
+
+} // namespace autobahn
+
+#include "wamp_invocation.ipp"
+
+#endif // AUTOBAHN_WAMP_INVOCATION_HPP

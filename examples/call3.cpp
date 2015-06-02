@@ -16,13 +16,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -52,8 +52,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -73,46 +73,54 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // call a remote procedure with positional arguments
                   //
-                  auto c1 = session.call("com.mathservice.add2", {23, 777})
-                     .then([&](future<any> f) {
-
-                        cerr << "Call 1 result: " << any_cast<uint64_t> (f.get()) << endl;
+                  std::tuple<uint64_t, uint64_t> c1_args(23, 777);
+                  auto c1 = session->call("com.mathservice.add2", c1_args)
+                     .then([&](future<wamp_call_result> result) {
+                        std::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 1 result: " << std::get<0>(result_arguments) << endl;
                      }
                   );
 
                   // call a remote procedure with keyword arguments
                   //
-                  auto c2 = session.call("com.arguments.stars", {}, {{"stars", 10}})
-                     .then([&](future<any> f) {
-
-                        cerr << "Call 2 result: " << any_cast<string> (f.get()) << endl;
+                  std::tuple<> c2_args;
+                  std::unordered_map<std::string, uint64_t> c2_kw_args = {{"stars", 10}};
+                  auto c2 = session->call("com.arguments.stars", c2_args, c2_kw_args)
+                     .then([&](future<wamp_call_result> result) {
+                        std::tuple<std::string> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 2 result: " << std::get<0>(result_arguments) << endl;
                      }
                   );
 
                   // call a remote procedure with positional and keyword arguments
                   //
-                  auto c3 = session.call("com.arguments.numbers", {1, 7}, {{"prefix", string("Hello number: ")}})
-                     .then([](boost::future<boost::any> f) {
-
-                     anyvec v = any_cast<anyvec>(f.get());
-                     for (size_t i = 0; i < v.size(); ++i) {
-                        cerr << any_cast<string>(v[i]) << endl;
-                     }
+                  std::tuple<uint64_t, uint64_t> c3_args(1, 7);
+                  std::unordered_map<std::string, std::string> c3_kw_args = {{"prefix", string("Hello number: ")}};
+                  auto c3 = session->call("com.arguments.numbers", c3_args, c3_kw_args)
+                     .then([](boost::future<wamp_call_result> result) {
+                        std::tuple<std::vector<std::string>> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        auto& v = std::get<0>(result_arguments);
+                        for (size_t i = 0; i < v.size(); ++i) {
+                           cerr << v[i] << endl;
+                        }
                   });
 
                   // do something when all remote procedure calls have finished
                   //
-                  auto finish = when_all(std::move(c1), std::move(c2), std::move(c3));
+                  auto finish = boost::when_all(std::move(c1), std::move(c2), std::move(c3));
 
                   finish.then([&](decltype(finish)) {
 
@@ -120,7 +128,7 @@ int main () {
 
                      // leave the session and stop I/O loop
                      //
-                     session.leave().then([&](future<string> reason) {
+                     session->leave().then([&](future<string> reason) {
                         cerr << "Session left (" << reason.get() << ")" << endl;
                         io.stop();
                      }).wait();

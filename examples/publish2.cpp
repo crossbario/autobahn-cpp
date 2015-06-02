@@ -16,14 +16,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <iostream>
+#include <autobahn/autobahn.hpp>
+#include <boost/asio.hpp>
 #include <chrono>
 #include <functional>
-
-#include "autobahn.hpp"
-
-#include <boost/asio.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -51,13 +51,18 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<autobahn::wamp_session<
+            tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
       //
       future<void> session_future;
+
+      // same for other vars we need to keep alive ..
+      int count = 1;
+      asio::deadline_timer timer(io, posix_time::seconds(1));
+      std::function<void ()> dopub;
 
       // now do an asynchronous connect ..
       //
@@ -66,73 +71,35 @@ int main () {
          // we either connected or an error happened during connect ..
          //
          [&](boost::system::error_code ec, tcp::resolver::iterator) {
-
             if (!ec) {
                cerr << "Connected to server" << endl;
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  // event without any payload
+                  // publish an event every second ..
                   //
-                  session.publish("com.myapp.topic2");
+                  dopub = [&]() {
+                     timer.async_wait([&](system::error_code) {
+                        std::tuple<uint64_t> arguments(count);
+                        std::map<std::string, std::string> kw_arguments = {{"foo", string("bar")}};
+                        session->publish("com.myapp.topic2", arguments, kw_arguments);
 
+                        cerr << "Event " << count << " published." << endl;
 
-                  // event with positional payload
-                  //
-                  session.publish("com.myapp.topic2", {23, true, std::string("hello")});
-
-
-                  // event with complex positional payload
-                  //
-                  autobahn::anyvec v;
-                  v.push_back(1);
-                  v.push_back(3.123);
-                  v.push_back(false);
-                  v.push_back(std::string("hello"));
-
-                  autobahn::anyvec v2;
-                  v2.push_back(std::string("foo"));
-                  v2.push_back(std::string("bar"));
-
-                  v.push_back(v2);
-
-                  autobahn::anymap m;
-                  m["foo"] = 23;
-                  m["bar"] = 1.23;
-                  m["baz"] = std::string("awesome");
-
-                  v.push_back(m);
-
-                  session.publish("com.myapp.topic2", v);
-
-
-                  // event with keyword payload
-                  //
-                  autobahn::anymap m2;
-                  m2["a"] = 23;
-                  m2["b"] = std::string("foobar");
-
-                  session.publish("com.myapp.topic2", {}, m2);
-
-
-                  cerr << "Events published" << endl;
-
-
-                  // leave the session and stop I/O loop
-                  //
-                  session.leave().then([&](future<string> reason) {
-                     cerr << "Session left (" << reason.get() << ")" << endl;
-                     io.stop();
-                  }).wait();
-
+                        count += 1;
+                        timer.expires_at(timer.expires_at() + posix_time::seconds(1));
+                        dopub();
+                     });
+                  };
+                  dopub();
                });
 
             } else {

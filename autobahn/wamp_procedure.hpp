@@ -16,18 +16,19 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_PROCEDURE_HPP
+#define AUTOBAHN_WAMP_PROCEDURE_HPP
 
-#include "wamp_event.hpp"
+#include "wamp_arguments.hpp"
 #include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+namespace autobahn {
 
-#endif // AUTOBAHN_HPP
+/// Handler type for use with wamp_session::provide
+typedef std::function<void(wamp_invocation&)> wamp_procedure;
+
+typedef wamp_kw_arguments provide_options;
+
+} // namespace autobahn
+
+#endif // AUTOBAHN_WAMP_PROCEDURE_HPP

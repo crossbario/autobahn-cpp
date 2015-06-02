@@ -16,11 +16,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
+#include <iostream>
+#include <memory>
+#include <msgpack.hpp>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -48,8 +49,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -69,20 +70,22 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
-                  auto f1 = session.subscribe("com.myapp.topic1",
-                     [](const anyvec& args, const anymap& kwargs) {
-                        cerr << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
+                  auto f1 = session->subscribe("com.myapp.topic1",
+                     [](const wamp_event& event) {
+                        std::tuple<uint64_t> event_arguments;
+                        event.arguments().convert(event_arguments);
+                        cerr << "Got event: " << std::get<0>(event_arguments) << endl;
                      }
-                  ).then([](future<subscription> sub) {
-                     cerr << "Subscribed with subscription ID " << sub.get().id << endl;
+                  ).then([](future<wamp_subscription> sub) {
+                     cerr << "Subscribed with subscription ID " << sub.get().id() << endl;
                   });
 
                   f1.wait();

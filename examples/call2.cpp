@@ -15,21 +15,24 @@
 //  limitations under the License.
 //
 ///////////////////////////////////////////////////////////////////////////////
+#define BOOST_THREAD_PROVIDES_FUTURE
+#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
+#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 
-#include <string>
-#include <iostream>
-
-#include "autobahn.hpp"
-
+#include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
 
 using namespace std;
 using namespace boost;
 using namespace autobahn;
 
 using boost::asio::ip::tcp;
-
 
 int main () {
 
@@ -52,8 +55,8 @@ int main () {
       // create a WAMP session that talks over TCP
       //
       bool debug = false;
-      autobahn::session<tcp::socket,
-                        tcp::socket> session(io, socket, socket, debug);
+      auto session = std::make_shared<
+            autobahn::wamp_session<tcp::socket, tcp::socket>>(io, socket, socket, debug);
 
       // make sure the future returned from the session joining a realm (see below)
       // does not run out of scope (being destructed prematurely ..)
@@ -73,45 +76,41 @@ int main () {
 
                // start the WAMP session on the transport that has been connected
                //
-               session.start();
+               session->start();
 
                // join a realm with the WAMP session
                //
-               session_future = session.join("realm1").then([&](future<uint64_t> s) {
+               session_future = session->join("realm1").then([&](future<uint64_t> s) {
 
                   cerr << "Session joined to realm with session ID " << s.get() << endl;
 
                   // issue a number of remote procedure calls ..
                   //
-                  auto c0 = session.call("com.mathservice.add2", {2, 9})
-                     .then([](future<any> f) {
-
-                     uint64_t res = any_cast<uint64_t> (f.get());
-                     cerr << "Call 0 result: " << res << endl;
+                  std::tuple<uint64_t, uint64_t> c0_args(2, 9);
+                  auto c0 = session->call("com.mathservice.add2", c0_args)
+                     .then([](future<wamp_call_result> result) {
+                        std::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 0 result: " << std::get<0>(result_arguments) << endl;
                   });
 
                   c0.wait();
 
-                  auto c1 = session.call("com.math.slowsquare", {2}, {{"delay", 3}})
-                     .then([](future<any> f) {
-
-                     uint64_t res = any_cast<uint64_t> (f.get());
-                     cerr << "Call 1 result: " << res << endl;
+                  std::tuple<uint64_t> c1_args(2);
+                  std::unordered_map<std::string, uint64_t> c1_kw_args = {{"delay", 3}};
+                  auto c1 = session->call("com.math.slowsquare", c1_args, c1_kw_args)
+                     .then([](future<wamp_call_result> result) {
+                        std::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 1 result: " << std::get<0>(result_arguments) << endl;
                   });
 
-                  auto c2 = session.call("com.math.slowsquare", {3})
-                     .then([&session](future<any> f) {
-
-                     uint64_t res = any_cast<uint64_t> (f.get());
-                     cerr << "Call 2 result: " << res << endl;
-
-                     auto c3 = session.call("com.math.slowsquare", {4}, {{"delay", 3}})
-                        .then([](future<any> f) {
-
-                        uint64_t res = any_cast<uint64_t> (f.get());
-                        cerr << "Call 3 result: " << res << endl;
-                     });
-                     c3.wait();
+                  std::tuple<uint64_t> c2_args(3);
+                  auto c2 = session->call("com.math.slowsquare", c2_args)
+                     .then([&session](future<wamp_call_result> result) {
+                        std::tuple<uint64_t> result_arguments;
+                        result.get().arguments().convert(result_arguments);
+                        cerr << "Call 2 result: " << std::get<0>(result_arguments) << endl;
                   });
 
                   // do something when all remote procedure calls have finished
@@ -124,7 +123,7 @@ int main () {
 
                      // leave the session and stop I/O loop
                      //
-                     session.leave().then([&](future<string> reason) {
+                     session->leave().then([&](future<string> reason) {
                         cerr << "Session left (" << reason.get() << ")" << endl;
                         io.stop();
                      }).wait();
