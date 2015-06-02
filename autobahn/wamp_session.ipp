@@ -52,6 +52,7 @@ wamp_session<IStream, OStream>::wamp_session(boost::asio::io_service& io, IStrea
     , m_out(out)
     , m_session_id(0)
     , m_request_id(ATOMIC_VAR_INIT(0))
+    , m_goodbye_sent(false)
 {
 }
 
