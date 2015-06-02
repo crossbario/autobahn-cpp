@@ -14,10 +14,10 @@ The API and implementation make use of modern C++ 11 and new asynchronous idioms
 
 **Autobahn**|Cpp supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Unix domain sockets** or **pipes** (`stdio`). The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
- * C++ 11 compiler
- * [`boost::future`](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
- * [`boost::any`](http://www.boost.org/doc/libs/1_55_0/doc/html/any.html)
- * [`boost::asio`](http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio.html)
+ * C++11 compiler
+ * [`boost::future`](http://www.boost.org/doc/libs/1_56_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
+ * [`boost::asio`](http://www.boost.org/doc/libs/1_56_0/doc/html/boost_asio.html)
+ * [msgpack-c](https://github.com/msgpack/msgpack-c)
 
 For getting help, questions or feedback, get in touch on the **[mailing list](https://groups.google.com/forum/#!forum/autobahnws)**, **[Twitter](https://twitter.com/autobahnws)** or **IRC `#autobahn`** (Freenode).
 
@@ -29,31 +29,33 @@ Here is how programming with C++ and **Autobahn**|Cpp looks like.
 **Calling a remote Procedure**
 
 ```c++
-auto c1 = session.call("com.mathservice.add2", {23, 777})
-.then(
-   [&](future<any> f) {
-		cout << "Got call result " << any_cast<uint64_t> (f.get()) << endl;
-	});
+auto c1 = session.call("com.mathservice.add2", std::make_tuple(23, 777))
+    .then([&](future<wamp_call_result> result) {
+        std::tuple<uint64_t> args;
+        result.get().arguments().convert(args);
+        std::cout << "Got call result " << std::get<0>(args) << std::endl;
+    });
 ```
 
 **Registering a remoted Procedure**
 ```c++
 auto r1 = session.provide("com.myapp.cpp.square",
-   [](const anyvec& args, const anymap& kwargs) {
-      cout << "Procedure is invoked .." << endl;
-      uint64_t x = any_cast<uint64_t> (args[0]);
-      return x * x;
-   })
-.then(
-   [](future<registration> reg) {
-      cout << "Registered with ID " << reg.get().id << endl;
-   });
+    [](wamp_invocation invocation) {
+        std::cout << "Procedure is invoked .." << endl;
+        std::tuple<uint64_t> args;
+        invocation->arguments().convert(args);
+        uint64_t x = std::get<0>(args);
+        return x * x;
+    })
+    .then([](future<wamp_registration> reg) {
+        std::cout << "Registered with ID " << reg.get().id() << std::endl;
+    });
 ```
 
 **Publishing an Event**
 
 ```c++
-session.publish("com.myapp.topic2", {23, true, string("hello")});
+session.publish("com.myapp.topic2", std::make_tuple(23, true, std::string("hello")));
 ```
 
 **Publishing an Event (acknowledged)**
@@ -62,24 +64,24 @@ session.publish("com.myapp.topic2", {23, true, string("hello")});
 auto opts = PublishOptions();
 opts.acknowledge = True;
 
-auto p1 = session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
-.then(
-   [](future<publication> pub) {
-      cout << "Published with ID " << pub.get().id << endl;
-   });
+session.publish("com.myapp.topic2", std::make_tuple(23, true, std::string("hello")), opts)
+    .then([](future<wamp_publication> pub) {
+        std::cout << "Published with ID " << pub.get().id() << std::endl;
+    });
 ```
 
 **Subscribing to a Topic**
 
 ```c++
 auto s1 = session.subscribe("com.myapp.topic1",
-   [](const anyvec& args, const anymap& kwargs) {
-      cout << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
-   })
-.then(
-   [](future<subscription> sub) {
-      cout << "Subscribed with ID " << sub.get().id << endl;
-   });
+    [](const wamp_event& event) {
+        std::tuple<uint64_t> args;
+        event.arguments().convert(args);
+        std::cout << "Got event: " << std::get<0>(args) << std::endl;
+    })
+    .then([](future<wamp_subscription> sub) {
+        std::cout << "Subscribed with ID " << sub.get().id() << std::endl;
+    });
 ```
 
 
@@ -96,7 +98,7 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 >
 > * The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/2).
 > * While C++ 11 includes `std::future` in the standard library, this lacks continuations. `boost::future.then` allows attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
-> * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 (upcoming release as of 31/03/2014) or higher.
+> * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 or higher.
 > * The library and example programs were tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
 
 
@@ -122,9 +124,9 @@ Most of the time, your distro's Boost libraries will be outdated. Don't waste ti
 
 ```console
 cd ~
-wget http://downloads.sourceforge.net/project/boost/boost/1.57.0/boost_1_57_0.tar.bz2
-tar xvjf boost_1_57_0.tar.bz2
-cd boost_1_57_0
+wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
+tar xvjf boost_1_58_0.tar.bz2
+cd boost_1_58_0
 ./bootstrap.sh --with-toolset=clang
 ./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
@@ -147,7 +149,7 @@ Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and build with Clang:
 cd $HOME
 git clone https://github.com/msgpack/msgpack-c.git
 cd msgpack-c
-git checkout cpp-1.0.1
+git checkout cpp-1.1.0
 ./bootstrap
 CXX=`which clang++` CC=`which clang` CXXFLAGS="-std=c++11 -stdlib=libc++" \
    LDFLAGS="-stdlib=libc++" ./configure --prefix=$HOME/msgpack_clang
