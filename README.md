@@ -97,7 +97,7 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 > *Notes*
 >
 > * The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/2).
-> * While C++ 11 includes `std::future` in the standard library, this lacks continuations. `boost::future.then` allows attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
+> * While C++ 11 includes `std::future` in the standard library, this lacks continuations. `boost::future.then` allows attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2017 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
 > * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 or higher.
 > * The library and example programs were tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
 
@@ -107,20 +107,22 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 Install some libs and build tools (these are for Ubuntu):
 
 ```console
-sudo apt-get install libbz2-dev libssl-dev ruby libtool autoconf scons
+sudo apt-get install libbz2-dev libssl-dev cmake
 ```
 
 ### Clang
 
-If you want to work with Clang (rather than GCC), which is recommended, install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/) (these are for Ubuntu):
+If you want to work with Clang (rather than GCC), install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/) (these are for Ubuntu):
 
 ```console
 sudo apt-get install clang libc++1 libc++-dev
+sudo update-alternatives --config c++
+# select clang++ in command-line interface
 ```
 
 ### Boost
 
-Most of the time, your distro's Boost libraries will be outdated. Don't waste time with the latter: to build the latest Boost 1.57 (current release as of 2015/03) from sources
+Most of the time, your distro's Boost libraries will be outdated (unless you're using Arch or Homebrew). Don't waste time with those: to build the latest Boost 1.58 (current release as of 2015/06) from sources
 
 ```console
 cd ~
@@ -143,16 +145,16 @@ To build using GCC instead of Clang:
 
 ### MsgPack-C
 
-Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and build with Clang:
+Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and install:
 
 ```console
 cd $HOME
 git clone https://github.com/msgpack/msgpack-c.git
 cd msgpack-c
 git checkout cpp-1.1.0
-./bootstrap
-CXX=`which clang++` CC=`which clang` CXXFLAGS="-std=c++11 -stdlib=libc++" \
-   LDFLAGS="-stdlib=libc++" ./configure --prefix=$HOME/msgpack_clang
+mkdir -p ../build/msgpack-c
+cd ../build/msgpack-c
+cmake ${HOME}/msgpack-c
 make
 make install
 ```
@@ -171,8 +173,8 @@ To get **Autobahn**|Cpp library and examples, clone the repo
 
 ```console
 cd $HOME
-git clone git@github.com:davidchappelle/AutobahnCpp.git
-cd AutobahnCpp
+git clone git@github.com:davidchappelle/AutobahnCpp.git autobahn
+cd autobahn
 ```
 
 The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
@@ -197,47 +199,20 @@ The Autobahn|Cpp repository contains a number of [examples](https://github.com/t
 
 For building the examples, add the following to your `~/.profile`:
 
-
 ```console
-## Use clang
-##
-export CC='clang'
-export CXX='clang++'
-
-## Libaries (clang based)
-##
-export BOOST_ROOT=${HOME}/boost_trunk_clang
-export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
-
-export MSGPACK_ROOT=${HOME}/msgpack_clang
-export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
-```
-
-For building with GCC, use the following
-
-```console
-## Use GNU
-##
-export CC='gcc'
-export CXX='g++'
-
-## Libraries (GCC based)
-##
-export BOOST_ROOT=${HOME}/boost_trunk_gcc
-export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
-
-export MSGPACK_ROOT=${HOME}/msgpack_gcc
-export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
+export BOOST_ROOT=${HOME}/boost
 ```
 
 Now build all examples:
 
 ```console
-cd autobahn/examples
-scons -j 4
+mkdir -p ${HOME}/build/autobahn
+cd ${HOME}/build/autobahn
+cmake ${HOME}/autobahn
+make -j4
 ```
 
-The examples will get built in `autobahn/build/examples`.
+The examples will get built in `build/autobahn/examples`.
 
 
 ### Running the Examples
@@ -255,15 +230,15 @@ pip install autobahn[twisted]
 Start the example router in a first terminal
 
 ```console
-cd autobahn/examples
+cd ${HOME}/autobahn/examples
 python server.py
 ```
 
 Then start one of the built C++ examples in a second terminal
 
 ```console
-cd autobahn
-./build/examples/call1
+cd ${HOME}/build/autobahn
+./examples/call1
 ```
 
 

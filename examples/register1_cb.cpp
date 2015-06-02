@@ -97,7 +97,7 @@ int main (int argc, char** argv) {
 
          // register a free standing function for remoting
          //
-         auto r1 = session->provide("com.myapp.cpp.add2", &add2);
+         auto r1 = session->provide("com.mathservice.add2", &add2);
          r1.then([](future<wamp_registration> reg) {
             cerr << "Registered with registration ID " << reg.get().id() << endl;
          }).wait();
