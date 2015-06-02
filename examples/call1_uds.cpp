@@ -64,7 +64,7 @@ int main () {
          // call a remote procedure ..
          //
          std::tuple<uint64_t, uint64_t> arguments(23, 777);
-         auto c1 = session->call("com.myapp.cpp.add2", arguments).then(
+         auto c1 = session->call("com.mathservice.add2", arguments).then(
             [&](future<wamp_call_result> result) {
                // call result received
                //

@@ -35,8 +35,6 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_event_handler.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_invocation.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_invocation.ipp
-    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_invocation_result.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_invocation_result.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_message.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_message_type.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_procedure.hpp

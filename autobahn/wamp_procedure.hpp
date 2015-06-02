@@ -25,9 +25,9 @@
 namespace autobahn {
 
 /// Handler type for use with wamp_session::provide
-typedef std::function<void(wamp_invocation&)> wamp_procedure;
+using wamp_procedure = std::function<void(wamp_invocation)>;
 
-typedef wamp_kw_arguments provide_options;
+using provide_options = wamp_kw_arguments;
 
 } // namespace autobahn
 

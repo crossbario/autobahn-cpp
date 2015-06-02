@@ -19,6 +19,7 @@
 #ifndef AUTOBAHN_WAMP_ARGUMENTS_HPP
 #define AUTOBAHN_WAMP_ARGUMENTS_HPP
 
+#include <array>
 #include <msgpack.hpp>
 #include <string>
 #include <unordered_map>
@@ -29,7 +30,7 @@ namespace autobahn {
 using wamp_arguments = std::vector<msgpack::object>;
 using wamp_kw_arguments = std::unordered_map<std::string, msgpack::object>;
 
-static const msgpack::object EMPTY_ARGUMENTS(wamp_arguments(), nullptr);
+static const msgpack::object EMPTY_ARGUMENTS(std::array<msgpack::object, 0>(), nullptr);
 static const msgpack::object EMPTY_KW_ARGUMENTS(wamp_kw_arguments(), nullptr);
 
 } // namespace autobahn

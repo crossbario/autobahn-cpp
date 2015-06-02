@@ -31,26 +31,26 @@ using namespace autobahn;
 
 using boost::asio::local::stream_protocol;
 
-void add2(wamp_invocation& invocation)
+void add2(wamp_invocation invocation)
 {
    cerr << "Someone is calling add2() .." << endl;
    std::tuple<uint64_t, uint64_t> arguments;
-   invocation.arguments().convert(arguments);
+   invocation->arguments().convert(arguments);
 
    std::tuple<uint16_t> result(
             std::get<0>(arguments) + std::get<1>(arguments));
-   invocation.result().set_arguments(result);
+   invocation->result(result);
 }
 
-void square(wamp_invocation& invocation)
+void square(wamp_invocation invocation)
 {
    cerr << "Someone is calling my lambda function .." << endl;
    std::tuple<uint64_t, uint64_t> arguments;
-   invocation.arguments().convert(arguments);
+   invocation->arguments().convert(arguments);
 
    std::tuple<uint16_t> result(
             std::get<0>(arguments) * std::get<1>(arguments));
-   invocation.result().set_arguments(result);
+   invocation->result(result);
 }
 
 int main (int argc, char** argv) {
@@ -97,7 +97,7 @@ int main (int argc, char** argv) {
 
          // register a free standing function for remoting
          //
-         auto r1 = session->provide("com.myapp.cpp.add2", &add2);
+         auto r1 = session->provide("com.mathservice.add2", &add2);
          r1.then([](future<wamp_registration> reg) {
             cerr << "Registered with registration ID " << reg.get().id() << endl;
          }).wait();
