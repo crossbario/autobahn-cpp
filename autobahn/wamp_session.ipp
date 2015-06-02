@@ -21,7 +21,6 @@
 #include "wamp_call_result.hpp"
 #include "wamp_event.hpp"
 #include "wamp_invocation.hpp"
-#include "wamp_invocation_result.hpp"
 #include "wamp_message_type.hpp"
 #include "wamp_publication.hpp"
 #include "wamp_registration.hpp"
@@ -349,8 +348,8 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic)
 }
 
 template<typename IStream, typename OStream>
-template <typename ARGUMENTS>
-void wamp_session<IStream, OStream>::publish(const std::string& topic, const ARGUMENTS& arguments)
+template <typename List>
+void wamp_session<IStream, OStream>::publish(const std::string& topic, const List& arguments)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -381,9 +380,9 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic, const ARG
 }
 
 template<typename IStream, typename OStream>
-template <typename ARGUMENTS, typename KW_ARGUMENTS>
+template <typename List, typename Map>
 void wamp_session<IStream, OStream>::publish(
-        const std::string& topic, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments)
+        const std::string& topic, const List& arguments, const Map& kw_arguments)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -450,9 +449,9 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(const std::
 }
 
 template<typename IStream, typename OStream>
-template<typename ARGUMENTS>
+template<typename List>
 boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
-        const std::string& procedure, const ARGUMENTS& arguments)
+        const std::string& procedure, const List& arguments)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -488,9 +487,9 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
 }
 
 template<typename IStream, typename OStream>
-template<typename ARGUMENTS, typename KW_ARGUMENTS>
+template<typename List, typename Map>
 boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
-        const std::string& procedure, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments)
+        const std::string& procedure, const List& arguments, const Map& kw_arguments)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -664,7 +663,9 @@ void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
 
 
 template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_invocation(const wamp_message& message)
+void wamp_session<IStream, OStream>::process_invocation(
+        const wamp_message& message,
+        msgpack::unique_ptr<msgpack::zone>&& zone)
 {
     // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict]
     // [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
@@ -690,84 +691,71 @@ void wamp_session<IStream, OStream>::process_invocation(const wamp_message& mess
             throw protocol_error("INVOCATION.Details must be a map");
         }
 
-        wamp_invocation invocation;
+        wamp_invocation invocation = std::make_shared<wamp_invocation_impl>();
+        invocation->set_request_id(request_id);
+
         if (message.size() > 4) {
             if (message[4].type != msgpack::type::ARRAY) {
                 throw protocol_error("INVOCATION.Arguments must be an array/vector");
             }
-            invocation.set_arguments(message[4]);
+            invocation->set_arguments(message[4]);
 
             if (message.size() > 5) {
                 if (message[5].type != msgpack::type::MAP) {
                     throw protocol_error("INVOCATION.KwArguments must be a map");
                 }
-                invocation.set_kw_arguments(message[5]);
+                invocation->set_kw_arguments(message[5]);
             }
         }
 
-        auto buffer = std::make_shared<msgpack::sbuffer>();
-        msgpack::packer<msgpack::sbuffer> packer(*buffer);
+        invocation->set_zone(std::move(*zone));
+        zone.reset();
 
-        // [YIELD, INVOCATION.Request|id, Options|dict]
-        // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
-        // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
+        auto weak_this = std::weak_ptr<wamp_session>(this->shared_from_this());
+
+        auto send_result_fn = [weak_this] (const std::shared_ptr<msgpack::sbuffer>& buffer) {
+            // Make sure the session still exists, since the invocation could run
+            // on a different thread.
+            auto shared_this = weak_this.lock();
+            if (!shared_this) {
+                return; // FIXME: or throw exception?
+            }
+
+            // Send to the io_service thread, and make sure the session still exists (again).
+            shared_this->m_io.dispatch([weak_this, buffer] {
+                auto shared_this = weak_this.lock();
+                if (!shared_this) {
+                    return; // FIXME: or throw exception?
+                }
+                shared_this->send(buffer);
+            });
+        };
+
+        invocation->set_send_result_fn(std::move(send_result_fn));
+
         try {
             if (m_debug) {
                 std::cerr << "Invoking procedure registered under " << registration_id << std::endl;
             }
             procedure_itr->second(invocation);
-
-            packer.pack_array(4);
-            packer.pack(static_cast<int>(message_type::YIELD));
-            packer.pack(request_id);
-            packer.pack_map(0);
-
-            auto& result = invocation.result();
-            if (result.arguments().type != msgpack::type::NIL) {
-                packer.pack(result.arguments());
-                if (result.kw_arguments().type != msgpack::type::NIL) {
-                    packer.pack(result.kw_arguments());
-                }
-            } else if (result.kw_arguments().type != msgpack::type::NIL) {
-                packer.pack(EMPTY_ARGUMENTS);
-                packer.pack(result.kw_arguments());
-            }
-            send(buffer);
         }
-
-        // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
-        // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri, Arguments|list]
-        // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri, Arguments|list, ArgumentsKw|dict]
 
         // FIXME: implement Autobahn-specific exception with error URI
         catch (const std::exception& e) {
             // we can at least describe the error with e.what()
             //
-            packer.pack_array(7);
-            packer.pack(static_cast<int>(message_type::ERROR));
-            packer.pack(static_cast<int>(message_type::INVOCATION));
-            packer.pack(request_id);
-            packer.pack_map(0);
-            packer.pack(std::string("wamp.error.runtime_error"));
-            packer.pack_array(0);
-
-            packer.pack_map(1);
-            packer.pack(std::string("what"));
-            packer.pack(std::string(e.what()));
-
-            send(buffer);
+            if (invocation->sendable()) {
+                std::map<std::string, std::string> error_kw_arguments;
+                error_kw_arguments["what"] = e.what();
+                invocation->error("wamp.error.runtime_error", EMPTY_ARGUMENTS, error_kw_arguments);
+            }
         }
         catch (...) {
             // no information available on actual error
             //
-            packer.pack_array(5);
-            packer.pack(static_cast<int>(message_type::ERROR));
-            packer.pack(static_cast<int>(message_type::INVOCATION));
-            packer.pack(request_id);
-            packer.pack_map(0);
-            packer.pack(std::string("wamp.error.runtime_error"));
-
-            send(buffer);
+            if (invocation->sendable()) {
+                invocation->error("wamp.error.runtime_error");
+            }
         }
     } else {
         throw protocol_error("bogus INVOCATION message for non-registered registration ID");
@@ -1114,7 +1102,7 @@ void wamp_session<IStream, OStream>::got_message(
             // FIXME
             break;
         case message_type::INVOCATION:
-            process_invocation(message);
+            process_invocation(message, std::move(zone));
             break;
         case message_type::INTERRUPT:
             throw protocol_error("received INTERRUPT message - not implemented");

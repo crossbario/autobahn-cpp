@@ -30,15 +30,15 @@ using namespace autobahn;
 
 using boost::asio::ip::tcp;
 
-void add2(wamp_invocation& invocation)
+void add2(wamp_invocation invocation)
 {
    cerr << "Someone is calling add2() .." << endl;
    std::tuple<uint64_t, uint64_t> arguments;
-   invocation.arguments().convert(arguments);
+   invocation->arguments().convert(arguments);
 
    std::tuple<uint16_t> result(
             std::get<0>(arguments) + std::get<1>(arguments));
-   invocation.result().set_arguments(result);
+   invocation->result(result);
 }
 
 int main () {
@@ -102,14 +102,14 @@ int main () {
                   // register a lambda for remoting
                   //
                   session->provide("com.myapp.cpp.square",
-                     [](wamp_invocation& invocation) {
+                     [](wamp_invocation invocation) {
                         cerr << "Someone is calling my lambda function .." << endl;
                         std::tuple<uint64_t, uint64_t> arguments;
-                        invocation.arguments().convert(arguments);
+                        invocation->arguments().convert(arguments);
 
                         std::tuple<uint16_t> result(
                                 std::get<0>(arguments) * std::get<1>(arguments));
-                        invocation.result().set_arguments(result);
+                        invocation->result(result);
                      }
                   ).wait();
                });

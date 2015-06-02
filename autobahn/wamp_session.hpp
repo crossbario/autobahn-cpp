@@ -117,8 +117,8 @@ public:
      * \param topic The URI of the topic to publish to.
      * \param arguments The positional payload for the event.
      */
-    template <typename ARGUMENTS>
-    void publish(const std::string& topic, const ARGUMENTS& arguments);
+    template <typename List>
+    void publish(const std::string& topic, const List& arguments);
 
     /*!
      * Publish an event with both positional and keyword payload to a topic.
@@ -127,8 +127,8 @@ public:
      * \param arguments The positional payload for the event.
      * \param kw_arguments The keyword payload for the event.
      */
-    template <typename ARGUMENTS, typename KW_ARGUMENTS>
-    void publish(const std::string& topic, const ARGUMENTS& arguments, const KW_ARGUMENTS& kw_arguments);
+    template <typename List, typename Map>
+    void publish(const std::string& topic, const List& arguments, const Map& kw_arguments);
 
     /*!
      * Subscribe a handler to a topic to receive events.
@@ -163,9 +163,9 @@ public:
      * \param arguments The positional arguments for the call.
      * \return A future that resolves to the result of the remote procedure call.
      */
-    template <typename ARGUMENTS>
+    template <typename List>
     boost::future<wamp_call_result> call(
-            const std::string& procedure, const ARGUMENTS& arguments);
+            const std::string& procedure, const List& arguments);
 
     /*!
      * Calls a remote procedure with positional and keyword arguments.
@@ -175,9 +175,9 @@ public:
      * \param kw_arguments The keyword arguments for the call.
      * \return A future that resolves to the result of the remote procedure call.
      */
-    template<typename ARGUMENTS, typename KW_ARGUMENTS>
+    template<typename List, typename Map>
     boost::future<wamp_call_result> call(
-            const std::string& procedure, const ARGUMENTS& args, const KW_ARGUMENTS& kwargs);
+            const std::string& procedure, const List& arguments, const Map& kw_arguments);
 
     /*!
      * Register an procedure as a procedure that can be called remotely.
@@ -218,7 +218,9 @@ private:
     void process_registered(const wamp_message& message);
 
     /// Process a WAMP INVOCATION message.
-    void process_invocation(const wamp_message& message);
+    void process_invocation(
+            const wamp_message& message,
+            msgpack::unique_ptr<msgpack::zone>&& zone);
 
     /// Process a WAMP GOODBYE message.
     void process_goodbye(const wamp_message& message);
