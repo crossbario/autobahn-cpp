@@ -161,12 +161,6 @@ make install
 
 > On FreeBSD, you need to `pkg install autotools` and invoke `gmake` instead of `make`.
 
-To build with GCC instead of clang:
-
-```console
-./configure --prefix=$HOME/msgpack_gcc
-```
-
 ### **Autobahn**|Cpp
 
 To get **Autobahn**|Cpp library and examples, clone the repo
