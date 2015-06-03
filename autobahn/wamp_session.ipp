@@ -70,7 +70,7 @@ boost::future<bool> wamp_session<IStream, OStream>::start()
     boost::asio::async_read(
         m_in,
         boost::asio::buffer(m_buffer_message_length, sizeof(m_buffer_message_length)),
-        bind(&wamp_session<IStream, OStream>::got_handshake_reply, this, boost::asio::placeholders::error)
+        bind(&wamp_session<IStream, OStream>::got_handshake_reply, this->shared_from_this(), boost::asio::placeholders::error)
     );
 
     return m_handshake.get_future();
@@ -964,7 +964,7 @@ void wamp_session<IStream, OStream>::receive_message()
     // read 4 octets msg length prefix ..
     boost::asio::async_read(m_in,
         boost::asio::buffer(m_buffer_message_length, sizeof(m_buffer_message_length)),
-        bind(&wamp_session<IStream, OStream>::got_message_header, this, boost::asio::placeholders::error));
+        bind(&wamp_session<IStream, OStream>::got_message_header, this->shared_from_this(), boost::asio::placeholders::error));
 }
 
 template<typename IStream, typename OStream>
@@ -982,7 +982,7 @@ void wamp_session<IStream, OStream>::got_message_header(const boost::system::err
 
         boost::asio::async_read(m_in,
             boost::asio::buffer(m_unpacker.buffer(), m_message_length),
-            bind(&wamp_session<IStream, OStream>::got_message_body, this, boost::asio::placeholders::error));
+            bind(&wamp_session<IStream, OStream>::got_message_body, this->shared_from_this(), boost::asio::placeholders::error));
     } else {
         // TODO: Well this is no good. The session will basically just become unresponsive
         // at this point as we will no longer be trying to asynchronously receive messages.
