@@ -54,8 +54,9 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_unsubscribe_request.ipp)
 
 foreach(h ${PUBLIC_HEADERS})
-    get_filename_component(HEADER_INCLUDE_DIRECTORY include/${h} DIRECTORY)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${h}
+    string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "include/" include "${h}")
+    get_filename_component(HEADER_INCLUDE_DIRECTORY ${include} DIRECTORY)
+    install(FILES ${h}
         DESTINATION ${HEADER_INCLUDE_DIRECTORY}
         COMPONENT "headers")
 endforeach()
