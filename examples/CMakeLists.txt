@@ -1,4 +1,4 @@
-include_directories(${Boost_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIR})
 link_libraries(${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 set(CALL1_SOURCES call1.cpp)
