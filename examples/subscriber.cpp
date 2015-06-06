@@ -25,12 +25,10 @@
 
 void topic1(const autobahn::wamp_event& event)
 {
-    std::tuple<std::string> event_arguments;
-    event.arguments().convert(event_arguments);
-    std::cerr << "received event: " << std::get<0>(event_arguments) << std::endl;
+    std::cerr << "received event: " << event.argument<uint64_t>(0) << std::endl;
 }
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     try {
         auto parameters = get_parameters(argc, argv);
