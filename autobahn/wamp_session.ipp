@@ -45,13 +45,13 @@ namespace autobahn {
 template<typename IStream, typename OStream>
 wamp_session<IStream, OStream>::wamp_session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug)
     : m_debug(debug)
-    , m_stopped(false)
     , m_io(io)
     , m_in(in)
     , m_out(out)
-    , m_session_id(0)
     , m_request_id(ATOMIC_VAR_INIT(0))
+    , m_session_id(0)
     , m_goodbye_sent(false)
+    , m_stopped(false)
 {
 }
 
@@ -118,17 +118,40 @@ void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::er
 }
 
 template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::stop()
+boost::future<void> wamp_session<IStream, OStream>::stop()
 {
-    m_stopped = true;
-    try {
-        m_in.close();
-    } catch (...) {
-    }
-    try {
-        m_out.close();
-    } catch (...) {
-    }
+    auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+
+    m_io.dispatch([=]() {
+        auto shared_self = weak_self.lock();
+        if (!shared_self) {
+            return;
+        }
+
+        if (m_stopped) {
+            throw protocol_error("session already stopped");
+        }
+
+        if (m_session_id) {
+            throw protocol_error("session still joined");
+        }
+
+        m_stopped = true;
+
+        try {
+            m_in.close();
+        } catch (...) {
+        }
+
+        try {
+            m_out.close();
+        } catch (...) {
+        }
+
+        m_session_stop.set_value();
+    });
+
+    return m_session_stop.get_future();
 }
 
 template<typename IStream, typename OStream>

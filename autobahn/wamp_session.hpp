@@ -86,7 +86,7 @@ public:
      * Closes the IStream and the OStream provided to the constructor
      * of this session.
      */
-    void stop();
+    boost::future<void> stop();
 
     /*!
      * Join a realm with this session.
@@ -242,8 +242,6 @@ private:
 
     bool m_debug;
 
-    bool m_stopped;
-
     boost::asio::io_service& m_io;
 
     /// Input stream this session runs on.
@@ -258,21 +256,27 @@ private:
     /// MsgPack unserialization unpacker.
     msgpack::unpacker m_unpacker;
 
+    /// Last request ID of outgoing WAMP requests.
+    std::atomic<uint64_t> m_request_id;
+
+    /// Synchronization for dealing with the rawsocket handshake
+    boost::promise<bool> m_handshake;
+
     /// WAMP session ID (if the session is joined to a realm).
     uint64_t m_session_id;
 
     /// Future to be fired when session was joined.
     boost::promise<uint64_t> m_session_join;
 
-    /// Last request ID of outgoing WAMP requests.
-    std::atomic<uint64_t> m_request_id;
-
     bool m_goodbye_sent;
 
     boost::promise<std::string> m_session_leave;
 
-    /// Synchronization for dealing with the rawsocket handshake
-    boost::promise<bool> m_handshake;
+    /// Set to true when the session is stopped.
+    bool m_stopped;
+
+    /// Synchronization for dealing with stopping the session
+    boost::promise<void> m_session_stop;
 
     //////////////////////////////////////////////////////////////////////////////////////
     /// Caller
