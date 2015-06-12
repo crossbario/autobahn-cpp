@@ -16,6 +16,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <boost/lexical_cast.hpp>
 #include <stdexcept>
 
 namespace autobahn {
@@ -40,7 +41,7 @@ template <typename T>
 inline T wamp_event::argument(std::size_t index) const
 {
     if (m_arguments.type != msgpack::type::ARRAY || m_arguments.via.array.size <= index) {
-        throw std::out_of_range("no argument at index " + std::to_string(index));
+        throw std::out_of_range("no argument at index " + boost::lexical_cast<std::string>(index));
     }
     return m_arguments.via.array.ptr[index].as<T>();
 }
