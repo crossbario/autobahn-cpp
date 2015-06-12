@@ -30,24 +30,20 @@ Here is how programming with C++ and **Autobahn**|Cpp looks like.
 
 ```c++
 auto c1 = session.call("com.mathservice.add2", std::make_tuple(23, 777))
-    .then([&](future<wamp_call_result> result) {
-        std::tuple<uint64_t> args;
-        result.get().arguments().convert(args);
-        std::cout << "Got call result " << std::get<0>(args) << std::endl;
+    .then([&](boost::future<wamp_call_result> result) {
+        std::cout << "Got call result " << result.get().argument<uint64_t>(0) << std::endl;
     });
 ```
 
 **Registering a remoted Procedure**
 ```c++
 auto r1 = session.provide("com.myapp.cpp.square",
-    [](wamp_invocation invocation) {
+    [](autobahn::wamp_invocation invocation) {
         std::cout << "Procedure is invoked .." << endl;
-        std::tuple<uint64_t> args;
-        invocation->arguments().convert(args);
-        uint64_t x = std::get<0>(args);
+        uint64_t x = invocation->argument<uint64_t>(0);
         return x * x;
     })
-    .then([](future<wamp_registration> reg) {
+    .then([](boost::future<autobahn::wamp_registration> reg) {
         std::cout << "Registered with ID " << reg.get().id() << std::endl;
     });
 ```
@@ -65,7 +61,7 @@ auto opts = PublishOptions();
 opts.acknowledge = True;
 
 session.publish("com.myapp.topic2", std::make_tuple(23, true, std::string("hello")), opts)
-    .then([](future<wamp_publication> pub) {
+    .then([](boost::future<autobahn::wamp_publication> pub) {
         std::cout << "Published with ID " << pub.get().id() << std::endl;
     });
 ```
@@ -74,12 +70,10 @@ session.publish("com.myapp.topic2", std::make_tuple(23, true, std::string("hello
 
 ```c++
 auto s1 = session.subscribe("com.myapp.topic1",
-    [](const wamp_event& event) {
-        std::tuple<uint64_t> args;
-        event.arguments().convert(args);
-        std::cout << "Got event: " << std::get<0>(args) << std::endl;
+    [](const autobahn::wamp_event& event) {
+        std::cout << "Got event: " << event.argument<uint64_t>(0) << std::endl;
     })
-    .then([](future<wamp_subscription> sub) {
+    .then([](boost::future<autobahn::wamp_subscription> sub) {
         std::cout << "Subscribed with ID " << sub.get().id() << std::endl;
     });
 ```

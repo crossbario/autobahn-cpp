@@ -25,7 +25,7 @@
 #include <string>
 #include <tuple>
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     std::cerr << "Boost: " << BOOST_VERSION << std::endl;
 
@@ -64,9 +64,8 @@ int main (int argc, char** argv)
                             std::tuple<uint64_t, uint64_t> arguments(23, 777);
                             call_future = session->call("com.examples.calculator.add", arguments).then(
                             [&](boost::future<autobahn::wamp_call_result> result) {
-                                std::tuple<uint64_t> result_arguments;
-                                result.get().arguments().convert(result_arguments);
-                                std::cerr << "call result: " << std::get<0>(result_arguments) << std::endl;
+                                uint64_t sum = result.get().argument<uint64_t>(0);
+                                std::cerr << "call result: " << sum << std::endl;
                                 leave_future = session->leave().then([&](boost::future<std::string> reason) {
                                     std::cerr << "left session (" << reason.get() << ")" << std::endl;
                                     stop_future = session->stop().then([&](boost::future<void> stopped) {

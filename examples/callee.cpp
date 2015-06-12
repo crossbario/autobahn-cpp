@@ -27,15 +27,13 @@
 
 void add(autobahn::wamp_invocation invocation)
 {
-    std::tuple<uint64_t, uint64_t> arguments;
-    invocation->arguments().convert(arguments);
+    auto a = invocation->argument<uint64_t>(0);
+    auto b = invocation->argument<uint64_t>(1);
 
-    std::tuple<uint16_t> result(
-                std::get<0>(arguments) + std::get<1>(arguments));
-    invocation->result(result);
+    invocation->result(std::make_tuple(a + b));
 }
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     std::cerr << "Boost: " << BOOST_VERSION << std::endl;
 

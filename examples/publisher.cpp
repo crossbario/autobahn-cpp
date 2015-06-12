@@ -26,7 +26,7 @@
 #include <string>
 #include <tuple>
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     try {
         auto parameters = get_parameters(argc, argv);

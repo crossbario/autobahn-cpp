@@ -16,6 +16,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <stdexcept>
+
 namespace autobahn {
 
 inline wamp_event::wamp_event()
@@ -24,14 +26,124 @@ inline wamp_event::wamp_event()
 {
 }
 
-inline const msgpack::object& wamp_event::arguments() const
+inline std::size_t wamp_event::number_of_arguments() const
 {
-    return m_arguments;
+    return m_arguments.type == msgpack::type::ARRAY ? m_arguments.via.array.size : 0;
 }
 
-inline const msgpack::object& wamp_event::kw_arguments() const
+inline std::size_t wamp_event::number_of_kw_arguments() const
 {
-    return m_kw_arguments;
+    return m_kw_arguments.type == msgpack::type::MAP ? m_kw_arguments.via.map.size : 0;
+}
+
+template <typename T>
+inline T wamp_event::argument(std::size_t index) const
+{
+    if (m_arguments.type != msgpack::type::ARRAY || m_arguments.via.array.size <= index) {
+        throw std::out_of_range("no argument at index " + std::to_string(index));
+    }
+    return m_arguments.via.array.ptr[index].as<T>();
+}
+
+template <typename List>
+inline List wamp_event::arguments() const
+{
+    return m_arguments.as<List>();
+}
+
+template <typename List>
+inline void wamp_event::get_arguments(List& args) const
+{
+    m_arguments.convert(args);
+}
+
+template <typename... T>
+inline void wamp_event::get_each_argument(T&... args) const
+{
+    auto args_tuple = std::make_tuple(std::ref(args)...);
+    m_arguments.convert(args_tuple);
+}
+
+template <typename T>
+inline T wamp_event::kw_argument(const std::string& key) const
+{
+    if (m_kw_arguments.type != msgpack::type::MAP) {
+        throw msgpack::type_error();
+    }
+    for (std::size_t i = 0; i < m_kw_arguments.via.map.size; ++i) {
+        const msgpack::object_kv& kv = m_kw_arguments.via.map.ptr[i];
+        if (kv.key.type == msgpack::type::STR && key.size() == kv.key.via.str.size
+                && key.compare(0, key.size(), kv.key.via.str.ptr, kv.key.via.str.size) == 0)
+        {
+            return kv.val.as<T>();
+        }
+    }
+    throw std::out_of_range(key + " keyword argument doesn't exist");
+}
+
+template <typename T>
+inline T wamp_event::kw_argument(const char* key) const
+{
+    if (m_kw_arguments.type != msgpack::type::MAP) {
+        throw msgpack::type_error();
+    }
+    std::size_t key_size = strlen(key);
+    for (std::size_t i = 0; i < m_kw_arguments.via.map.size; ++i) {
+        const msgpack::object_kv& kv = m_kw_arguments.via.map.ptr[i];
+        if (kv.key.type == msgpack::type::STR && key_size == kv.key.via.str.size
+                && memcmp(key, kv.key.via.str.ptr, key_size) == 0)
+        {
+            return kv.val.as<T>();
+        }
+    }
+    throw std::out_of_range(std::string(key) + " keyword argument doesn't exist");
+}
+
+template <typename T>
+inline T wamp_event::kw_argument_or(const std::string& key, const T& fallback) const
+{
+    if (m_kw_arguments.type != msgpack::type::MAP) {
+        throw msgpack::type_error();
+    }
+    for (std::size_t i = 0; i < m_kw_arguments.via.map.size; ++i) {
+        const msgpack::object_kv& kv = m_kw_arguments.via.map.ptr[i];
+        if (kv.key.type == msgpack::type::STR && key.size() == kv.key.via.str.size
+                && key.compare(0, key.size(), kv.key.via.str.ptr, kv.key.via.str.size) == 0)
+        {
+            return kv.val.as<T>();
+        }
+    }
+    return fallback;
+}
+
+template <typename T>
+inline T wamp_event::kw_argument_or(const char* key, const T& fallback) const
+{
+    if (m_kw_arguments.type != msgpack::type::MAP) {
+        throw msgpack::type_error();
+    }
+    std::size_t key_size = strlen(key);
+    for (std::size_t i = 0; i < m_kw_arguments.via.map.size; ++i) {
+        const msgpack::object_kv& kv = m_kw_arguments.via.map.ptr[i];
+        if (kv.key.type == msgpack::type::STR && key_size == kv.key.via.str.size
+                && memcmp(key, kv.key.via.str.ptr, key_size) == 0)
+        {
+            return kv.val.as<T>();
+        }
+    }
+    throw fallback;
+}
+
+template <typename Map>
+inline Map wamp_event::kw_arguments() const
+{
+    return m_kw_arguments.as<Map>();
+}
+
+template <typename Map>
+inline void wamp_event::get_kw_arguments(Map& kw_args) const
+{
+    m_kw_arguments.convert(kw_args);
 }
 
 inline void wamp_event::set_arguments(const msgpack::object& arguments)
