@@ -1,4 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIRS} ${Libmsgpack_INCLUDE_DIRS})
 link_libraries(${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 set(PARAMETERS_SOURCES parameters.cpp)
