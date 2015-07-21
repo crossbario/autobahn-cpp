@@ -19,6 +19,9 @@
 #ifndef AUTOBAHN_EXCEPTIONS_HPP
 #define AUTOBAHN_EXCEPTIONS_HPP
 
+#include <string>
+#include <stdexcept>
+
 namespace autobahn {
 
 class protocol_error : public std::runtime_error {
