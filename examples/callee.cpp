@@ -65,11 +65,16 @@ int main(int argc, char** argv)
                     std::cerr << "connected to server" << std::endl;
 
                     start_future = session->start().then([&](boost::future<bool> started) {
-                        std::cerr << "session started" << std::endl;
-                        join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
-                            std::cerr << "joined realm: " << s.get() << std::endl;
-                            session->provide("com.examples.calculator.add", &add);
-                        });
+                        if (started.get()) {
+                            std::cerr << "session started" << std::endl;
+                            join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
+                                std::cerr << "joined realm: " << s.get() << std::endl;
+                                session->provide("com.examples.calculator.add", &add);
+                            });
+                        } else {
+                            std::cerr << "failed to start session" << std::endl;
+                            io.stop();
+                        }
                     });
                 } else {
                     std::cerr << "connect failed: " << ec.message() << std::endl;
@@ -82,7 +87,7 @@ int main(int argc, char** argv)
         std::cerr << "stopped io service" << std::endl;
     }
     catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "exception: " << e.what() << std::endl;
         return 1;
     }
     return 0;

@@ -57,22 +57,27 @@ int main(int argc, char** argv)
                     std::cerr << "connected to server" << std::endl;
 
                     start_future = session->start().then([&](boost::future<bool> started) {
-                        std::cerr << "session started" << std::endl;
-                        join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> joined) {
-                            std::cerr << "joined realm: " << joined.get() << std::endl;
+                        if (started.get()) {
+                            std::cerr << "session started" << std::endl;
+                            join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> joined) {
+                                std::cerr << "joined realm: " << joined.get() << std::endl;
 
-                            std::tuple<std::string> arguments(std::string("hello"));
-                            session->publish("com.examples.subscriptions.topic1", arguments);
-                            std::cerr << "event published" << std::endl;
+                                std::tuple<std::string> arguments(std::string("hello"));
+                                session->publish("com.examples.subscriptions.topic1", arguments);
+                                std::cerr << "event published" << std::endl;
 
-                            leave_future = session->leave().then([&](boost::future<std::string> reason) {
-                                std::cerr << "left session (" << reason.get() << ")" << std::endl;
-                                stop_future = session->stop().then([&](boost::future<void> stopped) {
-                                    std::cerr << "stopped session" << std::endl;
-                                    io.stop();
+                                leave_future = session->leave().then([&](boost::future<std::string> reason) {
+                                    std::cerr << "left session (" << reason.get() << ")" << std::endl;
+                                    stop_future = session->stop().then([&](boost::future<void> stopped) {
+                                        std::cerr << "stopped session" << std::endl;
+                                        io.stop();
+                                    });
                                 });
                             });
-                        });
+                        } else {
+                            std::cerr << "failed to start session" << std::endl;
+                            io.stop();
+                        }
                     });
 
                 } else {

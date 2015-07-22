@@ -57,24 +57,27 @@ int main(int argc, char** argv)
                     std::cerr << "connected to server" << std::endl;
 
                     start_future = session->start().then([&](boost::future<bool> started) {
-                        std::cerr << "session started" << std::endl;
-                        join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
-                            std::cerr << "joined realm: " << s.get() << std::endl;
-
-                            std::tuple<uint64_t, uint64_t> arguments(23, 777);
-                            call_future = session->call("com.examples.calculator.add", arguments).then(
-                            [&](boost::future<autobahn::wamp_call_result> result) {
-                                uint64_t sum = result.get().argument<uint64_t>(0);
-                                std::cerr << "call result: " << sum << std::endl;
-                                leave_future = session->leave().then([&](boost::future<std::string> reason) {
-                                    std::cerr << "left session (" << reason.get() << ")" << std::endl;
-                                    stop_future = session->stop().then([&](boost::future<void> stopped) {
-                                        std::cerr << "stopped session" << std::endl;
-                                        io.stop();
+                        if (started.get()) {
+                            join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
+                                std::cerr << "joined realm: " << s.get() << std::endl;
+                                std::tuple<uint64_t, uint64_t> arguments(23, 777);
+                                call_future = session->call("com.examples.calculator.add", arguments).then(
+                                [&](boost::future<autobahn::wamp_call_result> result) {
+                                    uint64_t sum = result.get().argument<uint64_t>(0);
+                                    std::cerr << "call result: " << sum << std::endl;
+                                    leave_future = session->leave().then([&](boost::future<std::string> reason) {
+                                        std::cerr << "left session (" << reason.get() << ")" << std::endl;
+                                        stop_future = session->stop().then([&](boost::future<void> stopped) {
+                                            std::cerr << "stopped session" << std::endl;
+                                            io.stop();
+                                        });
                                     });
                                 });
                             });
-                        });
+                        } else {
+                            std::cerr << "failed to start session" << std::endl;
+                            io.stop();
+                        }
                     });
                 } else {
                     std::cerr << "connect failed: " << ec.message() << std::endl;
