@@ -73,6 +73,8 @@ public:
      */
     wamp_session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug = false);
 
+    ~wamp_session();
+
     /*!
      * Start listening on the IStream provided to the constructor
      * of this session.
@@ -250,7 +252,7 @@ private:
     /// Output stream this session runs on.
     OStream& m_out;
 
-    char m_buffer_message_length[4];
+    char m_message_length_buffer[4];
     uint32_t m_message_length;
 
     /// MsgPack unserialization unpacker.
@@ -258,6 +260,9 @@ private:
 
     /// Last request ID of outgoing WAMP requests.
     std::atomic<uint64_t> m_request_id;
+
+    /// Buffer used to hold the sent/recevied rawsocket handshake
+    char m_handshake_buffer[4];
 
     /// Synchronization for dealing with the rawsocket handshake
     boost::promise<bool> m_handshake;

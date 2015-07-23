@@ -34,6 +34,7 @@
 #include <unistd.h>
 #endif
 
+#include <boost/system/error_code.hpp>
 #include <cstdint>
 #include <exception>
 #include <iostream>
@@ -56,22 +57,37 @@ wamp_session<IStream, OStream>::wamp_session(boost::asio::io_service& io, IStrea
 }
 
 template<typename IStream, typename OStream>
+wamp_session<IStream, OStream>::~wamp_session()
+{
+}
+
+template<typename IStream, typename OStream>
 boost::future<bool> wamp_session<IStream, OStream>::start()
 {
     // Send the initial handshake packet informing the server which
-    // serialization format we wish to use, and our maximum message size
-    m_buffer_message_length[0] = 0x7F; // magic byte
-    m_buffer_message_length[1] = 0xF2; // we are ready to receive messages up to 2**24 octets and encoded using MsgPack
-    m_buffer_message_length[2] = 0x00; // reserved
-    m_buffer_message_length[3] = 0x00; // reserved
-    boost::asio::write(m_out, boost::asio::buffer(m_buffer_message_length, sizeof(m_buffer_message_length)));
+    // serialization format we wish to use, and our maximum message size.
+    m_handshake_buffer[0] = 0x7F; // magic byte
+    m_handshake_buffer[1] = 0xF2; // we are ready to receive messages up to 2**24 octets and encoded using MsgPack
+    m_handshake_buffer[2] = 0x00; // reserved
+    m_handshake_buffer[3] = 0x00; // reserved
+
+    boost::asio::write(
+            m_out,
+            boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)));
+
+    std::weak_ptr<wamp_session<IStream, OStream>> weak_self = this->shared_from_this();
+    auto handshake_reply = [=](const boost::system::error_code& error) {
+        auto shared_self = weak_self.lock();
+        if (shared_self) {
+            shared_self->got_handshake_reply(error);
+        }
+    };
 
     // Read the 4-byte reply from the server
     boost::asio::async_read(
         m_in,
-        boost::asio::buffer(m_buffer_message_length, sizeof(m_buffer_message_length)),
-        bind(&wamp_session<IStream, OStream>::got_handshake_reply, this->shared_from_this(), boost::asio::placeholders::error)
-    );
+        boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)),
+        boost::bind<void>(handshake_reply, boost::asio::placeholders::error));
 
     return m_handshake.get_future();
 }
@@ -81,10 +97,11 @@ void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::er
 {
     // If there is an error trying to receive the handshake reply then set
     // the handshake promise to false to indicate that the session could
-    // not be started.
+    // not be started. This can happen if the wrong magic byte is sent as
+    // the first octet in the handshake.
     if (error) {
         if (m_debug) {
-            std::cerr << "RawSocket handshake system error: " << error << std::endl;
+            std::cerr << "rawsocket handshake error: " << error << std::endl;
         }
 
         m_handshake.set_value(false);
@@ -95,25 +112,64 @@ void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::er
         std::cerr << "RawSocket handshake reply received" << std::endl;
     }
 
-    if (m_buffer_message_length[0] != 0x7F) {
+    if (m_handshake_buffer[0] != 0x7F) {
+        std::cerr << "rawsocket handshake error: invalid magic byte" << std::endl;
         m_handshake.set_value(false);
-        throw protocol_error("invalid magic byte in RawSocket handshake response");
+        return;
     }
-    if (((m_buffer_message_length[1] & 0x0F) != 0x02)) {
+
+    // Indicates that the handshake reply is an error.
+    if ((m_handshake_buffer[1] & 0x0F) == 0x00) {
+        if (m_debug) {
+            uint32_t error = m_handshake_buffer[1] & 0xF0;
+            std::cerr << "rawsocket handshake error: " << std::hex << error << std::endl;
+            if (error == 0x00) {
+                std::cerr << "rawsocket handshake error: illegal error code (" << error << ")" << std::endl;
+            } else if (error == 0x10) {
+                std::cerr << "rawsocket handshake error: serializer unsupported" << std::endl;
+            } else if (error == 0x20) {
+                std::cerr << "rawsocket handshake error: maximum message length unacceptable" << std::endl;
+            } else if (error == 0x30) {
+                std::cerr << "rawsocket handshake error: use of reserved bits (unsupported feature)" << std::endl;
+            } else if (error == 0x40) {
+                std::cerr << "rawsocket handshake error: maximum connection count reached" << std::endl;
+            } else {
+                std::cerr << "rawsocket handshake error: unknown/reserved error code (" << error << ")" << std::endl;
+            }
+        }
+
         m_handshake.set_value(false);
-        // FIXME: this isn't exactly a "protocol error" => invent new exception
-        throw protocol_error("RawSocket handshake reply: server does not speak MsgPack encoding");
+
+        return;
     }
+
+    uint32_t serializer_type = (m_handshake_buffer[1] & 0x0F);
+    if (serializer_type == 0x01) {
+        if (m_debug) {
+            std::cerr << "rawsocket handshake error: json currently not supported" << std::endl;
+        }
+        m_handshake.set_value(false);
+        return;
+    } else if (serializer_type == 0x02) {
+        if (m_debug) {
+            std::cerr << "rawsocket handshake: using msgpack serializer" << std::endl;
+        }
+        m_handshake.set_value(true);
+        // We intentionally fall through here since we are
+        // now ready to start receiving messages.
+    } else {
+        if (m_debug) {
+            std::cerr << "rawsocket handshake error: invalid serializer type ("
+                    << serializer_type << ")" << std::endl;
+        }
+        m_handshake.set_value(false);
+        return;
+    }
+
     if (m_debug) {
-        std::cerr << "RawSocket handshake reply is valid: start WAMP message send-receive loop" << std::endl;
+        std::cerr << "rawsocket handshake: start wamp async" << std::endl;
     }
 
-    // It is now safe to try and join the session so set the handshake promise
-    // indicating that the session has been started.
-    m_handshake.set_value(true);
-
-    // enter WAMP message send-receive ..
-    //
     receive_message();
 }
 
@@ -986,7 +1042,7 @@ void wamp_session<IStream, OStream>::receive_message()
 
     // read 4 octets msg length prefix ..
     boost::asio::async_read(m_in,
-        boost::asio::buffer(m_buffer_message_length, sizeof(m_buffer_message_length)),
+        boost::asio::buffer(m_message_length_buffer, sizeof(m_message_length_buffer)),
         bind(&wamp_session<IStream, OStream>::got_message_header, this->shared_from_this(), boost::asio::placeholders::error));
 }
 
@@ -994,7 +1050,7 @@ template<typename IStream, typename OStream>
 void wamp_session<IStream, OStream>::got_message_header(const boost::system::error_code& error)
 {
     if (!error) {
-        m_message_length = ntohl(*((uint32_t*) &m_buffer_message_length));
+        m_message_length = ntohl(*((uint32_t*) &m_message_length_buffer));
 
         if (m_debug) {
             std::cerr << "RX message (" << m_message_length << " octets) ..." << std::endl;
