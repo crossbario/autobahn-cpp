@@ -227,9 +227,13 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
 
     packer.pack_map(4);
     packer.pack(std::string("caller"));
-    packer.pack_map(0);
+    packer.pack_map(1);
+    packer.pack("call_timeout");
+    packer.pack(true);
     packer.pack(std::string("callee"));
-    packer.pack_map(0);
+    packer.pack_map(1);
+    packer.pack("call_timeout");
+    packer.pack(true);
     packer.pack(std::string("publisher"));
     packer.pack_map(0);
     packer.pack(std::string("subscriber"));
@@ -493,7 +497,9 @@ void wamp_session<IStream, OStream>::publish(
 }
 
 template<typename IStream, typename OStream>
-boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(const std::string& procedure)
+boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
+        const std::string& procedure,
+        const wamp_call_options& options)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -503,7 +509,7 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(const std::
     packer.pack_array(4);
     packer.pack(static_cast<int>(message_type::CALL));
     packer.pack(request_id);
-    packer.pack_map(0);
+    packer.pack(options);
     packer.pack(procedure);
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
@@ -530,7 +536,9 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(const std::
 template<typename IStream, typename OStream>
 template<typename List>
 boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
-        const std::string& procedure, const List& arguments)
+        const std::string& procedure,
+        const List& arguments,
+        const wamp_call_options& options)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -540,7 +548,7 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     packer.pack_array(5);
     packer.pack(static_cast<int>(message_type::CALL));
     packer.pack(request_id);
-    packer.pack_map(0);
+    packer.pack(options);
     packer.pack(procedure);
     packer.pack(arguments);
 
@@ -568,7 +576,10 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
 template<typename IStream, typename OStream>
 template<typename List, typename Map>
 boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
-        const std::string& procedure, const List& arguments, const Map& kw_arguments)
+        const std::string& procedure,
+        const List& arguments,
+        const Map& kw_arguments,
+        const wamp_call_options& options)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -578,7 +589,7 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     packer.pack_array(6);
     packer.pack(static_cast<int>(message_type::CALL));
     packer.pack(request_id);
-    packer.pack_map(0);
+    packer.pack(options);
     packer.pack(procedure);
     packer.pack(arguments);
     packer.pack(kw_arguments);

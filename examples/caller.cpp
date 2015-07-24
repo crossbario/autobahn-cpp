@@ -20,6 +20,7 @@
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -60,11 +61,21 @@ int main(int argc, char** argv)
                         if (started.get()) {
                             join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
                                 std::cerr << "joined realm: " << s.get() << std::endl;
+
+                                autobahn::wamp_call_options call_options;
+                                call_options.set_timeout(std::chrono::seconds(10));
+
                                 std::tuple<uint64_t, uint64_t> arguments(23, 777);
-                                call_future = session->call("com.examples.calculator.add", arguments).then(
+                                call_future = session->call("com.examples.calculator.add", arguments, call_options).then(
                                 [&](boost::future<autobahn::wamp_call_result> result) {
-                                    uint64_t sum = result.get().argument<uint64_t>(0);
-                                    std::cerr << "call result: " << sum << std::endl;
+                                    try {
+                                        uint64_t sum = result.get().argument<uint64_t>(0);
+                                        std::cerr << "call result: " << sum << std::endl;
+                                    } catch (const std::exception& e) {
+                                        std::cerr << "call failed: " << e.what() << std::endl;
+                                        io.stop();
+                                    }
+
                                     leave_future = session->leave().then([&](boost::future<std::string> reason) {
                                         std::cerr << "left session (" << reason.get() << ")" << std::endl;
                                         stop_future = session->stop().then([&](boost::future<void> stopped) {
@@ -94,5 +105,6 @@ int main(int argc, char** argv)
         std::cerr << e.what() << std::endl;
         return 1;
     }
+
     return 0;
 }

@@ -19,6 +19,7 @@
 #ifndef AUTOBAHN_SESSION_HPP
 #define AUTOBAHN_SESSION_HPP
 
+#include "wamp_call_options.hpp"
 #include "wamp_call_result.hpp"
 #include "wamp_event_handler.hpp"
 #include "wamp_message.hpp"
@@ -154,20 +155,25 @@ public:
      * Calls a remote procedure with no arguments.
      *
      * \param procedure The URI of the remote procedure to call.
+     * \param options The options to pass in the call to the router.
      * \return A future that resolves to the result of the remote procedure call.
      */
-    boost::future<wamp_call_result> call(const std::string& procedure);
+    boost::future<wamp_call_result> call(
+            const std::string& procedure,
+            const wamp_call_options& options = wamp_call_options());
 
     /*!
      * Calls a remote procedure with positional arguments.
      *
      * \param procedure The URI of the remote procedure to call.
      * \param arguments The positional arguments for the call.
+     * \param options The options to pass in the call to the router.
      * \return A future that resolves to the result of the remote procedure call.
      */
     template <typename List>
     boost::future<wamp_call_result> call(
-            const std::string& procedure, const List& arguments);
+            const std::string& procedure, const List& arguments,
+            const wamp_call_options& options = wamp_call_options());
 
     /*!
      * Calls a remote procedure with positional and keyword arguments.
@@ -175,11 +181,13 @@ public:
      * \param procedure The URI of the remote procedure to call.
      * \param arguments The positional arguments for the call.
      * \param kw_arguments The keyword arguments for the call.
+     * \param options The options to pass in the call to the router.
      * \return A future that resolves to the result of the remote procedure call.
      */
     template<typename List, typename Map>
     boost::future<wamp_call_result> call(
-            const std::string& procedure, const List& arguments, const Map& kw_arguments);
+            const std::string& procedure, const List& arguments, const Map& kw_arguments,
+            const wamp_call_options& options = wamp_call_options());
 
     /*!
      * Register an procedure as a procedure that can be called remotely.
