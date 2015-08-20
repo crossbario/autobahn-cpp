@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 project(autobahn-cpp)
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Werror -Wno-unused-local-typedef ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Werror -Wno-unused-local-typedefs -Wno-unknown-warning-option ${CMAKE_CXX_FLAGS}")
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
