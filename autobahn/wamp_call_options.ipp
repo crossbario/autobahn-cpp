@@ -27,12 +27,12 @@ inline wamp_call_options::wamp_call_options()
 {
 }
 
-const std::chrono::milliseconds& wamp_call_options::timeout() const
+inline const std::chrono::milliseconds& wamp_call_options::timeout() const
 {
     return m_timeout;
 }
 
-void wamp_call_options::set_timeout(const std::chrono::milliseconds& timeout)
+inline void wamp_call_options::set_timeout(const std::chrono::milliseconds& timeout)
 {
     m_timeout = timeout;
 }
