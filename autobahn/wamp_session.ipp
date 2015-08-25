@@ -228,9 +228,13 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
     packer.pack_map(4);
     packer.pack(std::string("caller"));
     packer.pack_map(1);
+    packer.pack("features");
+    packer.pack_map(1);
     packer.pack("call_timeout");
     packer.pack(true);
     packer.pack(std::string("callee"));
+    packer.pack_map(1);
+    packer.pack("features");
     packer.pack_map(1);
     packer.pack("call_timeout");
     packer.pack(true);
