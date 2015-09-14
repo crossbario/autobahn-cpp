@@ -215,11 +215,11 @@ Then, to install **Autobahn|Python**
 pip install autobahn[twisted]
 ```
 
-Start the example router in a first terminal
+Start the [Crossbar hello:cpp example](https://github.com/crossbario/crossbarexamples/tree/master/hello/cpp) router in a first terminal
 
 ```console
-cd ${HOME}/autobahn/examples
-python server.py
+cd $CROSSBAR_EXAMPLES/hello/cpp
+crossbar start
 ```
 
 Then start one of the built C++ examples in a second terminal
