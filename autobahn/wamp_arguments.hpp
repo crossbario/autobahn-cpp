@@ -16,18 +16,23 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_ARGUMENTS_HPP
+#define AUTOBAHN_WAMP_ARGUMENTS_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+#include <array>
+#include <msgpack.hpp>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+namespace autobahn {
 
-#endif // AUTOBAHN_HPP
+using wamp_arguments = std::vector<msgpack::object>;
+using wamp_kw_arguments = std::unordered_map<std::string, msgpack::object>;
+
+static const msgpack::object EMPTY_ARGUMENTS(std::array<msgpack::object, 0>(), nullptr);
+static const msgpack::object EMPTY_KW_ARGUMENTS(wamp_kw_arguments(), nullptr);
+
+} // namespace autobahn
+
+#endif // AUTOBAHN_WAMP_ARGUMENTS_HPP

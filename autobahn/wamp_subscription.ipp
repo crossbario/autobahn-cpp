@@ -16,18 +16,21 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+namespace autobahn {
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+inline wamp_subscription::wamp_subscription()
+    : m_id(0)
+{
+}
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+inline wamp_subscription::wamp_subscription(uint64_t id)
+    : m_id(id)
+{
+}
 
-#endif // AUTOBAHN_HPP
+inline uint64_t wamp_subscription::id() const
+{
+    return m_id;
+}
+
+} // namespace autobahn

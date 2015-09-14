@@ -16,18 +16,33 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+namespace autobahn {
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+inline wamp_subscribe_request::wamp_subscribe_request()
+    : m_handler()
+    , m_response()
+{
+}
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+inline wamp_subscribe_request::wamp_subscribe_request(const wamp_event_handler& handler)
+    : m_handler(handler)
+    , m_response()
+{
+}
 
-#endif // AUTOBAHN_HPP
+inline const wamp_event_handler& wamp_subscribe_request::handler() const
+{
+    return m_handler;
+}
+
+inline boost::promise<wamp_subscription>& wamp_subscribe_request::response()
+{
+    return m_response;
+}
+
+inline void wamp_subscribe_request::set_response(const wamp_subscription& subscription)
+{
+    m_response.set_value(subscription);
+}
+
+} // namespace autobahn
