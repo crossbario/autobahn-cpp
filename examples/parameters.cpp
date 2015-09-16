@@ -59,14 +59,14 @@ std::unique_ptr<parameters> get_parameters(int argc, char** argv)
     po::options_description description("options");
     description.add_options()
             ("help", "Display this help message")
-            ("debug,d", po::bool_switch()->default_value(false),
-                    "Enable debug logging.")
             ("realm,r", po::value<std::string>()->default_value(DEFAULT_WAMP_REALM),
                     "The realm to join on the wamp router.")
             ("rawsocket-ip,h", po::value<std::string>()->default_value(LOCALHOST_IP_ADDRESS_STRING),
                     "The ip address of the host running the wamp router.")
             ("rawsocket-port,p", po::value<uint16_t>()->default_value(DEFAULT_WAMP_RAWSOCKET_PORT),
-                    "The port that the wamp router is listening for connections on.");
+                    "The port that the wamp router is listening for connections on.")
+            ("debug,d", po::bool_switch()->default_value(false),
+                    "Enable debug logging.");
 
     po::variables_map variables;
     try {
