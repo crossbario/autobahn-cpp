@@ -16,8 +16,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_SESSION_HPP
-#define AUTOBAHN_SESSION_HPP
+#ifndef AUTOBAHN_WAMP_SESSION_HPP
+#define AUTOBAHN_WAMP_SESSION_HPP
 
 #include "wamp_call_options.hpp"
 #include "wamp_call_result.hpp"
@@ -58,27 +58,31 @@ class wamp_register_request;
 class wamp_registration;
 class wamp_subscribe_request;
 class wamp_subscription;
+class wamp_transport;
 class wamp_unsubscribe_request;
 
 /// Representation of a WAMP session.
-template<typename IStream, typename OStream>
-class wamp_session : public std::enable_shared_from_this<wamp_session<IStream, OStream>>
+class wamp_session : public std::enable_shared_from_this<wamp_session>
 {
 public:
 
     /*!
      * Create a new WAMP session.
      *
-     * \param in The input stream to run this session on.
-     * \param out THe output stream to run this session on.
+     * \param io_service The io service to drive event dispatching.
+     * \param in The inbound message based transport for this session.
+     * \param out Tte output message based transport for this session.
      */
-    wamp_session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug = false);
+    wamp_session(
+            boost::asio::io_service& io_service,
+            const std::shared_ptr<wamp_transport>& in,
+            const std::shared_ptr<wamp_transport>& out,
+            bool debug_enabled=false);
 
     ~wamp_session();
 
     /*!
-     * Start listening on the IStream provided to the constructor
-     * of this session.
+     * Establish an initial connection to the router.
      *
      * \return A future that resolves to true if the session was successfully
      *         started and false otherwise.
@@ -86,8 +90,10 @@ public:
     boost::future<bool> start();
 
     /*!
-     * Closes the IStream and the OStream provided to the constructor
-     * of this session.
+     * Closes the connection to the router.
+     *
+     * \return A future that resolves to true if the session was successfully
+     *         stopped and false otherwise.
      */
     boost::future<void> stop();
 
@@ -241,24 +247,30 @@ private:
     /// Receive one message from istream in m_unpacker.
     void receive_message();
 
-    void got_handshake_reply(const boost::system::error_code& error);
+    void got_handshake_reply(
+            const boost::system::error_code& error,
+            std::size_t /* bytes_transferred */);
 
-    void got_message_header(const boost::system::error_code& error);
+    void got_message_header(
+            const boost::system::error_code& error,
+            std::size_t /* bytes_transferred */);
 
-    void got_message_body(const boost::system::error_code& error);
+    void got_message_body(
+            const boost::system::error_code& error,
+            std::size_t /* bytes_transferred */);
 
     void got_message(const msgpack::object& object, msgpack::unique_ptr<msgpack::zone>&& zone);
 
 
-    bool m_debug;
+    bool m_debug_enabled;
 
-    boost::asio::io_service& m_io;
+    boost::asio::io_service& m_io_service;
 
     /// Input stream this session runs on.
-    IStream& m_in;
+    std::shared_ptr<wamp_transport> m_in;
 
     /// Output stream this session runs on.
-    OStream& m_out;
+    std::shared_ptr<wamp_transport> m_out;
 
     char m_message_length_buffer[4];
     uint32_t m_message_length;
@@ -328,4 +340,4 @@ private:
 
 #include "wamp_session.ipp"
 
-#endif // AUTOBAHN_SESSION_HPP
+#endif // AUTOBAHN_WAMP_SESSION_HPP

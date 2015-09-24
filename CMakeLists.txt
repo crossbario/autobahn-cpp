@@ -46,6 +46,8 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_message_type.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_network_component.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_network_component.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_network_transport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_network_transport.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_procedure.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_publication.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_publication.ipp
@@ -60,8 +62,12 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscription.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscription.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_tcp_component.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_tcp_component.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_tcp_transport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_tcp_transport.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_transport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_transport.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_uds_component.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_uds_transport.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_unsubscribe_request.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_unsubscribe_request.ipp)
 

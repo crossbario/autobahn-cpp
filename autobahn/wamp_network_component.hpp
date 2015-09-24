@@ -15,14 +15,13 @@
 
 namespace autobahn {
 
-template <class Socket, class Endpoint>
-class wamp_network_component :
-        public wamp_component<Socket, Socket>
+template <typename Transport>
+class wamp_network_component : public wamp_component
 {
 public:
     wamp_network_component(
             boost::asio::io_service& io_service,
-            const Endpoint& remote_endpoint,
+            const typename Transport::endpoint_type& remote_endpoint,
             const std::string& realm,
             bool debug=false);
 
@@ -31,15 +30,8 @@ public:
     virtual boost::future<void> start() override;
     virtual boost::future<void> stop() override;
 
-    Endpoint local_endpoint() const;
-    Endpoint remote_endpoint() const;
-
-protected:
-    Socket& socket();
-
 private:
-    Socket m_socket;
-    Endpoint m_remote_endpoint;
+    std::shared_ptr<Transport> m_transport;
 };
 
 } // namespace autobahn

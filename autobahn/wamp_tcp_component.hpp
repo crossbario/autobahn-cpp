@@ -7,6 +7,7 @@
 #define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 
 #include "wamp_network_component.hpp"
+#include "wamp_tcp_transport.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -19,25 +20,8 @@ namespace autobahn {
 /*!
  * A component that provides a TCP based WAMP session.
  */
-class wamp_tcp_component :
-        public wamp_network_component<
-                boost::asio::ip::tcp::socket,
-                boost::asio::ip::tcp::endpoint>
-{
-public:
-    wamp_tcp_component(
-            boost::asio::io_service& io_service,
-            const boost::asio::ip::tcp::endpoint& remote_endpoint,
-            const std::string& realm,
-            bool debug = false);
-
-    virtual ~wamp_tcp_component() override;
-
-    virtual boost::future<void> start() override;
-};
+using wamp_tcp_component = wamp_network_component<wamp_tcp_transport>;
 
 } // namespace autobahn
-
-#include "wamp_tcp_component.ipp"
 
 #endif // AUTOBAHN_WAMP_TCP_COMPONENT_HPP

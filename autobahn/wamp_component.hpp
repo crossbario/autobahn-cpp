@@ -16,7 +16,6 @@
 
 namespace autobahn {
 
-template <class Input, class Output>
 class wamp_component : public boost::noncopyable
 {
 public:
@@ -58,7 +57,7 @@ public:
     /*!
      * @return The underlying session.
      */
-    const std::shared_ptr<autobahn::wamp_session<Input, Output>>& session();
+    const std::shared_ptr<autobahn::wamp_session>& session();
 
 protected:
     /*!
@@ -66,14 +65,16 @@ protected:
      * have been determined. This must be prior to trying to start the
      * component as this actually creates the underlying session object.
      */
-    void initialize(Input& input, Output& output);
+    void initialize(
+            const std::shared_ptr<wamp_transport>& input,
+            const std::shared_ptr<wamp_transport>& output);
 
 private:
     boost::asio::io_service& m_io_service;
     const std::string m_realm;
     const bool m_debug_enabled;
 
-    std::shared_ptr<autobahn::wamp_session<Input, Output>> m_session;
+    std::shared_ptr<autobahn::wamp_session> m_session;
 };
 
 } // namespace autobahn
