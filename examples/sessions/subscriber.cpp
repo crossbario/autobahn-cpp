@@ -15,36 +15,30 @@
 //  limitations under the License.
 //
 ///////////////////////////////////////////////////////////////////////////////
-#include "parameters.hpp"
+
+#include "../parameters.hpp"
 
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
-#include <boost/version.hpp>
 #include <iostream>
 #include <memory>
-#include <string>
 #include <tuple>
 
-void add(autobahn::wamp_invocation invocation)
+void topic1(const autobahn::wamp_event& event)
 {
-    auto a = invocation->argument<uint64_t>(0);
-    auto b = invocation->argument<uint64_t>(1);
-
-    invocation->result(std::make_tuple(a + b));
+    std::cerr << "received event: " << event.argument<uint64_t>(0) << std::endl;
 }
 
 int main(int argc, char** argv)
 {
-    std::cerr << "Boost: " << BOOST_VERSION << std::endl;
-
     try {
         auto parameters = get_parameters(argc, argv);
+
+        std::cerr << "realm: " << parameters->realm() << std::endl;
 
         boost::asio::io_service io;
         boost::asio::ip::tcp::socket socket(io);
 
-        // create a WAMP session that talks over TCP
-        //
         bool debug = parameters->debug();
         auto session = std::make_shared<
                 autobahn::wamp_session<boost::asio::ip::tcp::socket,
@@ -60,7 +54,6 @@ int main(int argc, char** argv)
 
         socket.async_connect(parameters->rawsocket_endpoint(),
             [&](boost::system::error_code ec) {
-
                 if (!ec) {
                     std::cerr << "connected to server" << std::endl;
 
@@ -69,7 +62,7 @@ int main(int argc, char** argv)
                             std::cerr << "session started" << std::endl;
                             join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
                                 std::cerr << "joined realm: " << s.get() << std::endl;
-                                session->provide("com.examples.calculator.add", &add);
+                                session->subscribe("com.examples.subscriptions.topic1", &topic1);
                             });
                         } else {
                             std::cerr << "failed to start session" << std::endl;
@@ -78,6 +71,7 @@ int main(int argc, char** argv)
                     });
                 } else {
                     std::cerr << "connect failed: " << ec.message() << std::endl;
+                    io.stop();
                 }
             }
         );
@@ -86,8 +80,8 @@ int main(int argc, char** argv)
         io.run();
         std::cerr << "stopped io service" << std::endl;
     }
-    catch (const std::exception& e) {
-        std::cerr << "exception: " << e.what() << std::endl;
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         return 1;
     }
     return 0;

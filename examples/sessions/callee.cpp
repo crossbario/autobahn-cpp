@@ -15,27 +15,37 @@
 //  limitations under the License.
 //
 ///////////////////////////////////////////////////////////////////////////////
-#include "parameters.hpp"
+
+#include "../parameters.hpp"
 
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
-#include <chrono>
-#include <functional>
+#include <boost/version.hpp>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <tuple>
 
+void add(autobahn::wamp_invocation invocation)
+{
+    auto a = invocation->argument<uint64_t>(0);
+    auto b = invocation->argument<uint64_t>(1);
+
+    invocation->result(std::make_tuple(a + b));
+}
+
 int main(int argc, char** argv)
 {
+    std::cerr << "Boost: " << BOOST_VERSION << std::endl;
+
     try {
         auto parameters = get_parameters(argc, argv);
 
         boost::asio::io_service io;
         boost::asio::ip::tcp::socket socket(io);
-        boost::asio::ip::tcp::endpoint endpoint(
-                boost::asio::ip::address::from_string("127.0.0.1"), 8090);
 
+        // create a WAMP session that talks over TCP
+        //
         bool debug = parameters->debug();
         auto session = std::make_shared<
                 autobahn::wamp_session<boost::asio::ip::tcp::socket,
@@ -48,41 +58,27 @@ int main(int argc, char** argv)
         // responses from the router.
         boost::future<void> start_future;
         boost::future<void> join_future;
-        boost::future<void> leave_future;
-        boost::future<void> stop_future;
 
         socket.async_connect(parameters->rawsocket_endpoint(),
             [&](boost::system::error_code ec) {
+
                 if (!ec) {
                     std::cerr << "connected to server" << std::endl;
 
                     start_future = session->start().then([&](boost::future<bool> started) {
                         if (started.get()) {
                             std::cerr << "session started" << std::endl;
-                            join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> joined) {
-                                std::cerr << "joined realm: " << joined.get() << std::endl;
-
-                                std::tuple<std::string> arguments(std::string("hello"));
-                                session->publish("com.examples.subscriptions.topic1", arguments);
-                                std::cerr << "event published" << std::endl;
-
-                                leave_future = session->leave().then([&](boost::future<std::string> reason) {
-                                    std::cerr << "left session (" << reason.get() << ")" << std::endl;
-                                    stop_future = session->stop().then([&](boost::future<void> stopped) {
-                                        std::cerr << "stopped session" << std::endl;
-                                        io.stop();
-                                    });
-                                });
+                            join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
+                                std::cerr << "joined realm: " << s.get() << std::endl;
+                                session->provide("com.examples.calculator.add", &add);
                             });
                         } else {
                             std::cerr << "failed to start session" << std::endl;
                             io.stop();
                         }
                     });
-
                 } else {
                     std::cerr << "connect failed: " << ec.message() << std::endl;
-                    io.stop();
                 }
             }
         );
@@ -92,7 +88,7 @@ int main(int argc, char** argv)
         std::cerr << "stopped io service" << std::endl;
     }
     catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "exception: " << e.what() << std::endl;
         return 1;
     }
     return 0;

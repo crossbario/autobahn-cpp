@@ -19,9 +19,13 @@
 #ifndef AUTOBAHN_HPP
 #define AUTOBAHN_HPP
 
+#include "wamp_component.hpp"
 #include "wamp_event.hpp"
 #include "wamp_invocation.hpp"
 #include "wamp_session.hpp"
+#include "wamp_network_component.hpp"
+#include "wamp_tcp_component.hpp"
+#include "wamp_uds_component.hpp"
 
 /*! \mainpage Reference Documentation
  *
