@@ -27,6 +27,7 @@
 #include "wamp_register_request.hpp"
 #include "wamp_subscribe_request.hpp"
 #include "wamp_subscription.hpp"
+#include "wamp_transport.hpp"
 #include "wamp_unsubscribe_request.hpp"
 
 #if !(defined(_WIN32) || defined(WIN32))
@@ -43,10 +44,13 @@
 
 namespace autobahn {
 
-template<typename IStream, typename OStream>
-wamp_session<IStream, OStream>::wamp_session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug)
-    : m_debug(debug)
-    , m_io(io)
+inline wamp_session::wamp_session(
+        boost::asio::io_service& io_service,
+        const std::shared_ptr<wamp_transport>& in,
+        const std::shared_ptr<wamp_transport>& out,
+        bool debug_enabled)
+    : m_debug_enabled(debug_enabled)
+    , m_io_service(io_service)
     , m_in(in)
     , m_out(out)
     , m_request_id(ATOMIC_VAR_INIT(0))
@@ -56,13 +60,11 @@ wamp_session<IStream, OStream>::wamp_session(boost::asio::io_service& io, IStrea
 {
 }
 
-template<typename IStream, typename OStream>
-wamp_session<IStream, OStream>::~wamp_session()
+inline wamp_session::~wamp_session()
 {
 }
 
-template<typename IStream, typename OStream>
-boost::future<bool> wamp_session<IStream, OStream>::start()
+inline boost::future<bool> wamp_session::start()
 {
     // Send the initial handshake packet informing the server which
     // serialization format we wish to use, and our maximum message size.
@@ -71,36 +73,35 @@ boost::future<bool> wamp_session<IStream, OStream>::start()
     m_handshake_buffer[2] = 0x00; // reserved
     m_handshake_buffer[3] = 0x00; // reserved
 
-    boost::asio::write(
-            m_out,
-            boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)));
+    m_out->write(m_handshake_buffer, sizeof(m_handshake_buffer));
 
-    std::weak_ptr<wamp_session<IStream, OStream>> weak_self = this->shared_from_this();
-    auto handshake_reply = [=](const boost::system::error_code& error) {
+    std::weak_ptr<wamp_session> weak_self = this->shared_from_this();
+    auto handshake_reply = [=](
+            const boost::system::error_code& error,
+            std::size_t bytes_transferred) {
         auto shared_self = weak_self.lock();
         if (shared_self) {
-            shared_self->got_handshake_reply(error);
+            shared_self->got_handshake_reply(error, bytes_transferred);
         }
     };
 
     // Read the 4-byte reply from the server
-    boost::asio::async_read(
-        m_in,
-        boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)),
-        boost::bind<void>(handshake_reply, boost::asio::placeholders::error));
+    m_in->async_read(
+            m_handshake_buffer, sizeof(m_handshake_buffer), handshake_reply);
 
     return m_handshake.get_future();
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::error_code& error)
+inline void wamp_session::got_handshake_reply(
+        const boost::system::error_code& error,
+        std::size_t /* bytes_transferred */)
 {
     // If there is an error trying to receive the handshake reply then set
     // the handshake promise to false to indicate that the session could
     // not be started. This can happen if the wrong magic byte is sent as
     // the first octet in the handshake.
     if (error) {
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "rawsocket handshake error: " << error << std::endl;
         }
 
@@ -108,7 +109,7 @@ void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::er
         return;
     }
 
-    if (m_debug) {
+    if (m_debug_enabled) {
         std::cerr << "RawSocket handshake reply received" << std::endl;
     }
 
@@ -120,7 +121,7 @@ void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::er
 
     // Indicates that the handshake reply is an error.
     if ((m_handshake_buffer[1] & 0x0F) == 0x00) {
-        if (m_debug) {
+        if (m_debug_enabled) {
             uint32_t error = m_handshake_buffer[1] & 0xF0;
             std::cerr << "rawsocket handshake error: " << std::hex << error << std::endl;
             if (error == 0x00) {
@@ -145,20 +146,20 @@ void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::er
 
     uint32_t serializer_type = (m_handshake_buffer[1] & 0x0F);
     if (serializer_type == 0x01) {
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "rawsocket handshake error: json currently not supported" << std::endl;
         }
         m_handshake.set_value(false);
         return;
     } else if (serializer_type == 0x02) {
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "rawsocket handshake: using msgpack serializer" << std::endl;
         }
         m_handshake.set_value(true);
         // We intentionally fall through here since we are
         // now ready to start receiving messages.
     } else {
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "rawsocket handshake error: invalid serializer type ("
                     << serializer_type << ")" << std::endl;
         }
@@ -166,19 +167,18 @@ void wamp_session<IStream, OStream>::got_handshake_reply(const boost::system::er
         return;
     }
 
-    if (m_debug) {
+    if (m_debug_enabled) {
         std::cerr << "rawsocket handshake: start wamp async" << std::endl;
     }
 
     receive_message();
 }
 
-template<typename IStream, typename OStream>
-boost::future<void> wamp_session<IStream, OStream>::stop()
+inline boost::future<void> wamp_session::stop()
 {
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -195,12 +195,12 @@ boost::future<void> wamp_session<IStream, OStream>::stop()
         m_stopped = true;
 
         try {
-            m_in.close();
+            m_in.reset();
         } catch (...) {
         }
 
         try {
-            m_out.close();
+            m_out.reset();
         } catch (...) {
         }
 
@@ -210,8 +210,7 @@ boost::future<void> wamp_session<IStream, OStream>::stop()
     return m_session_stop.get_future();
 }
 
-template<typename IStream, typename OStream>
-boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& realm)
+inline boost::future<uint64_t> wamp_session::join(const std::string& realm)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -245,7 +244,7 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -261,8 +260,7 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
     return m_session_join.get_future();
 }
 
-template<typename IStream, typename OStream>
-boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::string& reason)
+inline boost::future<std::string> wamp_session::leave(const std::string& reason)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -275,7 +273,7 @@ boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::stri
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -298,8 +296,7 @@ boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::stri
     return m_session_leave.get_future();
 }
 
-template<typename IStream, typename OStream>
-boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
+inline boost::future<wamp_subscription> wamp_session::subscribe(
         const std::string& topic, const wamp_event_handler& handler)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
@@ -316,7 +313,7 @@ boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto subscribe_request = std::make_shared<wamp_subscribe_request>(handler);
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -334,8 +331,7 @@ boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
     return subscribe_request->response().get_future();
 }
 
-template<typename IStream, typename OStream>
-boost::future<void> wamp_session<IStream, OStream>::unsubscribe(const wamp_subscription& subscription)
+inline boost::future<void> wamp_session::unsubscribe(const wamp_subscription& subscription)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -350,7 +346,7 @@ boost::future<void> wamp_session<IStream, OStream>::unsubscribe(const wamp_subsc
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto unsubscribe_request = std::make_shared<wamp_unsubscribe_request>();
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -368,8 +364,7 @@ boost::future<void> wamp_session<IStream, OStream>::unsubscribe(const wamp_subsc
     return unsubscribe_request->response().get_future();
 }
 
-template<typename IStream, typename OStream>
-boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
+inline boost::future<wamp_registration> wamp_session::provide(
         const std::string& name, const wamp_procedure& procedure, const provide_options& options)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
@@ -386,7 +381,7 @@ boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto register_request = std::make_shared<wamp_register_request>(procedure);
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -404,8 +399,7 @@ boost::future<wamp_registration> wamp_session<IStream, OStream>::provide(
     return register_request->response().get_future();
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::publish(const std::string& topic)
+inline void wamp_session::publish(const std::string& topic)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -420,7 +414,7 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic)
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -434,9 +428,8 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic)
     });
 }
 
-template<typename IStream, typename OStream>
 template <typename List>
-void wamp_session<IStream, OStream>::publish(const std::string& topic, const List& arguments)
+inline void wamp_session::publish(const std::string& topic, const List& arguments)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -452,7 +445,7 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic, const Lis
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -466,9 +459,8 @@ void wamp_session<IStream, OStream>::publish(const std::string& topic, const Lis
     });
 }
 
-template<typename IStream, typename OStream>
 template <typename List, typename Map>
-void wamp_session<IStream, OStream>::publish(
+inline void wamp_session::publish(
         const std::string& topic, const List& arguments, const Map& kw_arguments)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
@@ -486,7 +478,7 @@ void wamp_session<IStream, OStream>::publish(
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -500,8 +492,7 @@ void wamp_session<IStream, OStream>::publish(
     });
 }
 
-template<typename IStream, typename OStream>
-boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
+inline boost::future<wamp_call_result> wamp_session::call(
         const std::string& procedure,
         const wamp_call_options& options)
 {
@@ -519,7 +510,7 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto call = std::make_shared<wamp_call>();
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -537,9 +528,8 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     return call->result().get_future();
 }
 
-template<typename IStream, typename OStream>
 template<typename List>
-boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
+inline boost::future<wamp_call_result> wamp_session::call(
         const std::string& procedure,
         const List& arguments,
         const wamp_call_options& options)
@@ -559,7 +549,7 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto call = std::make_shared<wamp_call>();
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -577,9 +567,8 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     return call->result().get_future();
 }
 
-template<typename IStream, typename OStream>
 template<typename List, typename Map>
-boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
+inline boost::future<wamp_call_result> wamp_session::call(
         const std::string& procedure,
         const List& arguments,
         const Map& kw_arguments,
@@ -601,7 +590,7 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto call = std::make_shared<wamp_call>();
 
-    m_io.dispatch([=]() {
+    m_io_service.dispatch([=]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -619,15 +608,13 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     return call->result().get_future();
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_welcome(const wamp_message& message)
+inline void wamp_session::process_welcome(const wamp_message& message)
 {
     m_session_id = message[1].as<uint64_t>();
     m_session_join.set_value(m_session_id);
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_goodbye(const wamp_message& message)
+inline void wamp_session::process_goodbye(const wamp_message& message)
 {
     m_session_id = 0;
 
@@ -652,8 +639,7 @@ void wamp_session<IStream, OStream>::process_goodbye(const wamp_message& message
     m_session_leave.set_value(reason);
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
+inline void wamp_session::process_error(const wamp_message& message)
 {
     // [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri]
     // [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri, Arguments|list]
@@ -719,7 +705,7 @@ void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
                 error += itr->second;
             }
         } catch (const std::exception& e) {
-            if (m_debug) {
+            if (m_debug_enabled) {
                 std::cerr << "failed to parse error message keyword arguments" << std::endl;
             }
 
@@ -756,8 +742,7 @@ void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
 }
 
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_invocation(
+inline void wamp_session::process_invocation(
         const wamp_message& message,
         msgpack::unique_ptr<msgpack::zone>&& zone)
 {
@@ -816,7 +801,7 @@ void wamp_session<IStream, OStream>::process_invocation(
             }
 
             // Send to the io_service thread, and make sure the session still exists (again).
-            shared_this->m_io.dispatch([weak_this, buffer] {
+            shared_this->m_io_service.dispatch([weak_this, buffer] {
                 auto shared_this = weak_this.lock();
                 if (!shared_this) {
                     return; // FIXME: or throw exception?
@@ -828,7 +813,7 @@ void wamp_session<IStream, OStream>::process_invocation(
         invocation->set_send_result_fn(std::move(send_result_fn));
 
         try {
-            if (m_debug) {
+            if (m_debug_enabled) {
                 std::cerr << "Invoking procedure registered under " << registration_id << std::endl;
             }
             procedure_itr->second(invocation);
@@ -856,8 +841,7 @@ void wamp_session<IStream, OStream>::process_invocation(
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_call_result(
+inline void wamp_session::process_call_result(
         const wamp_message& message, msgpack::unique_ptr<msgpack::zone>&& zone)
 {
     // [RESULT, CALL.Request|id, Details|dict]
@@ -899,8 +883,7 @@ void wamp_session<IStream, OStream>::process_call_result(
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_subscribed(const wamp_message& message)
+inline void wamp_session::process_subscribed(const wamp_message& message)
 {
     // [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
     if (message.size() != 3) {
@@ -927,8 +910,7 @@ void wamp_session<IStream, OStream>::process_subscribed(const wamp_message& mess
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_unsubscribed(const wamp_message& message)
+inline void wamp_session::process_unsubscribed(const wamp_message& message)
 {
     // [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
     if (message.size() != 2) {
@@ -949,8 +931,7 @@ void wamp_session<IStream, OStream>::process_unsubscribed(const wamp_message& me
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
+inline void wamp_session::process_event(const wamp_message& message)
 {
     // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict]
     // [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list]
@@ -1005,7 +986,7 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
                  ++subscription_handlers_itr;
             }
         } catch (...) {
-            if (m_debug) {
+            if (m_debug_enabled) {
                 std::cerr << "Warning: event handler threw exception" << std::endl;
             }
         }
@@ -1014,14 +995,13 @@ void wamp_session<IStream, OStream>::process_event(const wamp_message& message)
         // silently swallow EVENT for non-existent subscription IDs.
         // We may have just unsubscribed, the this EVENT might be have
         // already been in-flight.
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "EVENT - non-existent subscription ID " << subscription_id << std::endl;
         }
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::process_registered(const wamp_message& message)
+inline void wamp_session::process_registered(const wamp_message& message)
 {
     // [REGISTERED, REGISTER.Request|id, Registration|id]
 
@@ -1048,35 +1028,41 @@ void wamp_session<IStream, OStream>::process_registered(const wamp_message& mess
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::receive_message()
+inline void wamp_session::receive_message()
 {
-    if (m_debug) {
+    if (m_debug_enabled) {
         std::cerr << "RX preparing to receive message .." << std::endl;
     }
 
     // read 4 octets msg length prefix ..
-    boost::asio::async_read(m_in,
-        boost::asio::buffer(m_message_length_buffer, sizeof(m_message_length_buffer)),
-        bind(&wamp_session<IStream, OStream>::got_message_header, this->shared_from_this(), boost::asio::placeholders::error));
+    m_in->async_read(
+        m_message_length_buffer, sizeof(m_message_length_buffer),
+        bind(&wamp_session::got_message_header,
+            this->shared_from_this(),
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred));
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::got_message_header(const boost::system::error_code& error)
+inline void wamp_session::got_message_header(
+        const boost::system::error_code& error,
+        std::size_t /* bytes transferred */)
 {
     if (!error) {
         m_message_length = ntohl(*((uint32_t*) &m_message_length_buffer));
 
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "RX message (" << m_message_length << " octets) ..." << std::endl;
         }
 
         // read actual message
         m_unpacker.reserve_buffer(m_message_length);
 
-        boost::asio::async_read(m_in,
-            boost::asio::buffer(m_unpacker.buffer(), m_message_length),
-            bind(&wamp_session<IStream, OStream>::got_message_body, this->shared_from_this(), boost::asio::placeholders::error));
+        m_in->async_read(
+            m_unpacker.buffer(), m_message_length,
+            bind(&wamp_session::got_message_body,
+                this->shared_from_this(),
+                boost::asio::placeholders::error,
+                boost::asio::placeholders::bytes_transferred));
     } else {
         // TODO: Well this is no good. The session will basically just become unresponsive
         // at this point as we will no longer be trying to asynchronously receive messages.
@@ -1084,11 +1070,12 @@ void wamp_session<IStream, OStream>::got_message_header(const boost::system::err
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::got_message_body(const boost::system::error_code& error)
+inline void wamp_session::got_message_body(
+        const boost::system::error_code& error,
+        std::size_t /* bytes_transferred */)
 {
     if (!error) {
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "RX message received." << std::endl;
         }
 
@@ -1098,7 +1085,7 @@ void wamp_session<IStream, OStream>::got_message_body(const boost::system::error
         while (m_unpacker.next(&result)) {
             msgpack::object obj(result.get());
 
-            if (m_debug) {
+            if (m_debug_enabled) {
                 std::cerr << "RX WAMP message: " << obj << std::endl;
             }
 
@@ -1116,8 +1103,7 @@ void wamp_session<IStream, OStream>::got_message_body(const boost::system::error
 }
 
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::got_message(
+inline void wamp_session::got_message(
         const msgpack::object& obj, msgpack::unique_ptr<msgpack::zone>&& zone)
 {
 
@@ -1205,11 +1191,10 @@ void wamp_session<IStream, OStream>::got_message(
     }
 }
 
-template<typename IStream, typename OStream>
-void wamp_session<IStream, OStream>::send(const std::shared_ptr<msgpack::sbuffer>& buffer)
+inline void wamp_session::send(const std::shared_ptr<msgpack::sbuffer>& buffer)
 {
     if (!m_stopped) {
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "TX message (" << buffer->size() << " octets) ..." << std::endl;
         }
 
@@ -1220,20 +1205,18 @@ void wamp_session<IStream, OStream>::send(const std::shared_ptr<msgpack::sbuffer
         // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference/const_buffer/const_buffer/overload2.html
         // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference/async_write/overload1.html
 
-        std::size_t written = 0;
-
         // write message length prefix
-        uint32_t len = htonl(buffer->size());
-        written += boost::asio::write(m_out, boost::asio::buffer((char*)&len, sizeof(len)));
+        uint32_t length = htonl(buffer->size());
+        std::size_t written = m_out->write((char*)&length, sizeof(length));
 
         // write actual serialized message
-        written += boost::asio::write(m_out, boost::asio::buffer(buffer->data(), buffer->size()));
+        written += m_out->write(buffer->data(), buffer->size());
 
-        if (m_debug) {
-            std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + buffer->size()) << " octets)" << std::endl;
+        if (m_debug_enabled) {
+            std::cerr << "TX message sent (" << written << " / " << (sizeof(length) + buffer->size()) << " octets)" << std::endl;
         }
     } else {
-        if (m_debug) {
+        if (m_debug_enabled) {
             std::cerr << "TX message skipped since session stopped (" << buffer->size() << " octets)." << std::endl;
         }
     }

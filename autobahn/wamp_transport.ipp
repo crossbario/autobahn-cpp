@@ -16,25 +16,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+namespace autobahn {
 
-#include "wamp_component.hpp"
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
-#include "wamp_network_component.hpp"
-#include "wamp_tcp_component.hpp"
-#include "wamp_tcp_transport.hpp"
-#include "wamp_transport.hpp"
-#include "wamp_uds_component.hpp"
-#include "wamp_uds_transport.hpp"
+inline wamp_transport::~wamp_transport()
+{
+}
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
-
-#endif // AUTOBAHN_HPP
+} // namespace autobahn

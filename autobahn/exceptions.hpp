@@ -29,6 +29,11 @@ class protocol_error : public std::runtime_error {
      protocol_error(const std::string& message) : std::runtime_error(message) {};
 };
 
+class network_error : public std::runtime_error {
+  public:
+     network_error(const std::string& message) : std::runtime_error(message) {};
+};
+
 class no_session_error : public std::runtime_error {
   public:
      no_session_error() : std::runtime_error("session not joined") {};
