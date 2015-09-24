@@ -16,6 +16,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "wamp_message.hpp"
 #include "wamp_message_type.hpp"
 
 #include <boost/lexical_cast.hpp>
@@ -157,16 +158,13 @@ inline void wamp_invocation_impl::empty_result()
 {
     throw_if_not_sendable();
 
-    auto buffer = std::make_shared<msgpack::sbuffer>();
-    msgpack::packer<msgpack::sbuffer> packer(*buffer);
-
     // [YIELD, INVOCATION.Request|id, Options|dict]
-    packer.pack_array(3);
-    packer.pack(static_cast<int>(message_type::YIELD));
-    packer.pack(m_request_id);
-    packer.pack_map(0);
+    auto message = std::make_shared<wamp_message>(3);
+    message->set_field(0, static_cast<int>(message_type::YIELD));
+    message->set_field(1, m_request_id);
+    message->set_field(2, std::map<int, int>() /* No details */);
 
-    m_send_result_fn(buffer);
+    m_send_result_fn(message);
     m_send_result_fn = send_result_fn();
 }
 
@@ -175,17 +173,14 @@ inline void wamp_invocation_impl::result(const List& arguments)
 {
     throw_if_not_sendable();
 
-    auto buffer = std::make_shared<msgpack::sbuffer>();
-    msgpack::packer<msgpack::sbuffer> packer(*buffer);
-
     // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
-    packer.pack_array(4);
-    packer.pack(static_cast<int>(message_type::YIELD));
-    packer.pack(m_request_id);
-    packer.pack_map(0);
-    packer.pack(arguments);
+    auto message = std::make_shared<wamp_message>(4);
+    message->set_field(0, static_cast<int>(message_type::YIELD));
+    message->set_field(1, m_request_id);
+    message->set_field(2, std::map<int, int>() /* No details */);
+    message->set_field(3, arguments);
 
-    m_send_result_fn(buffer);
+    m_send_result_fn(message);
     m_send_result_fn = send_result_fn();
 }
 
@@ -195,18 +190,15 @@ inline void wamp_invocation_impl::result(
 {
     throw_if_not_sendable();
 
-    auto buffer = std::make_shared<msgpack::sbuffer>();
-    msgpack::packer<msgpack::sbuffer> packer(*buffer);
-
     // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
-    packer.pack_array(5);
-    packer.pack(static_cast<int>(message_type::YIELD));
-    packer.pack(m_request_id);
-    packer.pack_map(0);
-    packer.pack(arguments);
-    packer.pack(kw_arguments);
+    auto message = std::make_shared<wamp_message>(5);
+    message->set_field(0, static_cast<int>(message_type::YIELD));
+    message->set_field(1, m_request_id);
+    message->set_field(2, std::map<int, int>() /* No details */);
+    message->set_field(3, arguments);
+    message->set_field(4, kw_arguments);
 
-    m_send_result_fn(buffer);
+    m_send_result_fn(message);
     m_send_result_fn = send_result_fn();
 }
 
@@ -214,18 +206,15 @@ inline void wamp_invocation_impl::error(const std::string& error_uri)
 {
     throw_if_not_sendable();
 
-    auto buffer = std::make_shared<msgpack::sbuffer>();
-    msgpack::packer<msgpack::sbuffer> packer(*buffer);
-
     // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
-    packer.pack_array(5);
-    packer.pack(static_cast<int>(message_type::ERROR));
-    packer.pack(static_cast<int>(message_type::INVOCATION));
-    packer.pack(m_request_id);
-    packer.pack_map(0);
-    packer.pack(error_uri);
+    auto message = std::make_shared<wamp_message>(5);
+    message->set_field(0, static_cast<int>(message_type::ERROR));
+    message->set_field(1, static_cast<int>(message_type::INVOCATION));
+    message->set_field(2, m_request_id);
+    message->set_field(3, std::map<int, int>() /* No details */);
+    message->set_field(4, error_uri);
 
-    m_send_result_fn(buffer);
+    m_send_result_fn(message);
     m_send_result_fn = send_result_fn();
 }
 
@@ -234,19 +223,16 @@ inline void wamp_invocation_impl::error(const std::string& error_uri, const List
 {
     throw_if_not_sendable();
 
-    auto buffer = std::make_shared<msgpack::sbuffer>();
-    msgpack::packer<msgpack::sbuffer> packer(*buffer);
-
     // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri, Arguments|list]
-    packer.pack_array(6);
-    packer.pack(static_cast<int>(message_type::ERROR));
-    packer.pack(static_cast<int>(message_type::INVOCATION));
-    packer.pack(m_request_id);
-    packer.pack_map(0);
-    packer.pack(error_uri);
-    packer.pack(arguments);
+    auto message = std::make_shared<wamp_message>(6);
+    message->set_field(0, static_cast<int>(message_type::ERROR));
+    message->set_field(1, static_cast<int>(message_type::INVOCATION));
+    message->set_field(2, m_request_id);
+    message->set_field(3, std::map<int, int>() /* No details */);
+    message->set_field(4, error_uri);
+    message->set_field(5, arguments);
 
-    m_send_result_fn(buffer);
+    m_send_result_fn(message);
     m_send_result_fn = send_result_fn();
 }
 
@@ -257,20 +243,17 @@ inline void wamp_invocation_impl::error(
 {
     throw_if_not_sendable();
 
-    auto buffer = std::make_shared<msgpack::sbuffer>();
-    msgpack::packer<msgpack::sbuffer> packer(*buffer);
-
     // [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri, Arguments|list, ArgumentsKw|dict]
-    packer.pack_array(7);
-    packer.pack(static_cast<int>(message_type::ERROR));
-    packer.pack(static_cast<int>(message_type::INVOCATION));
-    packer.pack(m_request_id);
-    packer.pack_map(0);
-    packer.pack(error_uri);
-    packer.pack(arguments);
-    packer.pack(kw_arguments);
+    auto message = std::make_shared<wamp_message>(7);
+    message->set_field(0, static_cast<int>(message_type::ERROR));
+    message->set_field(1, static_cast<int>(message_type::INVOCATION));
+    message->set_field(2, m_request_id);
+    message->set_field(3, std::map<int, int>() /* No details */);
+    message->set_field(4, error_uri);
+    message->set_field(5, arguments);
+    message->set_field(6, kw_arguments);
 
-    m_send_result_fn(buffer);
+    m_send_result_fn(message);
     m_send_result_fn = send_result_fn();
 }
 

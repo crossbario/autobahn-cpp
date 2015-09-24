@@ -32,14 +32,12 @@ int main(int argc, char** argv)
         auto parameters = get_parameters(argc, argv);
 
         boost::asio::io_service io;
-        boost::asio::ip::tcp::socket socket(io);
-        boost::asio::ip::tcp::endpoint endpoint(
-                boost::asio::ip::address::from_string("127.0.0.1"), 8090);
+        auto transport = std::make_shared<autobahn::wamp_tcp_transport>(
+                io, parameters->rawsocket_endpoint());
 
         bool debug = parameters->debug();
-        auto session = std::make_shared<
-                autobahn::wamp_session<boost::asio::ip::tcp::socket,
-                boost::asio::ip::tcp::socket>>(io, socket, socket, debug);
+        auto session = std::make_shared<autobahn::wamp_session>(
+                io, transport, transport, debug);
 
         // Make sure the continuation futures we use do not run out of scope prematurely.
         // Since we are only using one thread here this can cause the io service to block
@@ -51,8 +49,7 @@ int main(int argc, char** argv)
         boost::future<void> leave_future;
         boost::future<void> stop_future;
 
-        socket.async_connect(parameters->rawsocket_endpoint(),
-            [&](boost::system::error_code ec) {
+        transport->async_connect([&](boost::system::error_code ec) {
                 if (!ec) {
                     std::cerr << "connected to server" << std::endl;
 

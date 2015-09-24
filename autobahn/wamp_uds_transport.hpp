@@ -16,34 +16,22 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_EXCEPTIONS_HPP
-#define AUTOBAHN_EXCEPTIONS_HPP
+#ifndef AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
+#define AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
 
-#include <string>
-#include <stdexcept>
+#include "wamp_rawsocket_transport.hpp"
+
+#include <boost/asio/local/stream_protocol.hpp>
 
 namespace autobahn {
 
-class protocol_error : public std::runtime_error {
-  public:
-     protocol_error(const std::string& message) : std::runtime_error(message) {};
-};
-
-class network_error : public std::runtime_error {
-  public:
-     network_error(const std::string& message) : std::runtime_error(message) {};
-};
-
-class no_session_error : public std::runtime_error {
-  public:
-     no_session_error() : std::runtime_error("session not joined") {};
-};
-
-class no_transport_error : public std::runtime_error {
-  public:
-     no_transport_error() : std::runtime_error("session not attached") {};
-};
+/*!
+ * A transport that provides rawsocket support over unix domain sockets (UDS).
+ */
+using wamp_uds_transport =
+        wamp_rawsocket_transport<
+            boost::asio::local::stream_protocol::socket>;
 
 } // namespace autobahn
 
-#endif // AUTOBAHN_EXCEPTIONS_HPP
+#endif // AUTOBAHN_WAMP_UDS_TRANSPORT_HPP

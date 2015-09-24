@@ -24,45 +24,26 @@
 namespace autobahn {
 
 inline wamp_call_result::wamp_call_result()
-    : m_arguments(EMPTY_ARGUMENTS)
+    : m_zone()
+    , m_arguments(EMPTY_ARGUMENTS)
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
 {
 }
 
-inline wamp_call_result::wamp_call_result(std::unique_ptr<msgpack::zone>&& zone)
-    : m_arguments(EMPTY_ARGUMENTS)
+inline wamp_call_result::wamp_call_result(msgpack::zone&& zone)
+    : m_zone(std::move(zone))
+    , m_arguments(EMPTY_ARGUMENTS)
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
-    , m_zone(std::move(zone))
 {
-}
-
-inline wamp_call_result::wamp_call_result(const wamp_call_result& other)
-{
-    m_zone.reset(new msgpack::zone());
-    m_arguments = msgpack::object(other.m_arguments, m_zone.get());
-    m_kw_arguments = msgpack::object(other.m_kw_arguments, m_zone.get());
 }
 
 inline wamp_call_result::wamp_call_result(wamp_call_result&& other)
-    : m_arguments(other.m_arguments)
+    : m_zone(std::move(other.m_zone))
+    , m_arguments(other.m_arguments)
     , m_kw_arguments(other.m_kw_arguments)
-    , m_zone(std::move(other.m_zone))
 {
     other.m_arguments = EMPTY_ARGUMENTS;
     other.m_kw_arguments = EMPTY_KW_ARGUMENTS;
-}
-
-inline wamp_call_result& wamp_call_result::operator=(const wamp_call_result& other)
-{
-    if (this == &other) {
-        return *this;
-    }
-
-    m_zone.reset(new msgpack::zone());
-    m_arguments = msgpack::object(other.m_arguments, m_zone.get());
-    m_kw_arguments = msgpack::object(other.m_kw_arguments, m_zone.get());
-
-    return *this;
 }
 
 inline wamp_call_result& wamp_call_result::operator=(wamp_call_result&& other)

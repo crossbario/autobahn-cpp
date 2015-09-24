@@ -22,6 +22,9 @@
 #include "wamp_event.hpp"
 #include "wamp_invocation.hpp"
 #include "wamp_session.hpp"
+#include "wamp_tcp_transport.hpp"
+#include "wamp_transport.hpp"
+#include "wamp_uds_transport.hpp"
 
 /*! \mainpage Reference Documentation
  *

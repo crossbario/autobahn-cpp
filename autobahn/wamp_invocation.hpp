@@ -29,6 +29,8 @@
 
 namespace autobahn {
 
+class wamp_message;
+
 class wamp_invocation_impl
 {
 public:
@@ -211,7 +213,7 @@ public:
     //
     // functions only called internally by wamp_session
 
-    using send_result_fn = std::function<void(const std::shared_ptr<msgpack::sbuffer>&)>;
+    using send_result_fn = std::function<void(const std::shared_ptr<wamp_message>&)>;
     void set_send_result_fn(send_result_fn&&);
     void set_request_id(std::uint64_t);
     void set_zone(msgpack::zone&&);

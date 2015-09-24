@@ -16,14 +16,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_SESSION_HPP
-#define AUTOBAHN_SESSION_HPP
+#ifndef AUTOBAHN_WAMP_SESSION_HPP
+#define AUTOBAHN_WAMP_SESSION_HPP
 
 #include "wamp_call_options.hpp"
 #include "wamp_call_result.hpp"
 #include "wamp_event_handler.hpp"
-#include "wamp_message.hpp"
 #include "wamp_procedure.hpp"
+#include "wamp_transport_handler.hpp"
 
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
@@ -54,40 +54,45 @@
 namespace autobahn {
 
 class wamp_call;
+class wamp_message;
 class wamp_register_request;
 class wamp_registration;
 class wamp_subscribe_request;
 class wamp_subscription;
+class wamp_transport;
 class wamp_unsubscribe_request;
 
 /// Representation of a WAMP session.
-template<typename IStream, typename OStream>
-class wamp_session : public std::enable_shared_from_this<wamp_session<IStream, OStream>>
+class wamp_session :
+        public wamp_transport_handler,
+        public std::enable_shared_from_this<wamp_session>
 {
 public:
 
     /*!
      * Create a new WAMP session.
      *
-     * \param in The input stream to run this session on.
-     * \param out THe output stream to run this session on.
+     * \param io_service The io service to drive event dispatching.
+     * \param in The inbound message based transport for this session.
+     * \param out Tte output message based transport for this session.
      */
-    wamp_session(boost::asio::io_service& io, IStream& in, OStream& out, bool debug = false);
+    wamp_session(
+            boost::asio::io_service& io_service,
+            bool debug_enabled=false);
 
     ~wamp_session();
 
     /*!
-     * Start listening on the IStream provided to the constructor
-     * of this session.
+     * Establishes an initial connection to the router.
      *
-     * \return A future that resolves to true if the session was successfully
-     *         started and false otherwise.
+     * \return A future that indicates if the session was successfully started.
      */
-    boost::future<bool> start();
+    boost::future<void> start();
 
     /*!
-     * Closes the IStream and the OStream provided to the constructor
-     * of this session.
+     * Closes the connection to the router.
+     *
+     * \return A future that indicates if the session was successfully stopped.
      */
     boost::future<void> stop();
 
@@ -105,14 +110,15 @@ public:
      * \param reason An optional WAMP URI providing a reason for leaving.
      * \return A future that resolves with the reason sent by the peer.
      */
-    boost::future<std::string> leave(const std::string& reason = std::string("wamp.error.close_realm"));
+    boost::future<std::string> leave(
+            const std::string& reason=std::string("wamp.error.close_realm"));
 
     /*!
      * Publish an event with empty payload to a topic.
      *
      * \param topic The URI of the topic to publish to.
      */
-    void publish(const std::string& topic);
+    boost::future<void> publish(const std::string& topic);
 
     /*!
      * Publish an event with positional payload to a topic.
@@ -121,7 +127,9 @@ public:
      * \param arguments The positional payload for the event.
      */
     template <typename List>
-    void publish(const std::string& topic, const List& arguments);
+    boost::future<void> publish(
+            const std::string& topic,
+            const List& arguments);
 
     /*!
      * Publish an event with both positional and keyword payload to a topic.
@@ -131,7 +139,10 @@ public:
      * \param kw_arguments The keyword payload for the event.
      */
     template <typename List, typename Map>
-    void publish(const std::string& topic, const List& arguments, const Map& kw_arguments);
+    boost::future<void> publish(
+            const std::string& topic,
+            const List& arguments,
+            const Map& kw_arguments);
 
     /*!
      * Subscribe a handler to a topic to receive events.
@@ -141,7 +152,8 @@ public:
      * \return A future that resolves to a autobahn::subscription
      */
     boost::future<wamp_subscription> subscribe(
-            const std::string& topic, const wamp_event_handler& handler);
+            const std::string& topic,
+            const wamp_event_handler& handler);
 
     /*!
      * Unubscribe a handler to previosuly subscribed topic.
@@ -172,7 +184,8 @@ public:
      */
     template <typename List>
     boost::future<wamp_call_result> call(
-            const std::string& procedure, const List& arguments,
+            const std::string& procedure,
+            const List& arguments,
             const wamp_call_options& options = wamp_call_options());
 
     /*!
@@ -203,77 +216,34 @@ public:
             const provide_options& options = provide_options());
 
 private:
+    virtual void on_attach(const std::shared_ptr<wamp_transport>& transport) override;
+    virtual void on_detach(bool was_clean, const std::string& reason) override;
+    virtual void on_message(wamp_message&& message) override;
 
-    /// Process a WAMP ERROR message.
-    void process_error(const wamp_message& message);
+    void process_error(wamp_message&& message);
+    void process_welcome(wamp_message&& message);
+    void process_call_result(wamp_message&& message);
+    void process_subscribed(wamp_message&& message);
+    void process_unsubscribed(wamp_message&& message);
+    void process_event(wamp_message&& message);
+    void process_registered(wamp_message&& message);
+    void process_invocation(wamp_message&& message);
+    void process_goodbye(wamp_message&& message);
 
-    /// Process a WAMP HELLO message.
-    void process_welcome(const wamp_message& message);
+    void send(wamp_message&& message, bool session_established=true);
 
-    /// Process a WAMP RESULT message.
-    void process_call_result(
-            const wamp_message& message,
-            msgpack::unique_ptr<msgpack::zone>&& zone);
+    bool m_debug_enabled;
 
-    /// Process a WAMP SUBSCRIBED message.
-    void process_subscribed(const wamp_message& message);
+    boost::asio::io_service& m_io_service;
 
-    /// Process a WAMP UNSUBSCRIBED message.
-    void process_unsubscribed(const wamp_message& message);
-
-    /// Process a WAMP EVENT message.
-    void process_event(const wamp_message& message);
-
-    /// Process a WAMP REGISTERED message.
-    void process_registered(const wamp_message& message);
-
-    /// Process a WAMP INVOCATION message.
-    void process_invocation(
-            const wamp_message& message,
-            msgpack::unique_ptr<msgpack::zone>&& zone);
-
-    /// Process a WAMP GOODBYE message.
-    void process_goodbye(const wamp_message& message);
-
-    /// Send out message serialized in serialization buffer to ostream.
-    void send(const std::shared_ptr<msgpack::sbuffer>& buffer);
-
-    /// Receive one message from istream in m_unpacker.
-    void receive_message();
-
-    void got_handshake_reply(const boost::system::error_code& error);
-
-    void got_message_header(const boost::system::error_code& error);
-
-    void got_message_body(const boost::system::error_code& error);
-
-    void got_message(const msgpack::object& object, msgpack::unique_ptr<msgpack::zone>&& zone);
-
-
-    bool m_debug;
-
-    boost::asio::io_service& m_io;
-
-    /// Input stream this session runs on.
-    IStream& m_in;
-
-    /// Output stream this session runs on.
-    OStream& m_out;
-
-    char m_message_length_buffer[4];
-    uint32_t m_message_length;
-
-    /// MsgPack unserialization unpacker.
-    msgpack::unpacker m_unpacker;
+    /// The transport this session runs on.
+    std::shared_ptr<wamp_transport> m_transport;
 
     /// Last request ID of outgoing WAMP requests.
     std::atomic<uint64_t> m_request_id;
 
-    /// Buffer used to hold the sent/recevied rawsocket handshake
-    char m_handshake_buffer[4];
-
-    /// Synchronization for dealing with the rawsocket handshake
-    boost::promise<bool> m_handshake;
+    /// Synchronization for dealing with starting the session
+    boost::promise<void> m_session_start;
 
     /// WAMP session ID (if the session is joined to a realm).
     uint64_t m_session_id;
@@ -285,8 +255,8 @@ private:
 
     boost::promise<std::string> m_session_leave;
 
-    /// Set to true when the session is stopped.
-    bool m_stopped;
+    /// Set to true when the session is running.
+    bool m_running;
 
     /// Synchronization for dealing with stopping the session
     boost::promise<void> m_session_stop;
@@ -319,13 +289,10 @@ private:
 
     /// Map of registered procedures (registration ID -> procedure)
     std::map<uint64_t, wamp_procedure> m_procedures;
-
-    /// An unserialized, raw WAMP message.
-    wamp_message m_message;
 };
 
 } // namespace autobahn
 
 #include "wamp_session.ipp"
 
-#endif // AUTOBAHN_SESSION_HPP
+#endif // AUTOBAHN_WAMP_SESSION_HPP

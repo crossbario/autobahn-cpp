@@ -60,7 +60,7 @@ public:
      *
      * @param message The message that has been received.
      */
-    virtual void on_message(const wamp_message& message) = 0;
+    virtual void on_message(wamp_message&& message) = 0;
 
     /*!
      * Default virtual destructor.

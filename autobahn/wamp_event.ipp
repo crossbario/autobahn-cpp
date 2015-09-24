@@ -21,8 +21,9 @@
 
 namespace autobahn {
 
-inline wamp_event::wamp_event()
-    : m_arguments(EMPTY_ARGUMENTS)
+inline wamp_event::wamp_event(msgpack::zone&& zone)
+    : m_zone(std::move(zone))
+    , m_arguments(EMPTY_ARGUMENTS)
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
 {
 }

@@ -21,6 +21,7 @@
 
 #include "wamp_arguments.hpp"
 
+#include <memory>
 #include <msgpack.hpp>
 #include <string>
 
@@ -29,7 +30,7 @@ namespace autobahn {
 class wamp_event
 {
 public:
-    wamp_event();
+    wamp_event(msgpack::zone&& zone);
 
     /*!
      * The number of positional arguments published by the event.
@@ -175,6 +176,7 @@ public:
     void set_kw_arguments(const msgpack::object& kw_arguments);
 
 private:
+    msgpack::zone m_zone;
     msgpack::object m_arguments;
     msgpack::object m_kw_arguments;
 };

@@ -69,18 +69,12 @@ public:
      * be attached at any given time.
      *
      * @param handler The handler to attach to this transport.
-     *
-     * @return A future that will be satisfied when the transport
-     *         handler has been successfully attached.
      */
     virtual void attach(
             const std::shared_ptr<wamp_transport_handler>& handler) = 0;
 
     /*!
      * Detaches the handler currently attached to the transport.
-     *
-     * @return A future that will be satisfied when the transport
-     *         handler has been successfully detached.
      */
     virtual void detach() = 0;
 
@@ -96,7 +90,7 @@ public:
      *
      * @param message The message to be sent.
      */
-    virtual void send(const std::shared_ptr<wamp_message>& message) = 0;
+    virtual void send(wamp_message&& message) = 0;
 
     /*!
      * Default virtual destructor.
