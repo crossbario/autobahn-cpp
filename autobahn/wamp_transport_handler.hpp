@@ -41,21 +41,6 @@ class wamp_transport_handler
 {
 public:
     /*!
-     * Default constructor.
-     */
-    wamp_transport_handler() = default;
-
-    /*!
-     * Default virtual destructor.
-     */
-    virtual ~wamp_transport_handler() = default;
-
-    wamp_transport_handler(const wamp_transport_handler&) = delete;
-    wamp_transport_handler& operator=(const wamp_transport_handler&) = delete;
-    wamp_transport_handler(wamp_transport_handler&&) = delete;
-    wamp_transport_handler& operator=(wamp_transport_handler&&) = delete;
-
-    /*!
      * Called by the transport when attaching a handler.
      *
      * @param transport The transport being attached to.
@@ -76,6 +61,11 @@ public:
      * @param message The message that has been received.
      */
     virtual void on_message(const wamp_message& message) = 0;
+
+    /*!
+     * Default virtual destructor.
+     */
+    virtual ~wamp_transport_handler() = default;
 };
 
 } // namespace autobahn

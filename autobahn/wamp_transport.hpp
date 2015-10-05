@@ -42,21 +42,6 @@ class wamp_transport
 {
 public:
     /*!
-     * Default constructor.
-     */
-    wamp_transport() = default;
-
-    /*!
-     * Default virtual destructor.
-     */
-    virtual ~wamp_transport() = default;
-
-    wamp_transport(const wamp_transport&) = delete;
-    wamp_transport& operator=(const wamp_transport&) = delete;
-    wamp_transport(wamp_transport&&) = delete;
-    wamp_transport& operator=(wamp_transport&&) = delete;
-
-    /*!
      * Attempts to connect the transport.
      *
      * @return A future that will be satisfied when the connect attempt
@@ -112,6 +97,11 @@ public:
      * @param message The message to be sent.
      */
     virtual void send(const std::shared_ptr<wamp_message>& message) = 0;
+
+    /*!
+     * Default virtual destructor.
+     */
+    virtual ~wamp_transport() = default;
 };
 
 } // namespace autobahn
