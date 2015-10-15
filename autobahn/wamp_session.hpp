@@ -201,6 +201,34 @@ public:
             const std::string& uri,
             const wamp_procedure& procedure,
             const provide_options& options = provide_options());
+	
+    /*!
+     * Register the principal to be authenticated 
+     *
+     * \param principal The principal to be authenticated 
+     * \return nothing 
+     */
+    void auth_principal( const std::string& principal ) { m_principal = principal; }
+
+    /*!
+     * Register the secret used for a wampcra authentication
+     *
+     * \param secret The unencrypted secret to authenticate with 
+     * \return nothing 
+     */
+    void auth_wampcra( const std::string& secret ) {
+        m_auth_data.push_back( make_tuple( "wampcra" , secret ) );
+    }
+
+    /*!
+     * Register the secret used for a ticket authentication
+     *
+     * \param secret The unencrypted secret to authenticate with 
+     * \return nothing 
+     */
+    void auth_ticket( const std::string& secret ) {
+        m_auth_data.push_back( make_tuple( "ticket" , secret ) );
+    }
 
 private:
 
@@ -209,6 +237,9 @@ private:
 
     /// Process a WAMP HELLO message.
     void process_welcome(const wamp_message& message);
+
+    /// Process a WAMP CHALLENGE message.
+    void process_challenge(const wamp_message& message);
 
     /// Process a WAMP RESULT message.
     void process_call_result(
@@ -290,6 +321,17 @@ private:
 
     /// Synchronization for dealing with stopping the session
     boost::promise<void> m_session_stop;
+
+    //////////////////////////////////////////////////////////////////////////////////////
+    /// Authentication 
+   
+    // the principal often username
+    std::string m_principal;
+	
+    // a tuple of authmethod, and secrets
+    std::vector< std::tuple< std::string, std::string > > m_auth_data; 
+
+    // auth is a tuple of ( "authmethod" , "principal" , "secret" )
 
     //////////////////////////////////////////////////////////////////////////////////////
     /// Caller

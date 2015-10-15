@@ -29,6 +29,8 @@
 #include "wamp_subscription.hpp"
 #include "wamp_unsubscribe_request.hpp"
 
+#include "wamp_auth_utils.hpp"
+
 #if !(defined(_WIN32) || defined(WIN32))
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -221,8 +223,30 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
 
     packer.pack(static_cast<int> (message_type::HELLO));
     packer.pack(realm);
+	
+   
+    // set authentication data, if session is configured to be authenticated.
+    if ( !m_principal.empty() && !m_auth_data.empty() ) {
 
-    packer.pack_map(1);
+    	packer.pack_map(3);
+    
+    	// an "authmethods" entry -> [ "wampcra" , "ticket", ... ]
+    	packer.pack(std::string("authmethods"));
+    	packer.pack_array( m_auth_data.size() );
+        for ( auto auth_data : m_auth_data ) {
+    	    packer.pack( std::get<0>(auth_data) );
+        }
+
+    	// authid -> "principal"    
+    	packer.pack(std::string("authid"));
+    	packer.pack(std::string( m_principal ));
+    } 
+    else {
+    	packer.pack_map(1);
+    }
+
+       
+    // and "roles" entry -> { ..... }
     packer.pack(std::string("roles"));
 
     packer.pack_map(4);
@@ -618,6 +642,161 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
 
     return call->result().get_future();
 }
+
+template<typename IStream, typename OStream>
+void wamp_session<IStream, OStream>::process_challenge(const wamp_message& message)
+{
+    // kind of authentication
+    std::string whatAuth = (message[1].as<std::string>());
+    
+    // check if we can actually handle this kind
+    // and raise protocol_error is not able to
+    bool canHandleAuth = false;
+    std::string canHandle;
+    for ( auto meth_sec : m_auth_data ) {
+	canHandle += " " + std::get<0>( meth_sec ); 
+        if ( std::get<0>( meth_sec ) == whatAuth ) {
+            canHandleAuth = true;
+            break;
+        }
+    }
+	
+    if ( !canHandleAuth ) {
+        throw protocol_error("not supported challenge type - can now only handle " + canHandle );
+    }
+    
+    /////////////////////////////////////////
+    // wampcra authentication
+    /////////////////////////////////////////
+    
+    if ( whatAuth == "wampcra" ) {
+
+        if (message[2].type != msgpack::type::MAP) {
+            throw protocol_error("CHALLENGE - Details must be a dictionary");
+        }
+        
+        std::string challenge, salt;
+        int iterations = 0 , keylen = 0;
+        bool salted = false;
+        
+        // parse the details, and fill variables above
+        try {
+            std::unordered_map<std::string, msgpack::object> details;
+            message[2].convert(details);
+            auto itr = details.find("challenge");
+            if (itr != details.end()) {
+                challenge = itr->second.as<std::string>();
+            } else {
+                throw protocol_error("wampcra must always introduce a challenge ( in details )");
+            }
+
+            itr = details.find("salt");
+            if (itr != details.end()) {
+                // ok we must salt our secret
+                salted = true;
+                salt = itr->second.as<std::string>();
+
+                itr = details.find("iterations");
+                if (itr == details.end()) {
+                    throw protocol_error("wampcra must always tell a number of iterations when introducing salting ( in details )");
+                }
+                iterations = itr->second.as<int>();
+
+
+                itr = details.find("keylen");
+                if (itr == details.end()) {
+                    throw protocol_error("wampcra must always tell a key length (keylen) when introducing salting ( in details )");
+                }
+                keylen = itr->second.as<int>();
+
+            } 
+
+        } catch (const std::exception& e) {
+            if (m_debug) {
+                std::cerr << "failed to parse challenge details" << std::endl;
+                throw protocol_error("wampcra authentication: Failed parse challange details");
+            }
+        }
+
+        // generate a signature, and send it back as an AUTHENTICATE msg.
+        try {
+            std::string secret;
+            for ( auto meth_sec : m_auth_data ) {
+                if ( std::get<0>( meth_sec ) == "wampcra" ) {
+                    secret = std::get<1>( meth_sec );
+                    break;
+                }
+            }
+
+            std::string key;
+
+            if ( salted )
+            {
+            	key = derive_key( secret , salt , iterations , keylen );
+            }
+            else { 
+            	key = secret;
+            }
+            
+            std::string signature = compute_wcs( key , challenge );
+            
+            // respond with an authenticate message
+            
+            auto buffer = std::make_shared<msgpack::sbuffer>();
+            msgpack::packer<msgpack::sbuffer> packer(*buffer);
+            
+            // [AUTHENTICATE, signature|str, extra|dict ]
+            packer.pack_array(3);
+            packer.pack(static_cast<int>(message_type::AUTHENTICATE));
+            packer.pack( signature );
+            packer.pack_map(0);
+            send(buffer);
+
+
+        } catch (const std::exception& e) {
+            if (m_debug) {
+                std::cerr << "failed to generate signature" << std::endl;
+                throw protocol_error("wampcra authentication error: failed handle challenge");
+            }
+        }
+
+    }
+    /////////////////////////////////////////
+    // ticket authentication
+    /////////////////////////////////////////
+    else if ( whatAuth == "ticket" ) {
+	
+        try {
+            std::string signature;
+            for ( auto meth_sec : m_auth_data ) {
+                if ( std::get<0>( meth_sec ) == "ticket" ) {
+                    signature = std::get<1>( meth_sec );
+                    break;
+                }
+            }
+
+            auto buffer = std::make_shared<msgpack::sbuffer>();
+            msgpack::packer<msgpack::sbuffer> packer(*buffer);
+            
+            // [AUTHENTICATE, signature|str, extra|dict ]
+            packer.pack_array(3);
+            packer.pack(static_cast<int>(message_type::AUTHENTICATE));
+            packer.pack( signature );
+            packer.pack_map(0);
+            send(buffer);
+
+        } catch (const std::exception& e) {
+            if (m_debug) {
+                std::cerr << "failed to handle ticket authentication" << std::endl;
+                throw protocol_error("ticket authentication error: failed send secret");
+            }
+        }
+    }
+    else { 
+        throw protocol_error("not supported challenge type - can now only handle 'wampcra' and 'ticket'");
+    }
+}
+
 
 template<typename IStream, typename OStream>
 void wamp_session<IStream, OStream>::process_welcome(const wamp_message& message)
@@ -1148,7 +1327,8 @@ void wamp_session<IStream, OStream>::got_message(
             // FIXME
             break;
         case message_type::CHALLENGE:
-            throw protocol_error("received CHALLENGE message - not implemented");
+            process_challenge(message);
+            break;
         case message_type::AUTHENTICATE:
             throw protocol_error("received AUTHENTICATE message unexpected for WAMP client roles");
         case message_type::GOODBYE:
