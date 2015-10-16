@@ -197,12 +197,12 @@ boost::future<void> wamp_session<IStream, OStream>::stop()
         m_stopped = true;
 
         try {
-            m_in.close();
+            m_in.lowest_layer().close();
         } catch (...) {
         }
 
         try {
-            m_out.close();
+            m_out.lowest_layer().close();
         } catch (...) {
         }
 
