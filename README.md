@@ -14,10 +14,10 @@ The API and implementation make use of modern C++ 11 and new asynchronous idioms
 
 **Autobahn**|Cpp supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Unix domain sockets** or **pipes** (`stdio`). The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
- * C++ 11 compiler
- * [`boost::future`](http://www.boost.org/doc/libs/1_55_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
- * [`boost::any`](http://www.boost.org/doc/libs/1_55_0/doc/html/any.html)
- * [`boost::asio`](http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio.html)
+ * C++11 compiler
+ * [`boost::future`](http://www.boost.org/doc/libs/1_56_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
+ * [`boost::asio`](http://www.boost.org/doc/libs/1_56_0/doc/html/boost_asio.html)
+ * [msgpack-c](https://github.com/msgpack/msgpack-c)
 
 For getting help, questions or feedback, get in touch on the **[mailing list](https://groups.google.com/forum/#!forum/autobahnws)**, **[Twitter](https://twitter.com/autobahnws)** or **IRC `#autobahn`** (Freenode).
 
@@ -29,31 +29,29 @@ Here is how programming with C++ and **Autobahn**|Cpp looks like.
 **Calling a remote Procedure**
 
 ```c++
-auto c1 = session.call("com.mathservice.add2", {23, 777})
-.then(
-   [&](future<any> f) {
-		cout << "Got call result " << any_cast<uint64_t> (f.get()) << endl;
-	});
+auto c1 = session.call("com.mathservice.add2", std::make_tuple(23, 777))
+    .then([&](boost::future<wamp_call_result> result) {
+        std::cout << "Got call result " << result.get().argument<uint64_t>(0) << std::endl;
+    });
 ```
 
 **Registering a remoted Procedure**
 ```c++
 auto r1 = session.provide("com.myapp.cpp.square",
-   [](const anyvec& args, const anymap& kwargs) {
-      cout << "Procedure is invoked .." << endl;
-      uint64_t x = any_cast<uint64_t> (args[0]);
-      return x * x;
-   })
-.then(
-   [](future<registration> reg) {
-      cout << "Registered with ID " << reg.get().id << endl;
-   });
+    [](autobahn::wamp_invocation invocation) {
+        std::cout << "Procedure is invoked .." << endl;
+        uint64_t x = invocation->argument<uint64_t>(0);
+        return x * x;
+    })
+    .then([](boost::future<autobahn::wamp_registration> reg) {
+        std::cout << "Registered with ID " << reg.get().id() << std::endl;
+    });
 ```
 
 **Publishing an Event**
 
 ```c++
-session.publish("com.myapp.topic2", {23, true, string("hello")});
+session.publish("com.myapp.topic2", std::make_tuple(23, true, std::string("hello")));
 ```
 
 **Publishing an Event (acknowledged)**
@@ -62,24 +60,22 @@ session.publish("com.myapp.topic2", {23, true, string("hello")});
 auto opts = PublishOptions();
 opts.acknowledge = True;
 
-auto p1 = session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
-.then(
-   [](future<publication> pub) {
-      cout << "Published with ID " << pub.get().id << endl;
-   });
+session.publish("com.myapp.topic2", std::make_tuple(23, true, std::string("hello")), opts)
+    .then([](boost::future<autobahn::wamp_publication> pub) {
+        std::cout << "Published with ID " << pub.get().id() << std::endl;
+    });
 ```
 
 **Subscribing to a Topic**
 
 ```c++
 auto s1 = session.subscribe("com.myapp.topic1",
-   [](const anyvec& args, const anymap& kwargs) {
-      cout << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
-   })
-.then(
-   [](future<subscription> sub) {
-      cout << "Subscribed with ID " << sub.get().id << endl;
-   });
+    [](const autobahn::wamp_event& event) {
+        std::cout << "Got event: " << event.argument<uint64_t>(0) << std::endl;
+    })
+    .then([](boost::future<autobahn::wamp_subscription> sub) {
+        std::cout << "Subscribed with ID " << sub.get().id() << std::endl;
+    });
 ```
 
 
@@ -95,88 +91,78 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 > *Notes*
 >
 > * The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this [issue](https://github.com/crossbario/autobahn-cpp/issues/2).
-> * While C++ 11 includes `std::future` in the standard library, this lacks continuations. `boost::future.then` allows attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2015 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
-> * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 (upcoming release as of 31/03/2014) or higher.
+> * While C++ 11 includes `std::future` in the standard library, this lacks continuations. `boost::future.then` allows attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2017 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
+> * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 or higher.
 > * The library and example programs were tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
 
 
 ### Build tools
 
-Install some libs and build tools:
+Install some libs and build tools (these are for Ubuntu):
 
-```shell
-sudo apt-get install libbz2-dev libssl-dev ruby libtool autoconf scons
+```console
+sudo apt-get install libbz2-dev libssl-dev cmake
 ```
 
-### clang
+### Clang
 
-Install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/):
+If you want to work with Clang (rather than GCC), install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/) (these are for Ubuntu):
 
-```shell
-sudo apt-get install clang-3.4 libc++1 libc++-dev
+```console
+sudo apt-get install clang libc++1 libc++-dev
+sudo update-alternatives --config c++
+# select clang++ in command-line interface
 ```
 
 ### Boost
 
-To build Boost 1.55 (current release) from sources, get source code package for the latest Boost release from [here](http://www.boost.org/) and
+Most of the time, your distro's Boost libraries will be outdated (unless you're using Arch or Homebrew). Don't waste time with those: to build the latest Boost 1.58 (current release as of 2015/06) from sources
 
-```shell
-cd $HOME
-tar xvjf Downloads/boost_1_55_0.tar.bz2
-cd boost_1_55_0/
-./bootstrap.sh
+```console
+cd ~
+wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
+tar xvjf boost_1_58_0.tar.bz2
+cd boost_1_58_0
+./bootstrap.sh --with-toolset=clang
 ./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
 
 > Note: The `-j 4` option will allow use of 4 cores for building.
 >
 
-To build with GCC instead of clang:
+To build using GCC instead of Clang:
 
-```shell
+```console
+./bootstrap.sh --with-toolset=gcc
 ./b2 toolset=gcc -j 4
-```
-
-To build Boost trunk (needed for `when_all`, `when_any`)
-
-```shell
-cd $HOME
-git clone --recursive git@github.com:boostorg/boost.git
-cd boost/
-./bootstrap.sh
-./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
 
 ### MsgPack-C
 
-Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and build with clang:
+Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and install:
 
-```shell
+```console
 cd $HOME
 git clone https://github.com/msgpack/msgpack-c.git
 cd msgpack-c
-./bootstrap
-CXX=`which clang++` CC=`which clang` CXXFLAGS="-std=c++11 -stdlib=libc++" \
-   LDFLAGS="-stdlib=libc++" ./configure --prefix=$HOME/msgpack_clang
+git checkout cpp-1.1.0
+mkdir -p ../build/msgpack-c
+cd ../build/msgpack-c
+cmake ${HOME}/msgpack-c
 make
 make install
 ```
 
-To build with GCC instead of clang:
-
-
-```shell
-./configure --prefix=$HOME/msgpack_gcc
-```
+> On FreeBSD, you need to `pkg install autotools` and invoke `gmake` instead of `make`.
 
 ### **Autobahn**|Cpp
 
 To get **Autobahn**|Cpp library and examples, clone the repo
 
-```shell
+```console
 cd $HOME
-git clone git@github.com:tavendo/AutobahnCpp.git
-cd AutobahnCpp
+git clone git@github.com:davidchappelle/AutobahnCpp.git autobahn
+cd autobahn
 ```
 
 The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
@@ -197,51 +183,25 @@ The Autobahn|Cpp repository contains a number of [examples](https://github.com/c
 * [Subscribe 1](https://github.com/crossbario/autobahn-cpp/blob/master/examples/subscribe1.cpp)
 
 
+
 ### Building the Examples
 
 For building the examples, add the following to your `~/.profile`:
 
-
-```shell
-## Use clang
-##
-export CC='clang'
-export CXX='clang++'
-
-## Libaries (clang based)
-##
-export BOOST_ROOT=${HOME}/boost_trunk_clang
-export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
-
-export MSGPACK_ROOT=${HOME}/msgpack_clang
-export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
-```
-
-For building with GCC, use the following
-
-```shell
-## Use GNU
-##
-export CC='gcc'
-export CXX='g++'
-
-## Libraries (GCC based)
-##
-export BOOST_ROOT=${HOME}/boost_trunk_gcc
-export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
-
-export MSGPACK_ROOT=${HOME}/msgpack_gcc
-export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
+```console
+export BOOST_ROOT=${HOME}/boost
 ```
 
 Now build all examples:
 
-```shell
-cd autobahn/examples
-scons -j 4
+```console
+mkdir -p ${HOME}/build/autobahn
+cd ${HOME}/build/autobahn
+cmake ${HOME}/autobahn
+make -j4
 ```
 
-The examples will get built in `autobahn/build/examples`.
+The examples will get built in `build/autobahn/examples`.
 
 
 ### Running the Examples
@@ -252,22 +212,22 @@ To run this, you need [Python](http://python.org) and [pip](http://www.pip-insta
 
 Then, to install **Autobahn|Python**
 
-```shell
+```console
 pip install autobahn[twisted]
 ```
 
-Start the example router in a first terminal
+Start the [Crossbar hello:cpp example](https://github.com/crossbario/crossbarexamples/tree/master/hello/cpp) router in a first terminal
 
-```shell
-cd autobahn/examples
-python server.py
+```console
+cd $CROSSBAR_EXAMPLES/hello/cpp
+crossbar start
 ```
 
 Then start one of the built C++ examples in a second terminal
 
-```shell
-cd autobahn
-./build/examples/call1
+```console
+cd ${HOME}/build/autobahn
+./examples/call1
 ```
 
 

@@ -16,18 +16,32 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_UNSUBSCRIBE_REQUEST_HPP
+#define AUTOBAHN_WAMP_UNSUBSCRIBE_REQUEST_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
+#define BOOST_THREAD_PROVIDES_FUTURE
+#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
+#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
+#include <boost/thread/future.hpp>
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+namespace autobahn {
 
-#endif // AUTOBAHN_HPP
+/// An outstanding wamp call.
+class wamp_unsubscribe_request
+{
+public:
+    wamp_unsubscribe_request();
+
+    boost::promise<void>& response();
+    void set_response();
+
+private:
+    boost::promise<void> m_response;
+};
+
+} // namespace autobahn
+
+#include "wamp_unsubscribe_request.ipp"
+
+#endif // AUTOBAHN_WAMP_UNSUBSCRIBE_REQUEST_HPP

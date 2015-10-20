@@ -19,3 +19,8 @@ web/reports*
 *.a
 .sconsign.dblite
 build
+doc/_upload*
+doc/_doxygen*
+
+# Qt Creator
+CMakeLists.txt.user

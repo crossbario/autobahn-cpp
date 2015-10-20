@@ -16,18 +16,33 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_CALL_OPTIONS_HPP
+#define AUTOBAHN_WAMP_CALL_OPTIONS_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+#include <chrono>
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+namespace autobahn {
 
-#endif // AUTOBAHN_HPP
+class wamp_call_options
+{
+public:
+    wamp_call_options();
+
+    wamp_call_options(wamp_call_options&& other) = delete;
+    wamp_call_options(const wamp_call_options& other) = delete;
+    wamp_call_options& operator=(wamp_call_options&& other) = delete;
+    wamp_call_options& operator=(const wamp_call_options& other) = delete;
+
+    const std::chrono::milliseconds& timeout() const;
+
+    void set_timeout(const std::chrono::milliseconds& timeout);
+
+private:
+    std::chrono::milliseconds m_timeout;
+};
+
+} // namespace autobahn
+
+#include "wamp_call_options.ipp"
+
+#endif // AUTOBAHN_WAMP_CALL_OPTIONS_HPP

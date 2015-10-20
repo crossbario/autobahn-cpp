@@ -16,18 +16,36 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_CALL_HPP
+#define AUTOBAHN_WAMP_CALL_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
+#include "wamp_call_result.hpp"
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
+#define BOOST_THREAD_PROVIDES_FUTURE
+#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
+#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
+#include <boost/thread/future.hpp>
 
-#endif // AUTOBAHN_HPP
+#include <msgpack.hpp>
+
+namespace autobahn {
+
+/// An outstanding wamp call.
+class wamp_call
+{
+public:
+    wamp_call();
+
+    boost::promise<wamp_call_result>& result();
+    void set_result(wamp_call_result&& value);
+
+private:
+    boost::promise<wamp_call_result> m_result;
+};
+
+} // namespace autobahn
+
+#include "wamp_call.ipp"
+
+#endif // AUTOBAHN_WAMP_CALL_HPP
