@@ -93,8 +93,8 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 
 .. image:: /_static/img/cpp_from_js.png
 
-* `Example C++ code <https://github.com/tavendo/AutobahnCpp/blob/master/examples/register2.cpp>`_
-* `Example JavaScript code <https://github.com/tavendo/AutobahnCpp/blob/master/examples/index.html>`_
+* `Example C++ code <https://github.com/crossbario/autobahn-cpp/blob/master/examples/register2.cpp>`_
+* `Example JavaScript code <https://github.com/crossbario/autobahn-cpp/blob/master/examples/index.html>`_
 
 
 Download
@@ -106,7 +106,7 @@ To get |ab| library and examples, clone the repo
 
    shell
    cd $HOME
-   git clone git@github.com:tavendo/AutobahnCpp.git
+   git clone git@github.com:crossbario/autobahn-cpp.git
    cd AutobahnCpp
 
 
