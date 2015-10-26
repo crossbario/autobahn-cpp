@@ -83,14 +83,14 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 
 ![](doc/_static/cpp_from_js.png)
 
-* [Example C++ code](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/register2.cpp)
-* [Example JavaScript code](https://github.com/tavendo/AutobahnCpp/blob/master/examples/index.html)
+* [Example C++ code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/register2.cpp)
+* [Example JavaScript code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/index.html)
 
 ## Building
 
 > *Notes*
 >
-> * The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this [issue](https://github.com/tavendo/AutobahnCpp/issues/2).
+> * The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this [issue](https://github.com/crossbario/autobahn-cpp/issues/2).
 > * While C++ 11 includes `std::future` in the standard library, this lacks continuations. `boost::future.then` allows attaching continuations to futures as outlined in the proposal [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf). This feature will come to standard C++, but probably not before 2017 (see [C++ Standardisation Roadmap](http://isocpp.org/std/status))
 > * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 or higher.
 > * The library and example programs were tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
@@ -170,17 +170,18 @@ The library is "header-only", means there isn't anything to compile or build. Ju
 
 ## Examples
 
-The Autobahn|Cpp repository contains a number of [examples](https://github.com/tavendo/AutobahnCpp/tree/master/examples) that demonstrate all 4 basic patterns of using WAMP:
+The Autobahn|Cpp repository contains a number of [examples](https://github.com/crossbario/autobahn-cpp/tree/master/examples) that demonstrate all 4 basic patterns of using WAMP:
 
-* [Call 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/call1.cpp)
-* [Call 2](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/call2.cpp)
-* [Call 3](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/call3.cpp)
-* [Register 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/register1.cpp)
-* [Register 2](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/register2.cpp)
-* [Publish 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/publish1.cpp)
-* [Publish 2](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/publish2.cpp)
-* [Publish 3](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/publish3.cpp)
-* [Subscribe 1](https://github.com/davidchappelle/AutobahnCpp/blob/master/examples/subscribe1.cpp)
+* [Call 1](https://github.com/crossbario/autobahn-cpp/blob/master/examples/call1.cpp)
+* [Call 2](https://github.com/crossbario/autobahn-cpp/blob/master/examples/call2.cpp)
+* [Call 3](https://github.com/crossbario/autobahn-cpp/blob/master/examples/call3.cpp)
+* [Register 1](https://github.com/crossbario/autobahn-cpp/blob/master/examples/register1.cpp)
+* [Register 2](https://github.com/crossbario/autobahn-cpp/blob/master/examples/register2.cpp)
+* [Publish 1](https://github.com/crossbario/autobahn-cpp/blob/master/examples/publish1.cpp)
+* [Publish 2](https://github.com/crossbario/autobahn-cpp/blob/master/examples/publish2.cpp)
+* [Publish 3](https://github.com/crossbario/autobahn-cpp/blob/master/examples/publish3.cpp)
+* [Subscribe 1](https://github.com/crossbario/autobahn-cpp/blob/master/examples/subscribe1.cpp)
+
 
 
 ### Building the Examples

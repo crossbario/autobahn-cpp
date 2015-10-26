@@ -3,7 +3,7 @@ Building |ab|
 
 Notes
 -----
-* The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this `issue <https://github.com/tavendo/AutobahnCpp/issues/2>`_.
+* The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this `issue <https://github.com/crossbario/autobahn-cpp/issues/2>`_.
 * While C++ 11 includes `std::future` in the standard library, this lacks continuations. ``boost::future.then`` allows attaching continuations to futures as outlined in the proposal `here <http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf>`_. This feature will come to standard C++, but probably not before 2015 (see `C++ Standardisation Roadmap <http://isocpp.org/std/status>`_)
 * Support for ``when_all`` and ``when_any`` as described in above proposal depends on Boost 1.56 (upcoming release as of 31/03/2014) or higher.
 * The library and example programs were tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs ;)
