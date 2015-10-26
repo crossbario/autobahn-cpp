@@ -1,17 +1,17 @@
 Examples
 ========
 
-The Autobahn|Cpp repository contains a number of `examples <https://github.com/tavendo/AutobahnCpp/tree/master/examples>`_ that demonstrate all 4 basic patterns of using WAMP:
+The Autobahn|Cpp repository contains a number of `examples <https://github.com/crossbario/autobahn-cpp/tree/master/examples>`_ that demonstrate all 4 basic patterns of using WAMP:
 
-* `Call 2 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/call2.cpp>`_
-* `Call 1 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/call1.cpp>`_
-* `Call 3 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/call3.cpp>`_
-* `Register 1 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/register1.cpp>`_
-* `Register 2 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/register2.cpp>`_
-* `Publish 1 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish1.cpp>`_
-* `Publish 2 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish2.cpp>`_
-* `Publish 3 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/publish3.cpp>`_
-* `Subscribe 1 <https://github.com/tavendo/AutobahnCpp/blob/master/examples/subscribe1.cpp>`_
+* `Call 2 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/call2.cpp>`_
+* `Call 1 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/call1.cpp>`_
+* `Call 3 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/call3.cpp>`_
+* `Register 1 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/register1.cpp>`_
+* `Register 2 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/register2.cpp>`_
+* `Publish 1 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/publish1.cpp>`_
+* `Publish 2 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/publish2.cpp>`_
+* `Publish 3 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/publish3.cpp>`_
+* `Subscribe 1 <https://github.com/crossbario/autobahn-cpp/blob/master/examples/subscribe1.cpp>`_
 
 
 Building the Examples
