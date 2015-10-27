@@ -1,9 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 2014 Tavendo GmbH
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+///////////////////////////////////////////////////////////////////////////////
+
 
 #ifndef WAMP_AUTH_UTILS_HPP
 #define WAMP_AUTH_UTILS_HPP
-
-
-#define USING_BOTAN_CRYPTO
 
 
 #include <stdio.h>
@@ -25,84 +40,6 @@ class derived_key_error : public std::exception
 };
 
 
-
-#ifdef USING_BOTAN_CRYPTO 
-//////////////////////////////////////////////////////
-// - using botan crypto lib
-// see http://botan.randombit.net/
-//////////////////////////////////////////////////////
-
-
-#include <botan/lookup.h>
-#include <botan/hex.h>
-#include <botan/base64.h>
-
-#include <botan/sha2_32.h>
-#include <botan/hmac.h>
-
-
-/*!
- * create a derived key from a password/secret 
- *
- * \param  passwd A secret string to make a derived key for
- * \param  salt A random salt added to the key 
- * \param  iterations A number of intertions used to create the derived key 
- * \param  keylen The length of the derived key returned. 
- * \return a PBKDF2-sha256 derived key 
- */
-inline std::string derive_key(
-        const std::string & passwd,
-        const std::string & salt,
-        int iterations,
-        int keylen
-		)
-{
-    using namespace Botan;
-
-    PBKDF* pbkdf = get_pbkdf("PBKDF2(SHA-256)");
-
-    OctetString key = pbkdf->derive_key(
-            keylen, 
-            passwd,
-            ( const unsigned char * ) &salt[0],
-            salt.size(),
-            iterations);
-
-    return base64_encode( hex_decode( key.as_string() ) );
-}
-
-
-/*!
- * make a keyed-hash from a key using the HMAC-sha256 and a challenge
- *
- * \param key The key to make a digest for 
- * \param challenge Some data mixin - identify the specific digest 
- * \return a base64 encoded digest  
- */
-inline std::string compute_wcs(
-        const std::string & key,
-        const std::string & challenge )
-{
-    using namespace Botan;
-
-    SHA_256 * _hash = new SHA_256(); 
-    // remark! SHA_256 is deleted by the HMAC in its destructor
-    
-    Botan::HMAC _mac( _hash );
-
-    _mac.set_key( ( const byte * ) key.data() , key.size() );
-    _mac.update( challenge );
-
-    auto f = _mac.final();
-    std::string b = base64_encode( f );
-
-    return b;
-}
-
-#endif //USING_BOTAN_CRYPTO
-
-
-#ifdef USING_OPENSSL_CRYPTO 
 //////////////////////////////////////////////////////
 // - using openssl crypto lib
 // see openssl at : https://www.openssl.org
@@ -226,7 +163,34 @@ inline std::string compute_wcs(
     return base_64_encode( str_out );
 }
 
-#endif //USING_OPENSSL_CRYPTO
+
+
+/*!
+ *  Generates a new random secret for use with WAMP-CRA.
+ *  The secret generated is a random character sequence drawn from
+ *
+ *  - upper and lower case latin letters
+ *  - digits
+ *  -
+ *
+ * \param length The length of the secret to generate. 
+ * \param challenge Some data mixin - identify the specific digest 
+ * \return The generated secret. The length of the generated is ``length`` octets.
+ */
+inline std::string generate_wcs(int length=14){
+
+    //
+    // The characters from which to generate the secret.
+    //
+    static const char WCS_SECRET_CHARSET[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    
+    std::string s;
+    for (int i = 0; i < length; ++i) {
+        s.push_back( WCS_SECRET_CHARSET[ rand() % (sizeof(WCS_SECRET_CHARSET) - 1) ] );
+    }
+    
+    return s;
+}
 
 
 #endif //WAMP_AUTH_UTILS_HPP

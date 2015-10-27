@@ -59,6 +59,8 @@ class wamp_registration;
 class wamp_subscribe_request;
 class wamp_subscription;
 class wamp_unsubscribe_request;
+class wamp_authenticate;
+class wamp_challenge;
 
 /// Representation of a WAMP session.
 template<typename IStream, typename OStream>
@@ -95,10 +97,14 @@ public:
      * Join a realm with this session.
      *
      * \param realm The realm to join on the WAMP router connected to.
+     * \param authmethods The authentication methods this instance support e.g. "wampcra","ticket"
+     * \param authid The username or maybe an other identifier for the user to join. 
      * \return A future that resolves with the session ID when the realm was joined.
      */
-    boost::future<uint64_t> join(const std::string& realm);
-
+    boost::future<uint64_t> join(
+            const std::string& realm, 
+            const std::vector<std::string>& authmethods = std::vector<std::string>(),
+            const std::string& authid = "" );
     /*!
      * Leave the realm.
      *
@@ -201,34 +207,15 @@ public:
             const std::string& uri,
             const wamp_procedure& procedure,
             const provide_options& options = provide_options());
-	
-    /*!
-     * Register the principal to be authenticated 
-     *
-     * \param principal The principal to be authenticated 
-     * \return nothing 
-     */
-    void auth_principal( const std::string& principal ) { m_principal = principal; }
 
     /*!
-     * Register the secret used for a wampcra authentication
+     * Function called by the session when authenting. It always has to be re-implemented (if authentication is part of the system).
      *
-     * \param secret The unencrypted secret to authenticate with 
-     * \return nothing 
+     * \param challenge The challenge from the router. Containing enough information, for the system to prove membership. 
+     * \return A future deliver a proper authentication response to the challenge given.
      */
-    void auth_wampcra( const std::string& secret ) {
-        m_auth_data.push_back( make_tuple( "wampcra" , secret ) );
-    }
+    virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
 
-    /*!
-     * Register the secret used for a ticket authentication
-     *
-     * \param secret The unencrypted secret to authenticate with 
-     * \return nothing 
-     */
-    void auth_ticket( const std::string& secret ) {
-        m_auth_data.push_back( make_tuple( "ticket" , secret ) );
-    }
 
 private:
 
