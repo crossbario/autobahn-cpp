@@ -108,8 +108,8 @@ inline boost::future<void> wamp_session::stop()
             return;
         }
 
-        if (!m_session_id) {
-            m_session_stop.set_exception(no_session_error());
+        if (m_session_id) {
+            m_session_stop.set_exception(protocol_error("session still joined"));
             return;
         }
 
