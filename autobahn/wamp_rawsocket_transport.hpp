@@ -87,7 +87,7 @@ public:
     /*!
      * @copydoc wamp_transport::is_connected()
      */
-    virtual bool is_connected() const;
+    virtual bool is_connected() const override;
 
     /*!
      * @copydoc wamp_transport::attach()
