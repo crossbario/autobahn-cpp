@@ -309,16 +309,6 @@ private:
     /// Synchronization for dealing with stopping the session
     boost::promise<void> m_session_stop;
 
-    //////////////////////////////////////////////////////////////////////////////////////
-    /// Authentication 
-   
-    // the principal often username
-    std::string m_principal;
-	
-    // a tuple of authmethod, and secrets
-    std::vector< std::tuple< std::string, std::string > > m_auth_data; 
-
-    // auth is a tuple of ( "authmethod" , "principal" , "secret" )
 
     //////////////////////////////////////////////////////////////////////////////////////
     /// Caller
