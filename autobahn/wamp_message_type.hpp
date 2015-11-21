@@ -19,6 +19,15 @@
 #ifndef AUTOBAHN_WAMP_MESSAGE_TYPE_HPP
 #define AUTOBAHN_WAMP_MESSAGE_TYPE_HPP
 
+#ifdef ERROR
+#undef ERROR
+#endif
+
+#ifdef REGISTERED
+#undef REGISTERED
+#endif
+
+
 namespace autobahn {
 
 /// WAMP message types.
