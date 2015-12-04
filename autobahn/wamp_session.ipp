@@ -28,6 +28,10 @@
 #include "wamp_subscribe_request.hpp"
 #include "wamp_subscription.hpp"
 #include "wamp_unsubscribe_request.hpp"
+#include "wamp_authenticate.hpp"
+#include "wamp_challenge.hpp"
+
+#include "wamp_auth_utils.hpp"
 
 #if !(defined(_WIN32) || defined(WIN32))
 #include <arpa/inet.h>
@@ -195,12 +199,12 @@ boost::future<void> wamp_session<IStream, OStream>::stop()
         m_stopped = true;
 
         try {
-            m_in.close();
+            m_in.lowest_layer().close();
         } catch (...) {
         }
 
         try {
-            m_out.close();
+            m_out.lowest_layer().close();
         } catch (...) {
         }
 
@@ -211,7 +215,9 @@ boost::future<void> wamp_session<IStream, OStream>::stop()
 }
 
 template<typename IStream, typename OStream>
-boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& realm)
+boost::future<uint64_t> wamp_session<IStream, OStream>::join(
+        const std::string& realm,
+        const std::vector<std::string>& authmethods, const std::string& authid)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -221,8 +227,30 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(const std::string& 
 
     packer.pack(static_cast<int> (message_type::HELLO));
     packer.pack(realm);
+	
+   
+    // set authentication data - if any given
+    if ( !authmethods.empty() && !authid.empty() ) {
 
-    packer.pack_map(1);
+    	packer.pack_map(3);
+    
+    	// an "authmethods" entry -> [ "wampcra" , "ticket", ... ]
+    	packer.pack(std::string("authmethods"));
+    	packer.pack_array( authmethods.size() );
+        for ( std::string am : authmethods ) {
+    	    packer.pack( am );
+        }
+
+    	// authid -> "principal"    
+    	packer.pack(std::string("authid"));
+    	packer.pack(std::string( authid ));
+    } 
+    else {
+    	packer.pack_map(1);
+    }
+
+       
+    // and "roles" entry -> { ..... }
     packer.pack(std::string("roles"));
 
     packer.pack_map(4);
@@ -617,6 +645,112 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
     });
 
     return call->result().get_future();
+}
+
+template<typename IStream, typename OStream>
+void wamp_session<IStream, OStream>::process_challenge(const wamp_message& message)
+{
+    // kind of authentication
+    std::string whatAuth = (message[1].as<std::string>());
+    
+    /////////////////////////////////////////
+    // wampcra authentication
+    /////////////////////////////////////////
+    
+    wamp_challenge challenge_object("");
+    
+    if ( whatAuth == "wampcra" ) {
+
+        if (message[2].type != msgpack::type::MAP) {
+            throw protocol_error("CHALLENGE - Details must be a dictionary");
+        }
+        
+        std::string challenge, salt;
+        int iterations = 0 , keylen = 0;
+        bool salted = false;
+        
+        // parse the details, and fill variables above
+        try {
+            std::unordered_map<std::string, msgpack::object> details;
+            message[2].convert(details);
+            auto itr = details.find("challenge");
+            if (itr != details.end()) {
+                challenge = itr->second.as<std::string>();
+            } else {
+                throw protocol_error("wampcra must always introduce a challenge ( in details )");
+            }
+
+            itr = details.find("salt");
+            if (itr != details.end()) {
+                // ok we must salt our secret
+                salted = true;
+                salt = itr->second.as<std::string>();
+
+                itr = details.find("iterations");
+                if (itr == details.end()) {
+                    throw protocol_error("wampcra must always tell a number of iterations when introducing salting ( in details )");
+                }
+                iterations = itr->second.as<int>();
+
+
+                itr = details.find("keylen");
+                if (itr == details.end()) {
+                    throw protocol_error("wampcra must always tell a key length (keylen) when introducing salting ( in details )");
+                }
+                keylen = itr->second.as<int>();
+            } 
+            
+            // make the challenge object 
+            challenge_object = wamp_challenge("wampcra",challenge,salt,iterations,keylen);
+
+        } catch (const std::exception& e) {
+            if (m_debug) {
+                std::cerr << "failed to parse challenge details" << std::endl;
+                throw protocol_error("wampcra authentication: Failed parse challange details");
+            }
+        };
+    /////////////////////////////////////////
+    // ticket authentication
+    /////////////////////////////////////////
+    }
+    else if ( whatAuth == "ticket" ) {
+
+            // make the challenge object 
+            challenge_object = wamp_challenge("ticket");
+    }
+    else { 
+        throw protocol_error("not supported challenge type - can now only handle 'wampcra' and 'ticket'");
+    }
+    
+    // I am not sure if this is neccesary. Looking at other 
+    // comments in this code and the examples, it seems like the  
+    // context_response should live at least until the end of
+    // the lambda callback - below 
+    std::shared_ptr< boost::future< void > > context_response = std::make_shared< boost::future<void> >();
+
+    // call the context, to get a signature...
+    (*context_response) = on_challenge( challenge_object ).then( [=]( boost::future<wamp_authenticate> fu_auth ) {
+        try { 
+            const wamp_authenticate sig = fu_auth.get();            
+
+            auto buffer = std::make_shared<msgpack::sbuffer>();
+            msgpack::packer<msgpack::sbuffer> packer(*buffer);
+            
+            // [AUTHENTICATE, signature|str, extra|dict ]
+            packer.pack_array(3);
+            packer.pack(static_cast<int>(message_type::AUTHENTICATE));
+            packer.pack( sig.signature() );
+            packer.pack_map(0);
+            send(buffer);
+            // make sure the context_response is copied into this lambda...
+            context_response.get();
+        } catch (const std::exception& e) {
+            if (m_debug) {
+                std::cerr << "failed to handle authentication" << std::endl;
+                throw protocol_error("authentication error: failed send signature");
+            }
+        }
+    });
 }
 
 template<typename IStream, typename OStream>
@@ -1148,7 +1282,8 @@ void wamp_session<IStream, OStream>::got_message(
             // FIXME
             break;
         case message_type::CHALLENGE:
-            throw protocol_error("received CHALLENGE message - not implemented");
+            process_challenge(message);
+            break;
         case message_type::AUTHENTICATE:
             throw protocol_error("received AUTHENTICATE message unexpected for WAMP client roles");
         case message_type::GOODBYE:
@@ -1238,5 +1373,16 @@ void wamp_session<IStream, OStream>::send(const std::shared_ptr<msgpack::sbuffer
         }
     }
 }
+
+
+template<typename IStream, typename OStream>
+boost::future<wamp_authenticate> wamp_session<IStream, OStream>::on_challenge(const wamp_challenge& challenge) {
+    // a dummy implementation
+    //
+    boost::promise<wamp_authenticate> dummy;
+    dummy.set_value( wamp_authenticate( "" ) );
+    return dummy.get_future();
+}
+
 
 } // namespace autobahn

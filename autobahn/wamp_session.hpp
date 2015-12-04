@@ -59,6 +59,8 @@ class wamp_registration;
 class wamp_subscribe_request;
 class wamp_subscription;
 class wamp_unsubscribe_request;
+class wamp_authenticate;
+class wamp_challenge;
 
 /// Representation of a WAMP session.
 template<typename IStream, typename OStream>
@@ -95,10 +97,14 @@ public:
      * Join a realm with this session.
      *
      * \param realm The realm to join on the WAMP router connected to.
+     * \param authmethods The authentication methods this instance support e.g. "wampcra","ticket"
+     * \param authid The username or maybe an other identifier for the user to join. 
      * \return A future that resolves with the session ID when the realm was joined.
      */
-    boost::future<uint64_t> join(const std::string& realm);
-
+    boost::future<uint64_t> join(
+            const std::string& realm, 
+            const std::vector<std::string>& authmethods = std::vector<std::string>(),
+            const std::string& authid = "" );
     /*!
      * Leave the realm.
      *
@@ -202,6 +208,15 @@ public:
             const wamp_procedure& procedure,
             const provide_options& options = provide_options());
 
+    /*!
+     * Function called by the session when authenting. It always has to be re-implemented (if authentication is part of the system).
+     *
+     * \param challenge The challenge from the router. Containing enough information, for the system to prove membership. 
+     * \return A future deliver a proper authentication response to the challenge given.
+     */
+    virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
+
+
 private:
 
     /// Process a WAMP ERROR message.
@@ -209,6 +224,9 @@ private:
 
     /// Process a WAMP HELLO message.
     void process_welcome(const wamp_message& message);
+
+    /// Process a WAMP CHALLENGE message.
+    void process_challenge(const wamp_message& message);
 
     /// Process a WAMP RESULT message.
     void process_call_result(
@@ -290,6 +308,7 @@ private:
 
     /// Synchronization for dealing with stopping the session
     boost::promise<void> m_session_stop;
+
 
     //////////////////////////////////////////////////////////////////////////////////////
     /// Caller
