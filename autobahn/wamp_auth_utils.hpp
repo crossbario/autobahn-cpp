@@ -27,8 +27,8 @@
 
 #include <exception>
 
-// 
-// Execpetion thrown when something gets wrong 
+//
+// Execpetion thrown when something gets wrong
 // creating the derived auth key.....
 //
 class derived_key_error : public std::exception
@@ -57,43 +57,43 @@ class derived_key_error : public std::exception
 /*!
  * base64 encoding
  *
- * \param data The data to be encoded 
- * \return A encoded string 
+ * \param data The data to be encoded
+ * \return A encoded string
  */
 inline std::string base_64_encode(const std::string & data )
-{ 
+{
     BIO *bio, *b64;
     BUF_MEM *pBuf;
-    
+
     b64 = BIO_new(BIO_f_base64());
     bio = BIO_new(BIO_s_mem());
     bio = BIO_push(b64, bio);
-    
-    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); 
-    
+
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+
     BIO_write(bio, (const unsigned char *) data.c_str(), data.size());
-    BIO_flush(bio);
-    
+    (void)BIO_flush(bio);
+
     BIO_get_mem_ptr(bio, &pBuf);
-    BIO_set_close(bio, BIO_NOCLOSE);
-    
+    (void)BIO_set_close(bio, BIO_NOCLOSE);
+
     std::string str_out;
     str_out.assign( pBuf->data, pBuf->length );
-    
+
     BIO_free_all(bio);
-    
+
     return str_out;
 }
 
 
 /*!
- * create a derived key from a password/secret 
+ * create a derived key from a password/secret
  *
  * \param  passwd A secret string to make a derived key for
- * \param  salt A random salt added to the key 
- * \param  iterations A number of intertions used to create the derived key 
- * \param  keylen The length of the derived key returned. 
- * \return a PBKDF2-sha256 derived key 
+ * \param  salt A random salt added to the key
+ * \param  iterations A number of intertions used to create the derived key
+ * \param  keylen The length of the derived key returned.
+ * \return a PBKDF2-sha256 derived key
  */
 inline std::string derive_key(
         const std::string & passwd,
@@ -111,15 +111,15 @@ inline std::string derive_key(
 
     std::string str_out;
     str_out.resize( keylen );
-	
+
 
     unsigned char * out = (unsigned char *) str_out.c_str();
 
 
     int result = PKCS5_PBKDF2_HMAC(
-		    pwd, passwdLen, 
-		    salt_value, saltLen, 
-		    iterations, 
+		    pwd, passwdLen,
+		    salt_value, saltLen,
+		    iterations,
 		    EVP_sha256(),
 		    keylen, out);
 
@@ -128,7 +128,7 @@ inline std::string derive_key(
 	    return base_64_encode( str_out );
     }
     else
-    { 
+    {
 	    throw derived_key_error();
     }
 }
@@ -137,9 +137,9 @@ inline std::string derive_key(
 /*!
  * make a keyed-hash from a key using the HMAC-sha256 and a challenge
  *
- * \param key The key to make a digest for 
- * \param challenge Some data mixin - identify the specific digest 
- * \return a base64 encoded digest  
+ * \param key The key to make a digest for
+ * \param challenge Some data mixin - identify the specific digest
+ * \return a base64 encoded digest
  */
 inline std::string compute_wcs(
         const std::string & key,
@@ -156,7 +156,7 @@ inline std::string compute_wcs(
     HMAC_Final(&hmac, hash, &len);
     HMAC_CTX_cleanup(&hmac);
 
-    
+
     std::string str_out;
     str_out.assign( ( char * ) &hash , 32 );
 
@@ -173,8 +173,8 @@ inline std::string compute_wcs(
  *  - digits
  *  -
  *
- * \param length The length of the secret to generate. 
- * \param challenge Some data mixin - identify the specific digest 
+ * \param length The length of the secret to generate.
+ * \param challenge Some data mixin - identify the specific digest
  * \return The generated secret. The length of the generated is ``length`` octets.
  */
 inline std::string generate_wcs(int length=14){
@@ -183,12 +183,12 @@ inline std::string generate_wcs(int length=14){
     // The characters from which to generate the secret.
     //
     static const char WCS_SECRET_CHARSET[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    
+
     std::string s;
     for (int i = 0; i < length; ++i) {
         s.push_back( WCS_SECRET_CHARSET[ rand() % (sizeof(WCS_SECRET_CHARSET) - 1) ] );
     }
-    
+
     return s;
 }
 
