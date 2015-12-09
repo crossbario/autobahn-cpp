@@ -227,13 +227,13 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(
 
     packer.pack(static_cast<int> (message_type::HELLO));
     packer.pack(realm);
-	
-   
+
+
     // set authentication data - if any given
     if ( !authmethods.empty() && !authid.empty() ) {
 
     	packer.pack_map(3);
-    
+
     	// an "authmethods" entry -> [ "wampcra" , "ticket", ... ]
     	packer.pack(std::string("authmethods"));
     	packer.pack_array( authmethods.size() );
@@ -241,15 +241,15 @@ boost::future<uint64_t> wamp_session<IStream, OStream>::join(
     	    packer.pack( am );
         }
 
-    	// authid -> "principal"    
+    	// authid -> "principal"
     	packer.pack(std::string("authid"));
     	packer.pack(std::string( authid ));
-    } 
+    }
     else {
     	packer.pack_map(1);
     }
 
-       
+
     // and "roles" entry -> { ..... }
     packer.pack(std::string("roles"));
 
@@ -652,23 +652,22 @@ void wamp_session<IStream, OStream>::process_challenge(const wamp_message& messa
 {
     // kind of authentication
     std::string whatAuth = (message[1].as<std::string>());
-    
+
     /////////////////////////////////////////
     // wampcra authentication
     /////////////////////////////////////////
-    
+
     wamp_challenge challenge_object("");
-    
+
     if ( whatAuth == "wampcra" ) {
 
         if (message[2].type != msgpack::type::MAP) {
             throw protocol_error("CHALLENGE - Details must be a dictionary");
         }
-        
+
         std::string challenge, salt;
         int iterations = 0 , keylen = 0;
-        bool salted = false;
-        
+
         // parse the details, and fill variables above
         try {
             std::unordered_map<std::string, msgpack::object> details;
@@ -683,7 +682,6 @@ void wamp_session<IStream, OStream>::process_challenge(const wamp_message& messa
             itr = details.find("salt");
             if (itr != details.end()) {
                 // ok we must salt our secret
-                salted = true;
                 salt = itr->second.as<std::string>();
 
                 itr = details.find("iterations");
@@ -698,9 +696,9 @@ void wamp_session<IStream, OStream>::process_challenge(const wamp_message& messa
                     throw protocol_error("wampcra must always tell a key length (keylen) when introducing salting ( in details )");
                 }
                 keylen = itr->second.as<int>();
-            } 
-            
-            // make the challenge object 
+            }
+
+            // make the challenge object
             challenge_object = wamp_challenge("wampcra",challenge,salt,iterations,keylen);
 
         } catch (const std::exception& e) {
@@ -715,27 +713,27 @@ void wamp_session<IStream, OStream>::process_challenge(const wamp_message& messa
     }
     else if ( whatAuth == "ticket" ) {
 
-            // make the challenge object 
+            // make the challenge object
             challenge_object = wamp_challenge("ticket");
     }
-    else { 
+    else {
         throw protocol_error("not supported challenge type - can now only handle 'wampcra' and 'ticket'");
     }
-    
-    // I am not sure if this is neccesary. Looking at other 
-    // comments in this code and the examples, it seems like the  
+
+    // I am not sure if this is neccesary. Looking at other
+    // comments in this code and the examples, it seems like the
     // context_response should live at least until the end of
-    // the lambda callback - below 
+    // the lambda callback - below
     std::shared_ptr< boost::future< void > > context_response = std::make_shared< boost::future<void> >();
 
     // call the context, to get a signature...
     (*context_response) = on_challenge( challenge_object ).then( [=]( boost::future<wamp_authenticate> fu_auth ) {
-        try { 
-            const wamp_authenticate sig = fu_auth.get();            
+        try {
+            const wamp_authenticate sig = fu_auth.get();
 
             auto buffer = std::make_shared<msgpack::sbuffer>();
             msgpack::packer<msgpack::sbuffer> packer(*buffer);
-            
+
             // [AUTHENTICATE, signature|str, extra|dict ]
             packer.pack_array(3);
             packer.pack(static_cast<int>(message_type::AUTHENTICATE));
