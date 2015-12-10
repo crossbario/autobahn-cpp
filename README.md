@@ -230,7 +230,20 @@ cd ${HOME}/build/autobahn
 ./examples/call1
 ```
 
+#### Running the Examples with Bonefish
 
+Start the bonefish router 
+```
+./bonefish/daemon/bonefish -r default -t 9000 -d
+```
+Then start the subscriber example in a second terminal
+```
+ ./examples/subscriber -d -p 9000
+ ```
+Then start the publisher example in a third terminal
+```
+ ./examples/publisher -d -p 9000
+ ```
 ## Documentation
 
 [Click here](http://autobahn.ws/cpp/reference/) for the Autobahn|Cpp reference documentation.
