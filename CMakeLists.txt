@@ -29,12 +29,17 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/autobahn.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/exceptions.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_arguments.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_auth_utils.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_authenticate.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_authenticate.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call_options.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call_options.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call_result.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call_result.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_challenge.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_challenge.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_event.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_event.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_event_handler.hpp
@@ -49,6 +54,8 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_register_request.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_registration.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_registration.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_transport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_transport_handler.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_session.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_session.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscribe_request.hpp
