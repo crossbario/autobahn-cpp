@@ -29,6 +29,9 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/autobahn.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/exceptions.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_arguments.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_authenticate.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_authenticate.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_auth_utils.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_call_options.hpp
