@@ -1,5 +1,5 @@
 include_directories(${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIRS} ${Libmsgpack_INCLUDE_DIRS})
-link_libraries(${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} crypto)
+link_libraries(${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 set(PARAMETERS_SOURCES parameters.cpp)
 set(PARAMETERS_HEADERS parameters.hpp)
@@ -21,4 +21,4 @@ target_link_libraries(caller examples_parameters)
 target_link_libraries(callee examples_parameters)
 target_link_libraries(publisher examples_parameters)
 target_link_libraries(subscriber examples_parameters)
-target_link_libraries(subscriber_wampcra examples_parameters)
+target_link_libraries(subscriber_wampcra examples_parameters crypto)
