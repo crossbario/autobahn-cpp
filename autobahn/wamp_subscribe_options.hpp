@@ -31,7 +31,7 @@
 #ifndef AUTOBAHN_WAMP_SUBSCRIBE_OPTIONS_HPP
 #define AUTOBAHN_WAMP_SUBSCRIBE_OPTIONS_HPP
 
-#include <chrono>
+#include <boost/optional.hpp>
 
 namespace autobahn {
 
@@ -46,11 +46,11 @@ public:
     wamp_subscribe_options& operator=(const wamp_subscribe_options& other) = delete;
 
     const std::string& match() const;
-
     void set_match(const std::string& match);
+    const bool is_match_set() const;
 
 private:
-    std::string m_match;
+    boost::optional<std::string> m_match;
 };
 
 } // namespace autobahn
@@ -58,3 +58,4 @@ private:
 #include "wamp_subscribe_options.ipp"
 
 #endif // AUTOBAHN_WAMP_SUBSCRIBE_OPTIONS_HPP
+

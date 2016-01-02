@@ -35,17 +35,26 @@
 namespace autobahn {
 
 inline wamp_subscribe_options::wamp_subscribe_options()
-    : m_match("exact")
+    : m_match()
 {
 }
 
 inline const std::string& wamp_subscribe_options::match() const
 {
-    return m_match;
+    return *m_match;
+}
+
+inline const bool wamp_subscribe_options::is_match_set() const
+{
+    return m_match.is_initialized();
 }
 
 inline void wamp_subscribe_options::set_match(const std::string& match)
 {
+    if (!(match == "exact" || match == "prefix" || match == "wildcard"))
+    {
+        throw std::runtime_error("The value of 'match' must be 'exact', 'prefix', or 'wildcard'.");
+    }
     m_match = match;
 }
 
@@ -62,9 +71,6 @@ struct convert<autobahn::wamp_subscribe_options>
             msgpack::object const& object,
             autobahn::wamp_subscribe_options& options) const
     {
-        std::unordered_map<std::string, msgpack::object> options_map;
-        object >> options_map;
-
         return object;
     }
 };
@@ -77,11 +83,23 @@ struct pack<autobahn::wamp_subscribe_options>
             msgpack::packer<Stream>& packer,
             autobahn::wamp_subscribe_options const& options) const
     {
-        std::unordered_map<std::string, std::string> options_map;
+        std::map<std::string, std::string> options_map;
+        bool should_pack_options = false;
 
-        options_map["match"] = options.match();
+        if (options.is_match_set())
+        {
+            options_map["match"] = options.match();
+            should_pack_options = true;
+        }
 
-        packer.pack(options_map);
+        if (should_pack_options)
+        {
+            packer.pack(options_map);
+        }
+        else
+        {
+            packer.pack_map(0);
+        }
 
         return packer;
     }
@@ -94,14 +112,23 @@ struct object_with_zone<autobahn::wamp_subscribe_options>
             msgpack::object::with_zone& object,
             const autobahn::wamp_subscribe_options& options)
     {
-        std::unordered_map<std::string, msgpack::object> options_map;
+        std::map<std::string, std::string> options_map;
+        bool should_copy_options = false;
 
-        options_map["match"] = msgpack::object(options.match());
+        if (options.is_match_set())
+        {
+            options_map["match"] = options.match();
+            should_copy_options = true;
+        }
 
-        object << options_map;
+        if (should_copy_options)
+        {
+            object << options_map;
+        }
     }
 };
 
 } // namespace adaptor
 } // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
 } // namespace msgpack
+
