@@ -82,11 +82,11 @@ inline std::string base_64_encode(const std::string & data )
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
 
     BIO_write(bio, (const unsigned char *) data.c_str(), data.size());
-    BIO_flush(bio);
-
+    (void)BIO_flush(bio);
+    
     BIO_get_mem_ptr(bio, &pBuf);
-    BIO_set_close(bio, BIO_NOCLOSE);
-
+    (void)BIO_set_close(bio, BIO_NOCLOSE);
+    
     std::string str_out;
     str_out.assign( pBuf->data, pBuf->length );
 
