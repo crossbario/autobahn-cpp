@@ -1189,6 +1189,7 @@ void wamp_session<IStream, OStream>::process_registered(const wamp_message& mess
         uint64_t registration_id = message[2].as<uint64_t>();
         m_procedures[registration_id] = register_request_itr->second->procedure();
         register_request_itr->second->set_response(wamp_registration(registration_id));
+        m_register_requests.erase(register_request_itr);
     } else {
         throw protocol_error("REGISTERED - no pending request ID");
     }
