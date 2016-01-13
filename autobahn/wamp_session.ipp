@@ -886,7 +886,7 @@ void wamp_session<IStream, OStream>::process_error(const wamp_message& message)
                     // FIXME: forward all error info .. also not sure if this is the correct
                     // way to use set_exception()
                     call_itr->second->result().set_exception(boost::copy_exception(std::runtime_error(error)));
-
+                    m_calls.erase(call_itr);
                 } else {
                     throw protocol_error("bogus ERROR message for non-pending CALL request ID");
                 }
@@ -1039,6 +1039,7 @@ void wamp_session<IStream, OStream>::process_call_result(
             }
         }
         call_itr->second->set_result(std::move(result));
+        m_calls.erase(call_itr);
     } else {
         throw protocol_error("bogus RESULT message for non-pending request ID");
     }
