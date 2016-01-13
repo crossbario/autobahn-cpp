@@ -33,6 +33,7 @@
 
 #include "wamp_call_options.hpp"
 #include "wamp_call_result.hpp"
+#include "wamp_subscribe_options.hpp"
 #include "wamp_event_handler.hpp"
 #include "wamp_message.hpp"
 #include "wamp_procedure.hpp"
@@ -156,10 +157,12 @@ public:
      *
      * \param topic The URI of the topic to subscribe to.
      * \param handler The handler that will receive events under the subscription.
+     * \param options The options to pass in the subscribe to the router.
      * \return A future that resolves to a autobahn::subscription
      */
     boost::future<wamp_subscription> subscribe(
-            const std::string& topic, const wamp_event_handler& handler);
+            const std::string& topic, const wamp_event_handler& handler,
+            const wamp_subscribe_options& options = wamp_subscribe_options());
 
     /*!
      * Unubscribe a handler to previosuly subscribed topic.

@@ -340,7 +340,8 @@ boost::future<std::string> wamp_session<IStream, OStream>::leave(const std::stri
 
 template<typename IStream, typename OStream>
 boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
-        const std::string& topic, const wamp_event_handler& handler)
+        const std::string& topic, const wamp_event_handler& handler,
+        const wamp_subscribe_options& options)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>();
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
@@ -350,7 +351,7 @@ boost::future<wamp_subscription> wamp_session<IStream, OStream>::subscribe(
     packer.pack_array(4);
     packer.pack(static_cast<int>(message_type::SUBSCRIBE));
     packer.pack(request_id);
-    packer.pack_map(0);
+    packer.pack(options);
     packer.pack(topic);
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
