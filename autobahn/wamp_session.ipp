@@ -680,7 +680,6 @@ void wamp_session<IStream, OStream>::process_challenge(const wamp_message& messa
 
         std::string challenge, salt;
         int iterations = 0 , keylen = 0;
-        bool salted = false;
 
         // parse the details, and fill variables above
         try {
@@ -696,7 +695,6 @@ void wamp_session<IStream, OStream>::process_challenge(const wamp_message& messa
             itr = details.find("salt");
             if (itr != details.end()) {
                 // ok we must salt our secret
-                salted = true;
                 salt = itr->second.as<std::string>();
 
                 itr = details.find("iterations");
