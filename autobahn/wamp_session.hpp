@@ -92,6 +92,13 @@ public:
     ~wamp_session();
 
     /*!
+     * Function to set the session to always disclose the caller
+     *
+     * \param caller_disclose_me Set to 'true' to have the session always disclose the caller
+     */
+    void set_caller_disclose_me(bool caller_disclose_me);
+
+    /*!
      * Start listening on the IStream provided to the constructor
      * of this session.
      *
@@ -193,7 +200,8 @@ public:
      */
     template <typename List>
     boost::future<wamp_call_result> call(
-            const std::string& procedure, const List& arguments,
+            const std::string& procedure,
+            const List& arguments,
             const wamp_call_options& options = wamp_call_options());
 
     /*!
@@ -207,7 +215,9 @@ public:
      */
     template<typename List, typename Map>
     boost::future<wamp_call_result> call(
-            const std::string& procedure, const List& arguments, const Map& kw_arguments,
+            const std::string& procedure,
+            const List& arguments,
+            const Map& kw_arguments,
             const wamp_call_options& options = wamp_call_options());
 
     /*!
@@ -230,7 +240,6 @@ public:
      * \return A future deliver a proper authentication response to the challenge given.
      */
     virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
-
 
 private:
 
@@ -292,6 +301,9 @@ private:
 
     /// Output stream this session runs on.
     OStream& m_out;
+
+    /// Flag signalling if the session should always disclose the caller
+    bool m_caller_disclose_me;
 
     char m_message_length_buffer[4];
     uint32_t m_message_length;

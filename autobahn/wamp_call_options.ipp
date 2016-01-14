@@ -36,17 +36,42 @@ namespace autobahn {
 
 inline wamp_call_options::wamp_call_options()
     : m_timeout()
+    , m_disclose_me()
 {
 }
 
 inline const std::chrono::milliseconds& wamp_call_options::timeout() const
 {
-    return m_timeout;
+    return *m_timeout;
 }
 
 inline void wamp_call_options::set_timeout(const std::chrono::milliseconds& timeout)
 {
+    if (!(timeout.count() > 0))
+    {
+        throw std::runtime_error("The value of 'timeout' must be greater than 0.");
+    }
     m_timeout = timeout;
+}
+
+inline const bool wamp_call_options::is_timeout_set() const
+{
+    return m_timeout.is_initialized();
+}
+
+inline const bool wamp_call_options::disclose_me() const
+{
+    return *m_disclose_me;
+}
+
+inline void wamp_call_options::set_disclose_me(const bool disclose_me)
+{
+    m_disclose_me = disclose_me;
+}
+
+inline const bool wamp_call_options::is_disclose_me_set() const
+{
+    return m_disclose_me.is_initialized();
 }
 
 } // namespace autobahn
@@ -62,12 +87,17 @@ struct convert<autobahn::wamp_call_options>
             msgpack::object const& object,
             autobahn::wamp_call_options& options) const
     {
-        std::unordered_map<std::string, msgpack::object> options_map;
+        std::map<std::string, msgpack::object> options_map;
         object >> options_map;
 
-        const auto options_map_itr = options_map.find("timeout");
-        if (options_map_itr != options_map.end()) {
-            options.set_timeout(std::chrono::milliseconds(options_map_itr->second.as<unsigned>()));
+        const auto options_map_timeout_itr = options_map.find("timeout");
+        if (options_map_timeout_itr != options_map.end()) {
+            options.set_timeout(std::chrono::milliseconds(options_map_timeout_itr->second.as<unsigned>()));
+        }
+
+        const auto options_map_disclose_me_itr = options_map.find("disclose_me");
+        if (options_map_disclose_me_itr != options_map.end()) {
+            options.set_disclose_me(options_map_disclose_me_itr->second.as<bool>());
         }
 
         return object;
@@ -82,13 +112,29 @@ struct pack<autobahn::wamp_call_options>
             msgpack::packer<Stream>& packer,
             autobahn::wamp_call_options const& options) const
     {
-        std::unordered_map<std::string, unsigned> options_map;
-        const auto& timeout = options.timeout();
-        if (timeout.count() > 0) {
-            options_map["timeout"] = timeout.count();
+        std::map<std::string, msgpack::object> options_map;
+        bool should_pack_options = false;
+
+        if (options.is_timeout_set())
+        {
+            options_map["timeout"] = msgpack::object(options.timeout().count());
+            should_pack_options = true;
         }
 
-        packer.pack(options_map);
+        if (options.is_disclose_me_set())
+        {
+            options_map["disclose_me"] = msgpack::object(options.disclose_me());
+            should_pack_options = true;
+        }
+
+        if (should_pack_options)
+        {
+            packer.pack(options_map);
+        }
+        else
+        {
+            packer.pack_map(0);
+        }
 
         return packer;
     }
@@ -101,14 +147,25 @@ struct object_with_zone<autobahn::wamp_call_options>
             msgpack::object::with_zone& object,
             const autobahn::wamp_call_options& options)
     {
-        std::unordered_map<std::string, msgpack::object> options_map;
+        std::map<std::string, msgpack::object> options_map;
+        bool should_copy_options = false;
 
-        const auto& timeout = options.timeout();
-        if (timeout.count() != 0) {
-            options_map["timeout"] = msgpack::object(timeout.count());
+        if (options.is_timeout_set())
+        {
+            options_map["timeout"] = msgpack::object(options.timeout().count());
+            should_copy_options = true;
         }
 
-        object << options_map;
+        if (options.is_disclose_me_set())
+        {
+            options_map["disclose_me"] = msgpack::object(options.disclose_me());
+            should_copy_options = true;
+        }
+
+        if (should_copy_options)
+        {
+            object << options_map;
+        }
     }
 };
 

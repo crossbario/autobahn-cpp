@@ -71,6 +71,14 @@ struct convert<autobahn::wamp_subscribe_options>
             msgpack::object const& object,
             autobahn::wamp_subscribe_options& options) const
     {
+        std::map<std::string, msgpack::object> options_map;
+        object >> options_map;
+
+        const auto options_map_itr = options_map.find("match");
+        if (options_map_itr != options_map.end()) {
+            options.set_match(std::string(options_map_itr->second.as<std::string>()));
+        }
+
         return object;
     }
 };
@@ -83,12 +91,12 @@ struct pack<autobahn::wamp_subscribe_options>
             msgpack::packer<Stream>& packer,
             autobahn::wamp_subscribe_options const& options) const
     {
-        std::map<std::string, std::string> options_map;
+        std::map<std::string, msgpack::object> options_map;
         bool should_pack_options = false;
 
         if (options.is_match_set())
         {
-            options_map["match"] = options.match();
+            options_map["match"] = msgpack::object(options.match());
             should_pack_options = true;
         }
 
@@ -112,12 +120,12 @@ struct object_with_zone<autobahn::wamp_subscribe_options>
             msgpack::object::with_zone& object,
             const autobahn::wamp_subscribe_options& options)
     {
-        std::map<std::string, std::string> options_map;
+        std::map<std::string, msgpack::object> options_map;
         bool should_copy_options = false;
 
         if (options.is_match_set())
         {
-            options_map["match"] = options.match();
+            options_map["match"] = msgpack::object(options.match());
             should_copy_options = true;
         }
 
