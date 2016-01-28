@@ -41,14 +41,16 @@
 
 int main(int argc, char** argv)
 {
+    std::cerr << "Boost: " << BOOST_VERSION << std::endl;
+
     try {
         auto parameters = get_parameters(argc, argv);
 
         boost::asio::io_service io;
         boost::asio::ip::tcp::socket socket(io);
-        boost::asio::ip::tcp::endpoint endpoint(
-                boost::asio::ip::address::from_string("127.0.0.1"), 8090);
 
+        // create a WAMP session that talks WAMP-RawSocket over TCP
+        //
         bool debug = parameters->debug();
         auto session = std::make_shared<
                 autobahn::wamp_session<boost::asio::ip::tcp::socket,
@@ -76,7 +78,7 @@ int main(int argc, char** argv)
                                 std::cerr << "joined realm: " << joined.get() << std::endl;
 
                                 std::tuple<std::string> arguments(std::string("hello"));
-                                session->publish("com.examples.subscriptions.topic1", arguments);
+                                session->publish("com.example.topic1", arguments);
                                 std::cerr << "event published" << std::endl;
 
                                 leave_future = session->leave().then([&](boost::future<std::string> reason) {
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
         std::cerr << "stopped io service" << std::endl;
     }
     catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "exception: " << e.what() << std::endl;
         return 1;
     }
     return 0;

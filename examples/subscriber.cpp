@@ -36,21 +36,25 @@
 #include <memory>
 #include <tuple>
 
-void topic1(const autobahn::wamp_event& event)
+void on_topic1(const autobahn::wamp_event& event)
 {
     std::cerr << "received event: " << event.argument<std::string>(0) << std::endl;
 }
 
 int main(int argc, char** argv)
 {
+    std::cerr << "Boost: " << BOOST_VERSION << std::endl;
+
     try {
         auto parameters = get_parameters(argc, argv);
 
-        std::cerr << "realm: " << parameters->realm() << std::endl;
+        std::cerr << "Connecting to realm: " << parameters->realm() << std::endl;
 
         boost::asio::io_service io;
         boost::asio::ip::tcp::socket socket(io);
 
+        // create a WAMP session that talks WAMP-RawSocket over TCP
+        //
         bool debug = parameters->debug();
         auto session = std::make_shared<
                 autobahn::wamp_session<boost::asio::ip::tcp::socket,
@@ -74,7 +78,7 @@ int main(int argc, char** argv)
                             std::cerr << "session started" << std::endl;
                             join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
                                 std::cerr << "joined realm: " << s.get() << std::endl;
-                                session->subscribe("com.examples.subscriptions.topic1", &topic1);
+                                session->subscribe("com.example.topic1", &on_topic1);
                             });
                         } else {
                             std::cerr << "failed to start session" << std::endl;
@@ -93,7 +97,7 @@ int main(int argc, char** argv)
         std::cerr << "stopped io service" << std::endl;
     }
     catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "exception: " << e.what() << std::endl;
         return 1;
     }
     return 0;

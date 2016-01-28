@@ -79,7 +79,7 @@ int main(int argc, char** argv)
                                 call_options.set_timeout(std::chrono::seconds(10));
 
                                 std::tuple<uint64_t, uint64_t> arguments(23, 777);
-                                call_future = session->call("com.examples.calculator.add", arguments, call_options).then(
+                                call_future = session->call("com.example.add2", arguments, call_options).then(
                                 [&](boost::future<autobahn::wamp_call_result> result) {
                                     try {
                                         uint64_t sum = result.get().argument<uint64_t>(0);

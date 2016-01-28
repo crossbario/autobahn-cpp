@@ -38,10 +38,12 @@
 #include <string>
 #include <tuple>
 
-void add(autobahn::wamp_invocation invocation)
+void add2(autobahn::wamp_invocation invocation)
 {
     auto a = invocation->argument<uint64_t>(0);
     auto b = invocation->argument<uint64_t>(1);
+
+    std::cerr << "Procedure com.example.add2 invoked: " << a << ", " << b << std::endl;
 
     invocation->result(std::make_tuple(a + b));
 }
@@ -53,10 +55,12 @@ int main(int argc, char** argv)
     try {
         auto parameters = get_parameters(argc, argv);
 
+        std::cerr << "Connecting to realm: " << parameters->realm() << std::endl;
+
         boost::asio::io_service io;
         boost::asio::ip::tcp::socket socket(io);
 
-        // create a WAMP session that talks over TCP
+        // create a WAMP session that talks WAMP-RawSocket over TCP
         //
         bool debug = parameters->debug();
         auto session = std::make_shared<
@@ -82,7 +86,7 @@ int main(int argc, char** argv)
                             std::cerr << "session started" << std::endl;
                             join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> s) {
                                 std::cerr << "joined realm: " << s.get() << std::endl;
-                                session->provide("com.examples.calculator.add", &add);
+                                session->provide("com.example.add2", &add2);
                             });
                         } else {
                             std::cerr << "failed to start session" << std::endl;

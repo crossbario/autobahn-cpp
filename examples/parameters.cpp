@@ -39,7 +39,7 @@ namespace {
 const std::string LOCALHOST_IP_ADDRESS_STRING("127.0.0.1");
 const boost::asio::ip::address LOCALHOST_IP_ADDRESS(
         boost::asio::ip::address::from_string(LOCALHOST_IP_ADDRESS_STRING));
-const std::string DEFAULT_WAMP_REALM("default");
+const std::string DEFAULT_WAMP_REALM("realm1");
 const uint16_t DEFAULT_WAMP_RAWSOCKET_PORT(8000);
 }
 
