@@ -101,7 +101,7 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 Install some libs and build tools (these are for Ubuntu):
 
 ```console
-sudo apt-get install libbz2-dev libssl-dev cmake
+sudo apt-get install -y libbz2-dev libssl-dev cmake
 ```
 
 ### Clang
@@ -109,20 +109,37 @@ sudo apt-get install libbz2-dev libssl-dev cmake
 If you want to work with Clang (rather than GCC), install [clang](http://clang.llvm.org/) and [libc++](http://libcxx.llvm.org/) (these are for Ubuntu):
 
 ```console
-sudo apt-get install clang libc++1 libc++-dev
-sudo update-alternatives --config c++
-# select clang++ in command-line interface
+sudo apt-get install -y clang libc++1 libc++-dev
+```
+
+Then make Clang available:
+
+```console
+oberstet@corei7ub1310:~$ sudo update-alternatives --config c++
+[sudo] password for oberstet: 
+Es gibt 3 Auswahlmöglichkeiten für die Alternative c++ (welche /usr/bin/c++ bereitstellen).
+
+  Auswahl      Pfad                     Priorität Status
+------------------------------------------------------------
+* 0            /usr/bin/g++              20        Auto-Modus
+  1            /usr/bin/clang++          10        manueller Modus
+  2            /usr/bin/clang++-libc++   5         manueller Modus
+  3            /usr/bin/g++              20        manueller Modus
+
+Drücken Sie die Eingabetaste, um die aktuelle Wahl[*] beizubehalten,
+oder geben Sie die Auswahlnummer ein: 1
+update-alternatives: /usr/bin/clang++ wird verwendet, um /usr/bin/c++ (c++) im manueller Modus bereitzustellen
 ```
 
 ### Boost
 
-Most of the time, your distro's Boost libraries will be outdated (unless you're using Arch or Homebrew). Don't waste time with those: to build the latest Boost 1.58 (current release as of 2015/06) from sources
+Most of the time, your distro's Boost libraries will be outdated (unless you're using Arch or Homebrew). Don't waste time with those: to build the latest Boost 1.60 (current release as of 2016/01) from sources
 
 ```console
 cd ~
-wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
-tar xvjf boost_1_58_0.tar.bz2
-cd boost_1_58_0
+wget http://downloads.sourceforge.net/project/boost/boost/1.60.0/boost_1_60_0.tar.bz2
+tar xvjf boost_1_60_0.tar.bz2
+cd boost_1_60_0
 ./bootstrap.sh --with-toolset=clang
 ./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
 ```
@@ -137,23 +154,38 @@ To build using GCC instead of Clang:
 ./b2 toolset=gcc -j 4
 ```
 
+Then add the following to your `~/.profile`:
+
+```shell
+export BOOST_ROOT=${HOME}/boost_1_60_0
+export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
+```
+
 ### MsgPack-C
 
 Get [MsgPack-C](https://github.com/msgpack/msgpack-c) and install:
 
 ```console
-cd $HOME
+cd ~
 git clone https://github.com/msgpack/msgpack-c.git
 cd msgpack-c
-git checkout cpp-1.1.0
-mkdir -p ../build/msgpack-c
-cd ../build/msgpack-c
-cmake ${HOME}/msgpack-c
-make
+git checkout cpp-1.4.0
+export CC=/usr/bin/clang
+export CXX=/usr/bin/clang++
+export CXXFLAGS="$CXXFLAGS -std=c++11"
+./bootstrap
+./configure --prefix=$HOME/msgpack_clang
 make install
 ```
 
 > On FreeBSD, you need to `pkg install autotools` and invoke `gmake` instead of `make`.
+
+Then add the following to your `~/.profile`:
+
+```shell
+export MSGPACK_ROOT=${HOME}/msgpack_clang
+export LD_LIBRARY_PATH=${MSGPACK_ROOT}/lib:${LD_LIBRARY_PATH}
+```
 
 ### **Autobahn**|Cpp
 
