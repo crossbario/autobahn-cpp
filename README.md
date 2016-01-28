@@ -161,7 +161,7 @@ To get **Autobahn**|Cpp library and examples, clone the repo
 
 ```console
 cd $HOME
-git clone git@github.com:davidchappelle/AutobahnCpp.git autobahn
+git clone https://github.com/crossbario/autobahn-cpp.git
 cd autobahn
 ```
 
