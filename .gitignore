@@ -25,3 +25,4 @@ doc/_doxygen*
 # Qt Creator
 CMakeLists.txt.user
 *.key
+*.pid

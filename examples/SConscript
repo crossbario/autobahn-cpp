@@ -34,7 +34,8 @@ examples = [('subscriber.cpp', []),
             ('publisher.cpp', []),
             ('callee.cpp', []),
             ('caller.cpp', []),
-            ('wampcra.cpp', ['crypto'])]
+            ('wampcra.cpp', ['crypto']),
+            ('uds.cpp', [])]
 
 parameters = env.StaticLibrary('parameters', ['parameters.cpp'])
 

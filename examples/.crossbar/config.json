@@ -71,6 +71,13 @@
                      }
                   }
                }
+            },
+            {
+               "type": "rawsocket",
+               "endpoint": {
+                  "type": "unix",
+                  "path": "/tmp/crossbar.sock"
+               }
             }
          ]
       }
