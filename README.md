@@ -7,6 +7,8 @@
  * **Publisher**
  * **Subscriber**
 
+**Autobahn**|Cpp is open-source, licensed under the [Boost Software License](LICENSE).
+
 The API and implementation make use of modern C++ 11 and new asynchronous idioms using (upcoming) features of the standard C++ library, in particular **Futures**, [**Continuations**](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf) and **Lambdas**.
 
 > [Continuations](http://en.wikipedia.org/wiki/Continuation) are *one* way of managing control flow in an asynchronous program. Other styles include: asynchronous [Callbacks](http://en.wikipedia.org/wiki/Callback_%28computer_programming%29), [Coroutines](http://en.wikipedia.org/wiki/Coroutine) (`yield` or `await`), Actors ([Erlang/OTP](http://www.erlang.org/), [Scala](http://www.scala-lang.org/)/[Akka](http://akka.io/) or [Rust](http://www.scala-lang.org/)) and [Transactional memory](http://en.wikipedia.org/wiki/Transactional_Synchronization_Extensions).
@@ -85,6 +87,12 @@ Here is JavaScript running in Chrome call into C++ running on command line. Both
 
 * [Example C++ code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/register2.cpp)
 * [Example JavaScript code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/index.html)
+
+
+## Examples
+
+The Autobahn|Cpp repository contains a number of [examples](examples) that demonstrate all 4 basic patterns of using WAMP. There are also examples for WAMP-CRA and Unix domain sockets.
+
 
 ## Building
 
@@ -198,58 +206,6 @@ cd autobahn
 ```
 
 The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
-
-
-## Examples
-
-The Autobahn|Cpp repository contains a number of [examples](examples) that demonstrate all 4 basic patterns of using WAMP.
-
-
-### Building the Examples
-
-For building the examples, add the following to your `~/.profile`:
-
-```console
-export BOOST_ROOT=${HOME}/boost
-```
-
-Now build all examples:
-
-```console
-mkdir -p ${HOME}/build/autobahn
-cd ${HOME}/build/autobahn
-cmake ${HOME}/autobahn
-make -j4
-```
-
-The examples will get built in `build/autobahn/examples`.
-
-
-### Running the Examples
-
-The examples include a [Autobahn|Python](http://autobahn.ws/python) based WAMP router and example backend.
-
-To run this, you need [Python](http://python.org) and [pip](http://www.pip-installer.org/en/latest/installing.html) already installed.
-
-Then, to install **Autobahn|Python**
-
-```console
-pip install autobahn[twisted]
-```
-
-Start the [Crossbar hello:cpp example](https://github.com/crossbario/crossbarexamples/tree/master/hello/cpp) router in a first terminal
-
-```console
-cd $CROSSBAR_EXAMPLES/hello/cpp
-crossbar start
-```
-
-Then start one of the built C++ examples in a second terminal
-
-```console
-cd ${HOME}/build/autobahn
-./examples/call1
-```
 
 
 ## Documentation
