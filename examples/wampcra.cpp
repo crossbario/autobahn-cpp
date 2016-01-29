@@ -36,11 +36,6 @@
 #include <memory>
 #include <tuple>
 
-void topic1(const autobahn::wamp_event& event)
-{
-    std::cerr << "received event: " << event.argument<uint64_t>(0) << std::endl;
-}
-
 template<typename IStream, typename OStream>
 class auth_wamp_session :
     public autobahn::wamp_session<IStream, OStream>
@@ -74,6 +69,8 @@ public:
 
 int main(int argc, char** argv)
 {
+    std::cerr << "Boost: " << BOOST_VERSION << std::endl;
+
     try {
         auto parameters = get_parameters(argc, argv);
 
@@ -85,8 +82,8 @@ int main(int argc, char** argv)
         bool debug = parameters->debug();
         std::vector<std::string> auth_methods;
         auth_methods.push_back("wampcra");
-        std::string secret = "secret";
-        std::string authid = "authid";
+        std::string authid = "homer";
+        std::string secret = "secret123";
 
         auto session = std::make_shared<
                 auth_wamp_session<boost::asio::ip::tcp::socket,
@@ -110,7 +107,7 @@ int main(int argc, char** argv)
                             std::cerr << "session started" << std::endl;
                             join_future = session->join(parameters->realm(), auth_methods, authid).then([&](boost::future<uint64_t> s) {
                                 std::cerr << "joined realm: " << s.get() << std::endl;
-                                session->subscribe("com.examples.subscriptions.topic1", &topic1);
+                                io.stop();
                             });
                         } else {
                             std::cerr << "failed to start session" << std::endl;

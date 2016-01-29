@@ -156,3 +156,16 @@ You should see the subscriber receiving the event, printing to console.
 
 Point a Web browser to [http://localhost:8080], watching the JavaScript console output. You should see the subscriber (JS component) receiving the event published by the C++ publisher. Same as for the C++ subscriber.
 
+
+## Debugging
+
+To turn on wire-level WAMP logging in Crossbar.io:
+
+```console
+crossbar start --loglevel=trace
+```
+
+To turn on wire-level WAMP logging in AutobahnCpp, start the examples like this:
+
+```console
+```
