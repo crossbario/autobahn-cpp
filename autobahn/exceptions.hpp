@@ -46,6 +46,11 @@ class no_session_error : public std::runtime_error {
      no_session_error() : std::runtime_error("session not joined") {};
 };
 
+class abort_error : public std::runtime_error {
+  public:
+     abort_error(const std::string& message) : std::runtime_error(message) {};
+};
+
 } // namespace autobahn
 
 #endif // AUTOBAHN_EXCEPTIONS_HPP

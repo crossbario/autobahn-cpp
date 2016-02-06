@@ -772,6 +772,29 @@ void wamp_session<IStream, OStream>::process_welcome(const wamp_message& message
 }
 
 template<typename IStream, typename OStream>
+void wamp_session<IStream, OStream>::process_abort(const wamp_message& message)
+{
+    // [ABORT, Details|dict, Reason|uri]
+    
+    if (message.size() != 3 ) {
+        throw protocol_error("ABORT - length must be 3");
+    }
+
+    // Details|dict
+    if (message[1].type != msgpack::type::MAP) {
+        throw protocol_error("ABORT - Details must be a dictionary");
+    }
+
+    // Reason|uri
+    if (message[2].type != msgpack::type::STR) {
+        throw protocol_error("invalid REASON - REASON must be a string (URI)");
+    }
+    std::string uri = message[2].as<std::string>();
+
+    m_session_join.set_exception( boost::copy_exception(abort_error( uri )));
+}
+
+template<typename IStream, typename OStream>
 void wamp_session<IStream, OStream>::process_goodbye(const wamp_message& message)
 {
     m_session_id = 0;
@@ -1292,7 +1315,7 @@ void wamp_session<IStream, OStream>::got_message(
             process_welcome(message);
             break;
         case message_type::ABORT:
-            // FIXME
+            process_abort(message);
             break;
         case message_type::CHALLENGE:
             process_challenge(message);

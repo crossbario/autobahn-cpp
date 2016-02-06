@@ -240,6 +240,9 @@ private:
     /// Process a WAMP HELLO message.
     void process_welcome(const wamp_message& message);
 
+    /// Process a WAMP ABORT message.
+    void process_abort(const wamp_message& message);
+
     /// Process a WAMP CHALLENGE message.
     void process_challenge(const wamp_message& message);
 
