@@ -40,11 +40,12 @@ class wamp_call_result
 {
 public:
     wamp_call_result();
-    wamp_call_result(msgpack::unique_ptr<msgpack::zone>&& zone);
-    wamp_call_result(const wamp_call_result& other);
+    wamp_call_result(msgpack::zone&& zone);
+
+    wamp_call_result(const wamp_call_result& other) = delete;
     wamp_call_result(wamp_call_result&& other);
 
-    wamp_call_result& operator=(const wamp_call_result& other);
+    wamp_call_result& operator=(const wamp_call_result& other) = delete;
     wamp_call_result& operator=(wamp_call_result&& other);
 
     /*!
@@ -191,9 +192,9 @@ public:
     void set_kw_arguments(const msgpack::object& kw_arguments);
 
 private:
+    msgpack::zone m_zone;
     msgpack::object m_arguments;
     msgpack::object m_kw_arguments;
-    msgpack::unique_ptr<msgpack::zone> m_zone;
 };
 
 } // namespace autobahn
