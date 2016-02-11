@@ -65,6 +65,8 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_transport_handler.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_session.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_session.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscribe_options.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscribe_options.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscribe_request.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscribe_request.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscription.hpp
