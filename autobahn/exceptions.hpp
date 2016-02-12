@@ -36,9 +36,14 @@
 
 namespace autobahn {
 
-class protocol_error : public std::runtime_error {
+class abort_error : public std::runtime_error {
   public:
-     protocol_error(const std::string& message) : std::runtime_error(message) {};
+     abort_error(const std::string& message) : std::runtime_error(message) {};
+};
+
+class network_error : public std::runtime_error {
+  public:
+     network_error(const std::string& message) : std::runtime_error(message) {};
 };
 
 class no_session_error : public std::runtime_error {
@@ -46,9 +51,14 @@ class no_session_error : public std::runtime_error {
      no_session_error() : std::runtime_error("session not joined") {};
 };
 
-class abort_error : public std::runtime_error {
+class no_transport_error : public std::runtime_error {
   public:
-     abort_error(const std::string& message) : std::runtime_error(message) {};
+     no_transport_error() : std::runtime_error("session not attached") {};
+};
+
+class protocol_error : public std::runtime_error {
+  public:
+     protocol_error(const std::string& message) : std::runtime_error(message) {};
 };
 
 } // namespace autobahn

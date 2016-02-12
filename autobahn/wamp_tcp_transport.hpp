@@ -28,21 +28,39 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_TCP_TRANSPORT_HPP
+#define AUTOBAHN_WAMP_TCP_TRANSPORT_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
-#include "wamp_tcp_transport.hpp"
-#include "wamp_transport.hpp"
-#include "wamp_uds_transport.hpp"
+// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
+#define BOOST_THREAD_PROVIDES_FUTURE
+#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
+#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
+#include "wamp_rawsocket_transport.hpp"
+
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
+namespace autobahn {
+
+/*!
+ * A transport that provides rawsocket support over TCP.
  */
+class wamp_tcp_transport :
+        public wamp_rawsocket_transport<boost::asio::ip::tcp::socket>
+{
+public:
+    wamp_tcp_transport(
+            boost::asio::io_service& io_service,
+            const boost::asio::ip::tcp::endpoint& remote_endpoint,
+            bool debug_enabled=false);
+    virtual ~wamp_tcp_transport() override;
 
-#endif // AUTOBAHN_HPP
+    virtual boost::future<void> connect() override;
+};
+
+} // namespace autobahn
+
+#include "wamp_tcp_transport.ipp"
+
+#endif // AUTOBAHN_WAMP_TCP_TRANSPORT_HPP

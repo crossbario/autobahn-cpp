@@ -64,6 +64,11 @@ public:
     using resume_handler = std::function<void()>;
 
 public:
+    /*!
+     * Default virtual destructor.
+     */
+    virtual ~wamp_transport() = default;
+
     /*
      * CONNECTION INTERFACE
      */
@@ -98,7 +103,7 @@ public:
      *
      * @param message The message to be sent.
      */
-    virtual void send(const std::shared_ptr<wamp_message>& message) = 0;
+    virtual void send_message(wamp_message&& message) = 0;
 
     /*!
      * Set the handler to be invoked when the transport detects congestion
@@ -107,7 +112,7 @@ public:
      *
      * @param handler The pause handler to be invoked.
      */
-    virtual void set_pause_handler(const pause_handler& handler) = 0;
+    virtual void set_pause_handler(pause_handler&& handler) = 0;
 
     /*!
      * Set the handler to be invoked when the transport detects congestion
@@ -116,7 +121,7 @@ public:
      *
      * @param handler The resume handler to be invoked.
      */
-    virtual void set_resume_handler(const resume_handler& handler) = 0;
+    virtual void set_resume_handler(resume_handler&& handler) = 0;
 
     /*
      * RECEIVER INTERFACE
@@ -139,18 +144,12 @@ public:
      * be attached at any given time.
      *
      * @param handler The handler to attach to this transport.
-     *
-     * @return A future that will be satisfied when the transport
-     *         handler has been successfully attached.
      */
     virtual void attach(
             const std::shared_ptr<wamp_transport_handler>& handler) = 0;
 
     /*!
      * Detaches the handler currently attached to the transport.
-     *
-     * @return A future that will be satisfied when the transport
-     *         handler has been successfully detached.
      */
     virtual void detach() = 0;
 
@@ -160,11 +159,6 @@ public:
      * @return Whether or not a handler is attached.
      */
     virtual bool has_handler() const = 0;
-
-    /*!
-     * Default virtual destructor.
-     */
-    virtual ~wamp_transport() = default;
 };
 
 } // namespace autobahn

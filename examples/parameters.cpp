@@ -39,14 +39,16 @@ namespace {
 const std::string LOCALHOST_IP_ADDRESS_STRING("127.0.0.1");
 const boost::asio::ip::address LOCALHOST_IP_ADDRESS(
         boost::asio::ip::address::from_string(LOCALHOST_IP_ADDRESS_STRING));
-const std::string DEFAULT_WAMP_REALM("realm1");
-const uint16_t DEFAULT_WAMP_RAWSOCKET_PORT(8000);
+const std::string DEFAULT_REALM("realm1");
+const uint16_t DEFAULT_RAWSOCKET_PORT(8000);
+const std::string DEFAULT_UDS_PATH("/tmp/crossbar.sock");
 }
 
 parameters::parameters()
     : m_debug(false)
-    , m_realm(DEFAULT_WAMP_REALM)
-    , m_rawsocket_endpoint(LOCALHOST_IP_ADDRESS, DEFAULT_WAMP_RAWSOCKET_PORT)
+    , m_realm(DEFAULT_REALM)
+    , m_rawsocket_endpoint(LOCALHOST_IP_ADDRESS, DEFAULT_RAWSOCKET_PORT)
+    , m_uds_endpoint(DEFAULT_UDS_PATH)
 {
 }
 
@@ -65,6 +67,11 @@ const boost::asio::ip::tcp::endpoint& parameters::rawsocket_endpoint() const
     return m_rawsocket_endpoint;
 }
 
+const boost::asio::local::stream_protocol::endpoint& parameters::uds_endpoint() const
+{
+    return m_uds_endpoint;
+}
+
 void parameters::set_debug(bool value)
 {
     m_debug = value;
@@ -81,6 +88,11 @@ void parameters::set_rawsocket_endpoint(const std::string& ip_address, uint16_t 
             boost::asio::ip::address::from_string(ip_address), port);
 }
 
+void parameters::set_uds_endpoint(const std::string& path)
+{
+    m_uds_endpoint = boost::asio::local::stream_protocol::endpoint(path);
+}
+
 std::unique_ptr<parameters> get_parameters(int argc, char** argv)
 {
     std::unique_ptr<parameters> params(new parameters);
@@ -91,11 +103,13 @@ std::unique_ptr<parameters> get_parameters(int argc, char** argv)
             ("help", "Display this help message")
             ("debug,d", po::bool_switch()->default_value(false),
                     "Enable debug logging.")
-            ("realm,r", po::value<std::string>()->default_value(DEFAULT_WAMP_REALM),
+            ("realm,r", po::value<std::string>()->default_value(DEFAULT_REALM),
                     "The realm to join on the wamp router.")
+            ("uds-path,u", po::value<std::string>()->default_value(DEFAULT_UDS_PATH),
+                    "The unix domain socket path the wamp router is listening for connections on.")
             ("rawsocket-ip,h", po::value<std::string>()->default_value(LOCALHOST_IP_ADDRESS_STRING),
                     "The ip address of the host running the wamp router.")
-            ("rawsocket-port,p", po::value<uint16_t>()->default_value(DEFAULT_WAMP_RAWSOCKET_PORT),
+            ("rawsocket-port,p", po::value<uint16_t>()->default_value(DEFAULT_RAWSOCKET_PORT),
                     "The port that the wamp router is listening for connections on.");
 
     po::variables_map variables;
@@ -120,6 +134,9 @@ std::unique_ptr<parameters> get_parameters(int argc, char** argv)
     params->set_rawsocket_endpoint(
             variables["rawsocket-ip"].as<std::string>(),
             variables["rawsocket-port"].as<uint16_t>());
+
+    params->set_uds_endpoint(
+            variables["uds-path"].as<std::string>());
 
     return params;
 }

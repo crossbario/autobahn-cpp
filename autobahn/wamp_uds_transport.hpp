@@ -28,21 +28,22 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
+#define AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
-#include "wamp_tcp_transport.hpp"
-#include "wamp_transport.hpp"
-#include "wamp_uds_transport.hpp"
+#include "wamp_rawsocket_transport.hpp"
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
+#include <boost/asio/local/stream_protocol.hpp>
+
+namespace autobahn {
+
+/*!
+ * A transport that provides rawsocket support over unix domain sockets (UDS).
  */
+using wamp_uds_transport =
+        wamp_rawsocket_transport<
+                boost::asio::local::stream_protocol::socket>;
 
-#endif // AUTOBAHN_HPP
+} // namespace autobahn
+
+#endif // AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
