@@ -32,6 +32,7 @@
 #define AUTOBAHN_WAMP_CALL_OPTIONS_HPP
 
 #include <chrono>
+#include <boost/optional.hpp>
 
 namespace autobahn {
 
@@ -46,11 +47,16 @@ public:
     wamp_call_options& operator=(const wamp_call_options& other) = delete;
 
     const std::chrono::milliseconds& timeout() const;
-
     void set_timeout(const std::chrono::milliseconds& timeout);
+    const bool is_timeout_set() const;
+
+    const bool disclose_me() const;
+    void set_disclose_me(bool disclose_me);
+    const bool is_disclose_me_set() const;
 
 private:
-    std::chrono::milliseconds m_timeout;
+    boost::optional<std::chrono::milliseconds> m_timeout;
+    boost::optional<bool> m_disclose_me;
 };
 
 } // namespace autobahn

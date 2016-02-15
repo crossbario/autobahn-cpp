@@ -67,6 +67,7 @@ wamp_session<IStream, OStream>::wamp_session(
     , m_io_service(io_service)
     , m_in(in)
     , m_out(out)
+    , m_caller_disclose_me(false)
     , m_request_id(ATOMIC_VAR_INIT(0))
     , m_session_id(0)
     , m_goodbye_sent(false)
@@ -77,6 +78,12 @@ wamp_session<IStream, OStream>::wamp_session(
 template<typename IStream, typename OStream>
 wamp_session<IStream, OStream>::~wamp_session()
 {
+}
+
+template<typename IStream, typename OStream>
+void wamp_session<IStream, OStream>::set_caller_disclose_me(bool caller_disclose_me)
+{
+    m_caller_disclose_me = caller_disclose_me;
 }
 
 template<typename IStream, typename OStream>
@@ -529,6 +536,10 @@ boost::future<wamp_call_result> wamp_session<IStream, OStream>::call(
         const wamp_call_options& options)
 {
     uint64_t request_id = ++m_request_id;
+
+    /*if (m_caller_disclose_me) {
+        options.set_disclose_me(true);
+    }*/
 
     // [CALL, Request|id, Options|dict, Procedure|uri]
     auto message = std::make_shared<wamp_message>(4);
