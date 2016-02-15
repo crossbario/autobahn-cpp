@@ -731,7 +731,7 @@ void wamp_session<IStream, OStream>::process_challenge(wamp_message&& message)
                 }
 
                 try {
-                    send_message(std::move(*message));
+                    send_message(std::move(*message), false);
                 } catch (const std::exception& e) {
                     if (m_debug) {
                         std::cerr << "failed to handle authentication" << std::endl;
@@ -1287,6 +1287,7 @@ void wamp_session<IStream, OStream>::got_message(wamp_message&& message)
             break;
         case message_type::CHALLENGE:
             process_challenge(std::move(message));
+			break;
         case message_type::AUTHENTICATE:
             throw protocol_error("received AUTHENTICATE message unexpected for WAMP client roles");
         case message_type::GOODBYE:
