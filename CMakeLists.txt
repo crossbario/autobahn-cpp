@@ -58,6 +58,8 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_procedure.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_publication.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_publication.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_rawsocket_transport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_rawsocket_transport.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_register_request.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_register_request.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_registration.hpp
@@ -72,6 +74,11 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscribe_request.ipp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscription.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_subscription.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_tcp_transport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_tcp_transport.ipp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_transport_handler.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_transport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_uds_transport.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_unsubscribe_request.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_unsubscribe_request.ipp)
 

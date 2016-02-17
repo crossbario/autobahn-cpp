@@ -28,21 +28,37 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
-
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
 #include "wamp_tcp_transport.hpp"
-#include "wamp_transport.hpp"
-#include "wamp_uds_transport.hpp"
 
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
- */
+#include <boost/system/error_code.hpp>
 
-#endif // AUTOBAHN_HPP
+namespace autobahn {
+
+inline wamp_tcp_transport::wamp_tcp_transport(
+        boost::asio::io_service& io_service,
+        const boost::asio::ip::tcp::endpoint& remote_endpoint,
+        bool debug_enabled)
+    : wamp_rawsocket_transport<boost::asio::ip::tcp::socket>(
+            io_service, remote_endpoint, debug_enabled)
+{
+}
+
+inline wamp_tcp_transport::~wamp_tcp_transport()
+{
+}
+
+inline boost::future<void> wamp_tcp_transport::connect()
+{
+    return wamp_rawsocket_transport<boost::asio::ip::tcp::socket>::connect().then(
+        [&](boost::future<void> connected) {
+            // Check the originating future for exceptions.
+            connected.get();
+
+            // Disable naggle for improved performance.
+            boost::asio::ip::tcp::no_delay option(true);
+            socket().set_option(option);
+        }
+    );
+}
+
+} // namespace autobahn

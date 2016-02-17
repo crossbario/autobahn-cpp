@@ -22,7 +22,7 @@
             }
             session.subscribe('com.examples.subscriptions.topic1', on_topic1);
 
-            session.call('com.example.add2', [23, 777]).then(
+            session.call('com.examples.calculator.add2', [23, 777]).then(
                function (res) {
                   console.log("Call succeeded. Result:", res);
                },
