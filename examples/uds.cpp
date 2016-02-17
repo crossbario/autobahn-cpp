@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) Tavendo GmbH
+// Copyright (c) Tavendo GmbH, Topology LP, and contributors.
 //
 // Boost Software License - Version 1.0 - August 17th, 2003
 //
