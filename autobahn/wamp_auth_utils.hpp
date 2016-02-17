@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) Tavendo GmbH
+// Copyright (c) Tavendo GmbH, Topology LP, and contributors.
 //
 // Boost Software License - Version 1.0 - August 17th, 2003
 //
@@ -83,10 +83,10 @@ inline std::string base_64_encode(const std::string & data )
 
     BIO_write(bio, (const unsigned char *) data.c_str(), data.size());
     (void)BIO_flush(bio);
-    
+
     BIO_get_mem_ptr(bio, &pBuf);
     (void)BIO_set_close(bio, BIO_NOCLOSE);
-    
+
     std::string str_out;
     str_out.assign( pBuf->data, pBuf->length );
 
