@@ -599,6 +599,7 @@ inline void wamp_session::on_message(wamp_message&& message)
             break;
         case message_type::CHALLENGE:
             process_challenge(std::move(message));
+            break;
         case message_type::AUTHENTICATE:
             throw protocol_error("received AUTHENTICATE message unexpected for WAMP client roles");
         case message_type::GOODBYE:
