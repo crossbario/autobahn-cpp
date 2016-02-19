@@ -103,6 +103,15 @@ else:
     raise SCons.Errors.UserError, "Neither MSGPACK_ROOT, nor MSGPACK_INCLUDES + MSGPACK_LIBS was set!"
 
 
+if os.environ.has_key('OPENSSL_ROOT'):
+    env.Append(CPPPATH = [os.path.join(os.environ['OPENSSL_ROOT'], 'include')])
+    env.Append(LIBPATH = [os.path.join(os.environ['OPENSSL_ROOT'], 'lib')])
+elif os.environ.has_key('OPENSSL_INCLUDES') and os.environ.has_key('OPENSSL_LIBS'):
+    env.Append(CPPPATH = [os.environ['OPENSSL_INCLUDES']])
+    env.Append(LIBPATH = [os.environ['OPENSSL_LIBS']])
+#not raising error, since this it may build fine and OpenSSL fix is for Mac only
+    
+    
 # Autobahn (is included as in `#include <autobahn/autobahn.hpp`)
 #
 env.Append(CPPPATH = ['#'])
