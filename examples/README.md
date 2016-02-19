@@ -58,6 +58,41 @@ oberstet@corei7ub1310:~/scm/crossbario/autobahn-cpp$ ldd ./build/examples/callee
 
 ## Run
 
+The following describes how to run the examples together with [Crossbar.io](http://crossbar.io). It should also work with other [WAMP compliant routers](http://wamp-proto.org/implementations/#routers), such as [Thruway](https://github.com/voryx/Thruway) or [Bonefish](https://github.com/tplgy/bonefish).
+
+### Install Crossbar.io
+
+> For full installation docs, please refer to the [Crossbar.io documentation](http://crossbar.io/docs/).
+
+You will need Python 2.7+ or Python 3.3+. Then do:
+
+```console
+pip install crossbar[all]
+```
+
+This should give you
+
+```console
+(cpy351_2) oberstet@corei7ub1310:~$ which crossbar
+/home/oberstet/cpy351_2/bin/crossbar
+(cpy351_2) oberstet@corei7ub1310:~$ crossbar version
+Automatically choosing optimal Twisted reactor
+Running on Linux and optimal reactor (epoll) was installed.
+     __  __  __  __  __  __      __     __
+    /  `|__)/  \/__`/__`|__) /\ |__)  |/  \
+    \__,|  \\__/.__/.__/|__)/~~\|  \. |\__/
+                                        
+ Crossbar.io        : 0.12.1
+   Autobahn         : 0.12.1 (with JSON, MessagePack, CBOR)
+   Twisted          : 15.5.0-EPollReactor
+   LMDB             : 0.89/lmdb-0.9.18
+   Python           : 3.5.1/CPython
+ OS                 : Linux-3.13.0-77-generic-x86_64-with-debian-jessie-sid
+ Machine            : x86_64
+
+(cpy351_2) oberstet@corei7ub1310:~$ 
+```
+
 ### Start Crossbar.io
 
 In a terminal, got to the examples forder and start [Crossbar.io](http://crossbar.io/):
