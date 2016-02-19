@@ -115,7 +115,7 @@ inline T value_for_key_or(const msgpack::object& object, const char* key, const 
             return kv.val.as<T>();
         }
     }
-    throw fallback;
+    return fallback;
 }
 } // namespace autobahn
 

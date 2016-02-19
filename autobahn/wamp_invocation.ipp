@@ -156,7 +156,7 @@ inline T wamp_invocation_impl::kw_argument_or(const char* key, const T& fallback
             return kv.val.as<T>();
         }
     }
-    throw fallback;
+    return fallback;
 }
 
 

@@ -48,7 +48,9 @@ parameters::parameters()
     : m_debug(false)
     , m_realm(DEFAULT_REALM)
     , m_rawsocket_endpoint(LOCALHOST_IP_ADDRESS, DEFAULT_RAWSOCKET_PORT)
-    , m_uds_endpoint(DEFAULT_UDS_PATH)
+#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
+	, m_uds_endpoint(DEFAULT_UDS_PATH)
+#endif
 {
 }
 
@@ -67,10 +69,12 @@ const boost::asio::ip::tcp::endpoint& parameters::rawsocket_endpoint() const
     return m_rawsocket_endpoint;
 }
 
+#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
 const boost::asio::local::stream_protocol::endpoint& parameters::uds_endpoint() const
 {
     return m_uds_endpoint;
 }
+#endif
 
 void parameters::set_debug(bool value)
 {
@@ -88,10 +92,12 @@ void parameters::set_rawsocket_endpoint(const std::string& ip_address, uint16_t 
             boost::asio::ip::address::from_string(ip_address), port);
 }
 
+#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
 void parameters::set_uds_endpoint(const std::string& path)
 {
     m_uds_endpoint = boost::asio::local::stream_protocol::endpoint(path);
 }
+#endif 
 
 std::unique_ptr<parameters> get_parameters(int argc, char** argv)
 {
@@ -135,8 +141,9 @@ std::unique_ptr<parameters> get_parameters(int argc, char** argv)
             variables["rawsocket-ip"].as<std::string>(),
             variables["rawsocket-port"].as<uint16_t>());
 
+#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
     params->set_uds_endpoint(
             variables["uds-path"].as<std::string>());
-
+#endif
     return params;
 }
