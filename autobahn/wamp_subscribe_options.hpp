@@ -40,6 +40,9 @@ class wamp_subscribe_options
 public:
     wamp_subscribe_options();
 
+    //Convenience constructor
+    wamp_subscribe_options(const std::string& match);
+
     wamp_subscribe_options(wamp_subscribe_options&& other) = delete;
     wamp_subscribe_options(const wamp_subscribe_options& other) = delete;
     wamp_subscribe_options& operator=(wamp_subscribe_options&& other) = delete;

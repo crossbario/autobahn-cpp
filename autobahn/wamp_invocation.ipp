@@ -46,6 +46,11 @@ inline wamp_invocation_impl::wamp_invocation_impl()
 {
 }
 
+inline const std::string& wamp_invocation_impl::uri() const
+{
+    return m_uri;
+}
+
 inline std::size_t wamp_invocation_impl::number_of_arguments() const
 {
     return m_arguments.type == msgpack::type::ARRAY ? m_arguments.via.array.size : 0;
@@ -151,8 +156,9 @@ inline T wamp_invocation_impl::kw_argument_or(const char* key, const T& fallback
             return kv.val.as<T>();
         }
     }
-    throw fallback;
+    return fallback;
 }
+
 
 template <typename Map>
 inline Map wamp_invocation_impl::kw_arguments() const
@@ -272,6 +278,11 @@ inline void wamp_invocation_impl::error(
 inline void wamp_invocation_impl::set_send_result_fn(send_result_fn&& send_result)
 {
     m_send_result_fn = std::move(send_result);
+}
+
+inline void wamp_invocation_impl::set_details(const msgpack::object& details)
+{
+    m_uri = std::move(value_for_key_or<std::string>(details, "procedure", std::string()));
 }
 
 inline void wamp_invocation_impl::set_request_id(std::uint64_t request_id)

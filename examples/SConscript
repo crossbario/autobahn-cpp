@@ -32,6 +32,7 @@ Import('env')
 
 examples = [('subscriber.cpp', []),
             ('publisher.cpp', []),
+            ('provide_prefix.cpp', []),
             ('callee.cpp', []),
             ('caller.cpp', []),
             ('wampcra.cpp', ['crypto']),

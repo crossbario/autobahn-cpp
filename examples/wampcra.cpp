@@ -36,6 +36,26 @@
 #include <memory>
 #include <tuple>
 
+void calculator(autobahn::wamp_invocation invocation)
+{
+	auto a = invocation->argument<uint64_t>(0);
+	auto b = invocation->argument<uint64_t>(1);
+
+	std::cerr << "Procedure com.examples.calculator.add2 invoked: " << a << ", " << b << std::endl;
+
+	invocation->result(std::make_tuple(a + b));
+}
+
+void math(autobahn::wamp_invocation invocation)
+{
+	auto a = invocation->argument<uint64_t>(0);
+	auto b = invocation->argument<uint64_t>(1);
+
+	std::cerr << "Procedure com.examples.calculator.add2 invoked: " << a << ", " << b << std::endl;
+
+	invocation->result(std::make_tuple(a + b));
+}
+
 class auth_wamp_session :
     public autobahn::wamp_session
 {
@@ -91,6 +111,8 @@ int main(int argc, char** argv)
         boost::future<void> join_future;
         boost::future<void> leave_future;
         boost::future<void> stop_future;
+		boost::future<void> provide_future;
+		boost::future<void> prefix_provide_future;
 
         connect_future = transport->connect().then([&](boost::future<void> connected) {
             try {
@@ -114,28 +136,39 @@ int main(int argc, char** argv)
                 std::string authid = "homer";
                 std::vector<std::string> authmethods = { "wampcra" };
                 join_future = session->join(parameters->realm(), authmethods, authid).then([&](boost::future<uint64_t> joined) {
-                    try {
-                        std::cerr << "joined realm: " << joined.get() << std::endl;
-                    } catch (const std::exception& e) {
+					try {
+						std::cerr << "joined realm: " << joined.get() << std::endl;
+
+
+
+						leave_future = session->leave().then([&](boost::future<std::string> reason) {
+							try {
+								std::cerr << "left session (" << reason.get() << ")" << std::endl;
+							}
+							catch (const std::exception& e) {
+								std::cerr << "failed to leave session: " << e.what() << std::endl;
+								io.stop();
+								return;
+							}
+
+							stop_future = session->stop().then([&](boost::future<void> stopped) {
+								std::cerr << "stopped session" << std::endl;
+								io.stop();
+							});
+						});
+
+
+
+					}
+					catch (const std::exception& e) {
                         std::cerr << e.what() << std::endl;
                         io.stop();
                         return;
                     }
 
-                    leave_future = session->leave().then([&](boost::future<std::string> reason) {
-                        try {
-                            std::cerr << "left session (" << reason.get() << ")" << std::endl;
-                        } catch (const std::exception& e) {
-                            std::cerr << "failed to leave session: " << e.what() << std::endl;
-                            io.stop();
-                            return;
-                        }
 
-                        stop_future = session->stop().then([&](boost::future<void> stopped) {
-                            std::cerr << "stopped session" << std::endl;
-                            io.stop();
-                        });
-                    });
+
+
                 });
             });
         });
