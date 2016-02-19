@@ -70,12 +70,13 @@ int main(int argc, char** argv)
         auto parameters = get_parameters(argc, argv);
 
         boost::asio::io_service io;
+        bool debug = parameters->debug();
+
         auto transport = std::make_shared<autobahn::wamp_tcp_transport>(
-                io, parameters->rawsocket_endpoint());
+                io, parameters->rawsocket_endpoint(), debug);
 
         std::string secret = "secret123";
 
-        bool debug = parameters->debug();
         auto session = std::make_shared<auth_wamp_session>(io, debug, secret);
 
         transport->attach(std::static_pointer_cast<autobahn::wamp_transport_handler>(session));

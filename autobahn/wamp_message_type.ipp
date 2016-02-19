@@ -28,56 +28,44 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_WAMP_MESSAGE_TYPE_HPP
-#define AUTOBAHN_WAMP_MESSAGE_TYPE_HPP
-
-#include <string>
-
-#ifdef ERROR
-#undef ERROR
-#endif
-
-#ifdef REGISTERED
-#undef REGISTERED
-#endif
-
 namespace autobahn {
 
-/// WAMP message types.
-enum class message_type : int
+inline std::string to_string(message_type type)
 {
-    HELLO = 1,
-    WELCOME = 2,
-    ABORT = 3,
-    CHALLENGE = 4,
-    AUTHENTICATE = 5,
-    GOODBYE = 6,
-    HEARTBEAT = 7,
-    ERROR = 8,
-    PUBLISH = 16,
-    PUBLISHED = 17,
-    SUBSCRIBE = 32,
-    SUBSCRIBED = 33,
-    UNSUBSCRIBE = 34,
-    UNSUBSCRIBED = 35,
-    EVENT = 36,
-    CALL = 48,
-    CANCEL = 49,
-    RESULT = 50,
-    REGISTER = 64,
-    REGISTERED = 65,
-    UNREGISTER = 66,
-    UNREGISTERED = 67,
-    INVOCATION = 68,
-    INTERRUPT = 69,
-    YIELD = 70
-};
+    static std::map<message_type, std::string> type_names = {
+        { message_type::HELLO, "hello" },
+        { message_type::WELCOME, "welcome" },
+        { message_type::ABORT, "abort" },
+        { message_type::CHALLENGE, "challenge" },
+        { message_type::AUTHENTICATE, "authenticate" },
+        { message_type::GOODBYE, "goodbye" },
+        { message_type::HEARTBEAT, "heartbeat" },
+        { message_type::ERROR, "error" },
+        { message_type::PUBLISH, "publish" },
+        { message_type::PUBLISHED, "published" },
+        { message_type::SUBSCRIBE, "subscribe" },
+        { message_type::SUBSCRIBED, "subscribed" },
+        { message_type::UNSUBSCRIBE, "unsubscribe" },
+        { message_type::UNSUBSCRIBED, "unsubscribed" },
+        { message_type::EVENT, "event" },
+        { message_type::CALL, "call" },
+        { message_type::CANCEL, "cancel" },
+        { message_type::RESULT, "result" },
+        { message_type::REGISTER, "register" },
+        { message_type::REGISTERED, "registered" },
+        { message_type::UNREGISTER, "unregister" },
+        { message_type::UNREGISTERED, "unregistered" },
+        { message_type::INVOCATION, "invocation" },
+        { message_type::INTERRUPT, "interrupt" },
+        { message_type::YIELD, "yield" }
+    };
 
-/// Convert message type enum to human readable string.
-std::string to_string(message_type type);
+    auto result = type_names.find(type);
+    if (result == type_names.end()) {
+        return std::string("unknown");
+    }
+
+    return result->second;
+}
 
 } // namespace autobahn
-
-#include "wamp_message_type.ipp"
-
-#endif // AUTOBAHN_WAMP_MESSAGE_TYPE_HPP

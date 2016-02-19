@@ -47,10 +47,10 @@ int main(int argc, char** argv)
         auto parameters = get_parameters(argc, argv);
 
         boost::asio::io_service io;
-        auto transport = std::make_shared<autobahn::wamp_tcp_transport>(
-                io, parameters->rawsocket_endpoint());
-
         bool debug = parameters->debug();
+        auto transport = std::make_shared<autobahn::wamp_tcp_transport>(
+                io, parameters->rawsocket_endpoint(), debug);
+
         auto session = std::make_shared<autobahn::wamp_session>(io, debug);
 
         transport->attach(std::static_pointer_cast<autobahn::wamp_transport_handler>(session));

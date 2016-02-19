@@ -28,6 +28,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "wamp_message_type.hpp"
+
 #include <stdexcept>
 
 namespace autobahn {
@@ -119,6 +121,32 @@ inline wamp_message::message_fields&& wamp_message::fields()
 inline msgpack::zone&& wamp_message::zone()
 {
     return std::move(m_zone);
+}
+
+inline std::ostream& operator<<(std::ostream& os, const wamp_message& message)
+{
+    std::size_t num_fields = message.size();
+    if (num_fields == 0) {
+        os << "unknown []";
+        return os;
+    }
+
+    const msgpack::object& type_field = message.field(0);
+    message_type type = static_cast<message_type>(type_field.as<int>());
+
+    if (num_fields == 1) {
+        os << to_string(type) << " []";
+        return os;
+    }
+
+    os << to_string(type) << " [";
+    os << message.field(1);
+    for (std::size_t index = 2; index < num_fields; ++index) {
+        os << ", " <<  message.field(index);
+    }
+    os << "]";
+
+    return os;
 }
 
 } // namespace autobahn

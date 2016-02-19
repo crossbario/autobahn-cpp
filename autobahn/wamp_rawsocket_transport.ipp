@@ -154,6 +154,7 @@ void wamp_rawsocket_transport<Socket>::send_message(wamp_message&& message)
 
     if (m_debug_enabled) {
         std::cerr << "TX message (" << buffer->size() << " octets) ..." << std::endl;
+        std::cerr << "TX message: " << message << std::endl;
     }
 }
 
@@ -349,16 +350,18 @@ void wamp_rawsocket_transport<Socket>::receive_message_body(
         msgpack::unpacked result;
 
         while (m_message_unpacker.next(&result)) {
-            if (m_debug_enabled) {
-                std::cerr << "RX WAMP message: " << result.get() << std::endl;
-            }
-
             wamp_message::message_fields fields;
             result.get().convert(fields);
 
             wamp_message message(std::move(fields), std::move(*(result.zone())));
+            if (m_debug_enabled) {
+                std::cerr << "RX message: " << message << std::endl;
+            }
+
             m_handler->on_message(std::move(message));
         }
+    } else {
+        std::cerr << "RX message ignored: no handler attached" << std::endl;
     }
 
     receive_message();
