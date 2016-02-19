@@ -31,13 +31,20 @@
 #ifndef AUTOBAHN_HPP
 #define AUTOBAHN_HPP
 
+#ifdef _WIN32
+#define MSGPACK_DISABLE_LEGACY_CONVERT
+#define MSGPACK_DEFAULT_API_VERSION 1
+#define MSGPACK_DISABLE_LEGACY_CONVERT
+#endif
+
 #include "wamp_event.hpp"
 #include "wamp_invocation.hpp"
 #include "wamp_session.hpp"
 #include "wamp_tcp_transport.hpp"
 #include "wamp_transport.hpp"
+#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
 #include "wamp_uds_transport.hpp"
-
+#endif
 /*! \mainpage Reference Documentation
  *
  * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>

@@ -181,7 +181,7 @@ inline void wamp_invocation_impl::empty_result()
 }
 
 template<typename List>
-inline void wamp_invocation_impl::result(const List& arguments)
+inline void wamp_invocation_impl::result(const List& arguments, bool intermediate)
 {
     throw_if_not_sendable();
 
@@ -193,12 +193,13 @@ inline void wamp_invocation_impl::result(const List& arguments)
     message->set_field(3, arguments);
 
     m_send_result_fn(message);
-    m_send_result_fn = send_result_fn();
+    if (!intermediate)
+		m_send_result_fn = send_result_fn();
 }
 
 template<typename List, typename Map>
 inline void wamp_invocation_impl::result(
-        const List& arguments, const Map& kw_arguments)
+        const List& arguments, const Map& kw_arguments, bool intermediate)
 {
     throw_if_not_sendable();
 
@@ -211,7 +212,8 @@ inline void wamp_invocation_impl::result(
     message->set_field(4, kw_arguments);
 
     m_send_result_fn(message);
-    m_send_result_fn = send_result_fn();
+	if (!intermediate)
+		m_send_result_fn = send_result_fn();
 }
 
 inline void wamp_invocation_impl::error(const std::string& error_uri)

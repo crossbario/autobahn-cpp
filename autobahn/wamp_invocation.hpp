@@ -49,6 +49,7 @@ public:
     wamp_invocation_impl();
     wamp_invocation_impl(wamp_invocation_impl&&) = delete; // copy wamp_invocation instead
 
+	//TODO: add URI and details
     /*!
      * The number of positional arguments passed to the invocation.
      */
@@ -195,13 +196,13 @@ public:
      * Reply to the invocation with positional arguments.
      */
     template <typename List>
-    void result(const List& arguments);
+    void result(const List& arguments, bool intermediate = false);
 
     /*!
      * Reply to the invocation with positional and keyword arguments.
      */
     template <typename List, typename Map>
-    void result(const List& arguments, const Map& kw_arguments);
+    void result(const List& arguments, const Map& kw_arguments, bool intermediate = false);
 
     /*!
      * Reply to the invocation with an error and no further details.
