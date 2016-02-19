@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{4357F288-DC34-40E3-9AAA-80C1E3EFD633}</ProjectGuid>
+    <ProjectGuid>{5D930CE9-EC02-4F5F-AEC9-D790E6D40DBE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>autobahncppexamples</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>wampcra</ProjectName>
+    <ProjectName>callee</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -243,8 +243,8 @@ EXIT 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\callee.cpp" />
     <ClCompile Include="..\..\parameters.cpp" />
-    <ClCompile Include="..\..\wampcra.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\parameters.hpp" />

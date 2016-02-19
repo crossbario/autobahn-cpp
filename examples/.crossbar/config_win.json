@@ -19,6 +19,18 @@
                      ]
                   },
                   {
+                     "name": "anonymous",
+                     "permissions": [
+                        {
+                           "uri": "*",
+                           "publish": true,
+                           "subscribe": true,
+                           "call": true,
+                           "register": true
+                        }
+                     ]
+                  },
+                  {
                      "name": "user",
                      "permissions": [
                         {
