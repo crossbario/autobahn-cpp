@@ -173,6 +173,9 @@ private:
     message_fields m_fields;
 };
 
+/// Convenience operator for outputting a raw wamp message.
+std::ostream& operator<<(std::ostream& os, const wamp_message& message);
+
 } // namespace autobahn
 
 #include "wamp_message.ipp"

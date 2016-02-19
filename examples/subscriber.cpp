@@ -51,12 +51,13 @@ int main(int argc, char** argv)
         std::cerr << "Connecting to realm: " << parameters->realm() << std::endl;
 
         boost::asio::io_service io;
+        bool debug = parameters->debug();
+
         auto transport = std::make_shared<autobahn::wamp_tcp_transport>(
-                io, parameters->rawsocket_endpoint(), true);
+                io, parameters->rawsocket_endpoint(), debug);
 
         // create a WAMP session that talks WAMP-RawSocket over TCP
         //
-        bool debug = parameters->debug();
         auto session = std::make_shared<autobahn::wamp_session>(io, debug);
 
         transport->attach(std::static_pointer_cast<autobahn::wamp_transport_handler>(session));
