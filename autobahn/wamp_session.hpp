@@ -176,7 +176,7 @@ public:
     boost::future<wamp_subscription> subscribe(
             const std::string& topic,
             const wamp_event_handler& handler,
-            const wamp_subscribe_options& options = wamp_subscribe_options());
+            const wamp_subscribe_options& options = wamp_subscribe_options("exact"));
 
     /*!
      * Unubscribe a handler to previosuly subscribed topic.
