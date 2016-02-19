@@ -60,7 +60,8 @@ void calculator(autobahn::wamp_invocation invocation)
 	}
 	else
 	{
-		throw std::exception("procedure not found");
+                std::string errorMessage = std::string("procedure not found ")+invocation->uri();
+		throw std::exception(errorMessage);
 	}
 }
 
