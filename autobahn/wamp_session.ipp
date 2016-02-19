@@ -1135,6 +1135,9 @@ inline void wamp_session::process_event(wamp_message&& message)
         }
 
         wamp_event event(std::move(message.zone()));
+
+		event.set_details(message.field(3));
+
         if (message.size() > 4) {
             if (!message.is_field_type(4, msgpack::type::ARRAY)) {
                 throw protocol_error("EVENT - EVENT.Arguments must be a list");

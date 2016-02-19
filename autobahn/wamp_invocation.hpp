@@ -49,7 +49,7 @@ public:
     wamp_invocation_impl();
     wamp_invocation_impl(wamp_invocation_impl&&) = delete; // copy wamp_invocation instead
 
-	//TODO: add URI and details
+	//add URI and details
 	/*!
 	* Invocatition procedure URI.  Used by prefix & wildcard registered procedures
 	*/

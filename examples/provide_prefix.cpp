@@ -64,6 +64,11 @@ void calculator(autobahn::wamp_invocation invocation)
 	}
 }
 
+void on_topic(const autobahn::wamp_event& event)
+{
+	std::cerr << "received event: " << event.uri() << " with argument " << event.argument<std::string>(0) << std::endl;
+}
+
 int main(int argc, char** argv)
 {
     std::cerr << "Boost: " << BOOST_VERSION << std::endl;
@@ -90,6 +95,7 @@ int main(int argc, char** argv)
         boost::future<void> start_future;
         boost::future<void> join_future;
         boost::future<void> provide_future;
+		boost::future<void> subscribe_future;
 
         connect_future = transport->connect().then([&](boost::future<void> connected) {
             try {
@@ -131,6 +137,20 @@ int main(int argc, char** argv)
                             return;
                         }
                     });
+
+					subscribe_future = session->subscribe("com.examples.subscriptions", &on_topic, autobahn::wamp_subscribe_options("prefix")).then([&](boost::future<autobahn::wamp_subscription> subscribed)
+					{
+						try {
+
+							std::cerr << "subscribed to topic: " << subscribed.get().id() << std::endl;
+						}
+						catch (const std::exception& e) {
+							std::cerr << e.what() << std::endl;
+							io.stop();
+							return;
+						}
+
+					});
                 });
             });
         });

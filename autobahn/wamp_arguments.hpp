@@ -45,6 +45,78 @@ using wamp_kw_arguments = std::unordered_map<std::string, msgpack::object>;
 static const msgpack::object EMPTY_ARGUMENTS(std::array<msgpack::object, 0>(), nullptr);
 static const msgpack::object EMPTY_KW_ARGUMENTS(wamp_kw_arguments(), nullptr);
 
+
+//msgpack map utilities.  
+//TODO: refactor event & invocation to used these
+template <typename T>
+inline T value_for_key(const msgpack::object& object, const std::string& key)
+{
+	if (object.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key.size() == kv.key.via.str.size
+			&& key.compare(0, key.size(), kv.key.via.str.ptr, kv.key.via.str.size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	throw std::out_of_range(key + " keyword argument doesn't exist");
+}
+
+template <typename T>
+inline T value_for_key(const msgpack::object& object, const char* key)
+{
+	if (m_kw_arguments.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	std::size_t key_size = strlen(key);
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key_size == kv.key.via.str.size
+			&& memcmp(key, kv.key.via.str.ptr, key_size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	throw std::out_of_range(std::string(key) + " keyword argument doesn't exist");
+}
+
+template <typename T>
+inline T value_for_key_or(const msgpack::object& object, const std::string& key, const T& fallback)
+{
+	if (object.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key.size() == kv.key.via.str.size
+			&& key.compare(0, key.size(), kv.key.via.str.ptr, kv.key.via.str.size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	return fallback;
+}
+
+template <typename T>
+inline T value_for_key_or(const msgpack::object& object, const char* key, const T& fallback)
+{
+	if (object.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	std::size_t key_size = strlen(key);
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key_size == kv.key.via.str.size
+			&& memcmp(key, kv.key.via.str.ptr, key_size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	throw fallback;
+}
 } // namespace autobahn
 
 #endif // AUTOBAHN_WAMP_ARGUMENTS_HPP
