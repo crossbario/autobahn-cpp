@@ -31,6 +31,17 @@
                }
             );
 
+            session.call('com.myapp.longop', [3], {}, { receive_progress: true }).then(
+                  function (res) {
+                      console.log("Final:", res);
+                      connection.close();
+                  },
+                  function (err) {
+                  },
+                  function (progress) {
+                      console.log("Progress:", progress);
+                  }
+               );
          };
 
          connection.onclose = function (reason, details) {

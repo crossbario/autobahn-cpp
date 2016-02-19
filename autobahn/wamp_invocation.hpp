@@ -192,6 +192,11 @@ public:
     void get_kw_arguments(Map& kw_args) const;
 
     /*!
+    * Checks if caller expects progressive results.
+    */
+    bool progressive_results_expected() const;
+
+    /*!
      * Reply to the invocation with an empty result.
      */
     void empty_result();
@@ -200,13 +205,13 @@ public:
      * Reply to the invocation with positional arguments.
      */
     template <typename List>
-    void result(const List& arguments);
+    void result(const List& arguments, bool intermediate = false);
 
     /*!
      * Reply to the invocation with positional and keyword arguments.
      */
     template <typename List, typename Map>
-    void result(const List& arguments, const Map& kw_arguments);
+    void result(const List& arguments, const Map& kw_arguments, bool intermediate = false);
 
     /*!
      * Reply to the invocation with an error and no further details.
@@ -249,6 +254,7 @@ private:
     send_result_fn m_send_result_fn;
     std::uint64_t m_request_id;
     std::string m_uri;
+    bool m_progressive_results_expected;
 };
 
 using wamp_invocation = std::shared_ptr<wamp_invocation_impl>;
