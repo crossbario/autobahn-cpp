@@ -46,6 +46,11 @@ inline wamp_invocation_impl::wamp_invocation_impl()
 {
 }
 
+inline const std::string& wamp_invocation_impl::uri() const
+{
+	return m_uri;
+}
+
 inline std::size_t wamp_invocation_impl::number_of_arguments() const
 {
     return m_arguments.type == msgpack::type::ARRAY ? m_arguments.via.array.size : 0;
@@ -153,6 +158,78 @@ inline T wamp_invocation_impl::kw_argument_or(const char* key, const T& fallback
     }
     throw fallback;
 }
+
+//TODO: move to a shared (utilities) file
+template <typename T>
+inline T value_for_key(const msgpack::object& object, const std::string& key)
+{
+	if (object.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key.size() == kv.key.via.str.size
+			&& key.compare(0, key.size(), kv.key.via.str.ptr, kv.key.via.str.size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	throw std::out_of_range(key + " keyword argument doesn't exist");
+}
+
+template <typename T>
+inline T value_for_key(const msgpack::object& object, const char* key) 
+{
+	if (m_kw_arguments.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	std::size_t key_size = strlen(key);
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key_size == kv.key.via.str.size
+			&& memcmp(key, kv.key.via.str.ptr, key_size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	throw std::out_of_range(std::string(key) + " keyword argument doesn't exist");
+}
+
+template <typename T>
+inline T value_for_key_or(const msgpack::object& object, const std::string& key, const T& fallback)
+{
+	if (object.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key.size() == kv.key.via.str.size
+			&& key.compare(0, key.size(), kv.key.via.str.ptr, kv.key.via.str.size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	return fallback;
+}
+
+template <typename T>
+inline T value_for_key_or(const msgpack::object& object, const char* key, const T& fallback)
+{
+	if (object.type != msgpack::type::MAP) {
+		throw msgpack::type_error();
+	}
+	std::size_t key_size = strlen(key);
+	for (std::size_t i = 0; i < object.via.map.size; ++i) {
+		const msgpack::object_kv& kv = object.via.map.ptr[i];
+		if (kv.key.type == msgpack::type::STR && key_size == kv.key.via.str.size
+			&& memcmp(key, kv.key.via.str.ptr, key_size) == 0)
+		{
+			return kv.val.as<T>();
+		}
+	}
+	throw fallback;
+}
+
 
 template <typename Map>
 inline Map wamp_invocation_impl::kw_arguments() const
@@ -274,6 +351,11 @@ inline void wamp_invocation_impl::error(
 inline void wamp_invocation_impl::set_send_result_fn(send_result_fn&& send_result)
 {
     m_send_result_fn = std::move(send_result);
+}
+
+inline void wamp_invocation_impl::set_details(const msgpack::object& details)
+{
+	m_uri = std::move(value_for_key_or<std::string>(details, "procedure", std::string()));
 }
 
 inline void wamp_invocation_impl::set_request_id(std::uint64_t request_id)

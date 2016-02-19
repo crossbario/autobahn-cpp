@@ -32,71 +32,52 @@
 
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
+#include <boost/version.hpp>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <thread>
 #include <tuple>
+
+const std::string PREFIX("com.examples.calculator");
 
 void calculator(autobahn::wamp_invocation invocation)
 {
-	auto a = invocation->argument<uint64_t>(0);
-	auto b = invocation->argument<uint64_t>(1);
+    auto a = invocation->argument<uint64_t>(0);
+    auto b = invocation->argument<uint64_t>(1);
 
-	std::cerr << "Procedure com.examples.calculator.add2 invoked: " << a << ", " << b << std::endl;
+    std::cerr << "Procedure " << invocation->uri() << "invoked: " << a << ", " << b << std::endl;
 
-	invocation->result(std::make_tuple(a + b));
+	auto suffix = invocation->uri().substr(PREFIX.size());
+
+	if (suffix == ".add")
+	{
+		invocation->result(std::make_tuple(a + b));
+	}
+	else if (suffix == ".mul2")
+	{
+		invocation->result(std::make_tuple(a * b));
+	}
+	else
+	{
+		throw std::exception("procedure not found");
+	}
 }
-
-void math(autobahn::wamp_invocation invocation)
-{
-	auto a = invocation->argument<uint64_t>(0);
-	auto b = invocation->argument<uint64_t>(1);
-
-	std::cerr << "Procedure com.examples.calculator.add2 invoked: " << a << ", " << b << std::endl;
-
-	invocation->result(std::make_tuple(a + b));
-}
-
-class auth_wamp_session :
-    public autobahn::wamp_session
-{
-public:
-    boost::promise<autobahn::wamp_authenticate> challenge_future;
-    std::string m_secret;
-
-    auth_wamp_session(
-            boost::asio::io_service& io,
-            bool debug_enabled,
-            const std::string& secret)
-        : autobahn::wamp_session(io, debug_enabled)
-        , m_secret(secret)
-    {
-    }
-
-    boost::future<autobahn::wamp_authenticate> on_challenge(const autobahn::wamp_challenge& challenge)
-    {
-        std::cerr << "responding to auth challenge: " << challenge.challenge() << std::endl;
-        std::string signature = compute_wcs(m_secret, challenge.challenge());
-        challenge_future.set_value(autobahn::wamp_authenticate(signature));
-        std::cerr << "signature: " << signature << std::endl;
-        return challenge_future.get_future();
-    }
-};
 
 int main(int argc, char** argv)
 {
     std::cerr << "Boost: " << BOOST_VERSION << std::endl;
-
     try {
         auto parameters = get_parameters(argc, argv);
 
+        std::cerr << "Connecting to realm: " << parameters->realm() << std::endl;
+
         boost::asio::io_service io;
         auto transport = std::make_shared<autobahn::wamp_tcp_transport>(
-                io, parameters->rawsocket_endpoint());
-
-        std::string secret = "secret123";
+                io, parameters->rawsocket_endpoint(), true);
 
         bool debug = parameters->debug();
-        auto session = std::make_shared<auth_wamp_session>(io, debug, secret);
+        auto session = std::make_shared<autobahn::wamp_session>(io, debug);
 
         transport->attach(std::static_pointer_cast<autobahn::wamp_transport_handler>(session));
 
@@ -108,10 +89,7 @@ int main(int argc, char** argv)
         boost::future<void> connect_future;
         boost::future<void> start_future;
         boost::future<void> join_future;
-        boost::future<void> leave_future;
-        boost::future<void> stop_future;
-		boost::future<void> provide_future;
-		boost::future<void> prefix_provide_future;
+        boost::future<void> provide_future;
 
         connect_future = transport->connect().then([&](boost::future<void> connected) {
             try {
@@ -121,6 +99,7 @@ int main(int argc, char** argv)
                 io.stop();
                 return;
             }
+
             std::cerr << "transport connected" << std::endl;
 
             start_future = session->start().then([&](boost::future<void> started) {
@@ -132,42 +111,26 @@ int main(int argc, char** argv)
                     return;
                 }
 
-                std::string authid = "homer";
-                std::vector<std::string> authmethods = { "wampcra" };
-                join_future = session->join(parameters->realm(), authmethods, authid).then([&](boost::future<uint64_t> joined) {
-					try {
-						std::cerr << "joined realm: " << joined.get() << std::endl;
+                std::cerr << "session started" << std::endl;
 
-
-
-						leave_future = session->leave().then([&](boost::future<std::string> reason) {
-							try {
-								std::cerr << "left session (" << reason.get() << ")" << std::endl;
-							}
-							catch (const std::exception& e) {
-								std::cerr << "failed to leave session: " << e.what() << std::endl;
-								io.stop();
-								return;
-							}
-
-							stop_future = session->stop().then([&](boost::future<void> stopped) {
-								std::cerr << "stopped session" << std::endl;
-								io.stop();
-							});
-						});
-
-
-
-					}
-					catch (const std::exception& e) {
+                join_future = session->join(parameters->realm()).then([&](boost::future<uint64_t> joined) {
+                    try {
+                        std::cerr << "joined realm: " << joined.get() << std::endl;
+                    } catch (const std::exception& e) {
                         std::cerr << e.what() << std::endl;
                         io.stop();
                         return;
                     }
-
-
-
-
+					provide_future = session->provide(PREFIX, &calculator, { { "match", msgpack::object("prefix") } }).then(
+						[&](boost::future<autobahn::wamp_registration> registration) {
+                        try {
+                            std::cerr << "registered procedure:" << registration.get().id() << std::endl;
+                        } catch (const std::exception& e) {
+                            std::cerr << e.what() << std::endl;
+                            io.stop();
+                            return;
+                        }
+                    });
                 });
             });
         });
@@ -176,9 +139,10 @@ int main(int argc, char** argv)
         io.run();
         std::cerr << "stopped io service" << std::endl;
     }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
+    catch (const std::exception& e) {
+        std::cerr << "exception: " << e.what() << std::endl;
+        return -1;
     }
+
     return 0;
 }

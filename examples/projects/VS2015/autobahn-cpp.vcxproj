@@ -18,6 +18,56 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\autobahn\autobahn.hpp" />
+    <ClInclude Include="..\..\..\autobahn\exceptions.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_arguments.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_authenticate.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_auth_utils.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_call.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_call_options.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_call_result.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_challenge.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_event.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_event_handler.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_invocation.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_message.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_message_type.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_procedure.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_publication.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_rawsocket_transport.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_register_request.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_registration.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_session.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_subscribe_options.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_subscribe_request.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_subscription.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_tcp_transport.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_transport.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_transport_handler.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_uds_transport.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_unsubscribe_request.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\autobahn\wamp_authenticate.ipp" />
+    <None Include="..\..\..\autobahn\wamp_call.ipp" />
+    <None Include="..\..\..\autobahn\wamp_call_options.ipp" />
+    <None Include="..\..\..\autobahn\wamp_call_result.ipp" />
+    <None Include="..\..\..\autobahn\wamp_challenge.ipp" />
+    <None Include="..\..\..\autobahn\wamp_event.ipp" />
+    <None Include="..\..\..\autobahn\wamp_invocation.ipp" />
+    <None Include="..\..\..\autobahn\wamp_message.ipp" />
+    <None Include="..\..\..\autobahn\wamp_publication.ipp" />
+    <None Include="..\..\..\autobahn\wamp_rawsocket_transport.ipp" />
+    <None Include="..\..\..\autobahn\wamp_register_request.ipp" />
+    <None Include="..\..\..\autobahn\wamp_registration.ipp" />
+    <None Include="..\..\..\autobahn\wamp_session.ipp" />
+    <None Include="..\..\..\autobahn\wamp_subscribe_options.ipp" />
+    <None Include="..\..\..\autobahn\wamp_subscribe_request.ipp" />
+    <None Include="..\..\..\autobahn\wamp_subscription.ipp" />
+    <None Include="..\..\..\autobahn\wamp_tcp_transport.ipp" />
+    <None Include="..\..\..\autobahn\wamp_unsubscribe_request.ipp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{94DB2E6B-5051-43EB-A4BD-D41F4D70D597}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -126,59 +176,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\autobahn\autobahn.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\exceptions.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_arguments.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_authenticate.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_auth_utils.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_call.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_call_options.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_call_result.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_challenge.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_event.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_event_handler.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_invocation.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_message.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_message_type.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_procedure.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_publication.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_rawsocket_transport.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_register_request.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_registration.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_session.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_subscribe_options.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_subscribe_request.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_subscription.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_tcp_transport.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_transport.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_transport_handler.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_uds_transport.hpp" />
-    <ClInclude Include="..\..\..\..\autobahn\wamp_unsubscribe_request.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\autobahn\wamp_authenticate.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_call.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_call_options.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_call_result.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_challenge.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_event.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_invocation.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_message.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_publication.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_rawsocket_transport.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_register_request.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_registration.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_session.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_subscribe_options.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_subscribe_request.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_subscription.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_tcp_transport.ipp" />
-    <None Include="..\..\..\..\autobahn\wamp_unsubscribe_request.ipp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
