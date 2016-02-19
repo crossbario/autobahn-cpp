@@ -84,22 +84,13 @@ struct pack<autobahn::wamp_subscribe_options>
             autobahn::wamp_subscribe_options const& options) const
     {
         std::map<std::string, std::string> options_map;
-        bool should_pack_options = false;
 
         if (options.is_match_set())
         {
             options_map["match"] = options.match();
-            should_pack_options = true;
         }
 
-        if (should_pack_options)
-        {
-            packer.pack(options_map);
-        }
-        else
-        {
-            packer.pack_map(0);
-        }
+        packer.pack(options_map);
 
         return packer;
     }
@@ -113,18 +104,13 @@ struct object_with_zone<autobahn::wamp_subscribe_options>
             const autobahn::wamp_subscribe_options& options)
     {
         std::map<std::string, std::string> options_map;
-        bool should_copy_options = false;
 
         if (options.is_match_set())
         {
             options_map["match"] = options.match();
-            should_copy_options = true;
         }
 
-        if (should_copy_options)
-        {
-            object << options_map;
-        }
+        object << options_map;
     }
 };
 
