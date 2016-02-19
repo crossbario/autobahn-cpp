@@ -68,7 +68,7 @@ inline T value_for_key(const msgpack::object& object, const std::string& key)
 template <typename T>
 inline T value_for_key(const msgpack::object& object, const char* key)
 {
-    if (m_kw_arguments.type != msgpack::type::MAP) {
+    if (object.type != msgpack::type::MAP) {
         throw msgpack::type_error();
     }
     std::size_t key_size = strlen(key);
