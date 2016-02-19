@@ -46,7 +46,13 @@
                      "directory": "../web"
                   },
                   "ws": {
-                     "type": "websocket"
+                     "type": "websocket",
+                     "auth": {
+                        "anonymous": {
+                           "type": "static",
+                           "role": "public"
+                        }
+                     }
                   }
                }
             },
@@ -77,6 +83,21 @@
                "endpoint": {
                   "type": "unix",
                   "path": "/tmp/crossbar.sock"
+               },
+               "auth": {
+                  "anonymous": {
+                     "type": "static",
+                     "role": "public"
+                  },
+                  "wampcra": {
+                     "type": "static",
+                     "users": {
+                        "homer": {
+                           "secret": "secret123",
+                           "role": "user"
+                        }
+                     }
+                  }
                }
             }
          ]
