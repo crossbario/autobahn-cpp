@@ -43,6 +43,7 @@ inline wamp_invocation_impl::wamp_invocation_impl()
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
     , m_send_result_fn()
     , m_request_id(0)
+    , m_progressive_results_expected(false)
 {
 }
 
@@ -172,6 +173,11 @@ inline void wamp_invocation_impl::get_kw_arguments(Map& kw_args) const
     m_kw_arguments.convert(kw_args);
 }
 
+inline bool wamp_invocation_impl::progressive_results_expected() const
+{
+    return m_progressive_results_expected;
+}
+
 inline void wamp_invocation_impl::empty_result()
 {
     throw_if_not_sendable();
@@ -187,37 +193,70 @@ inline void wamp_invocation_impl::empty_result()
 }
 
 template<typename List>
-inline void wamp_invocation_impl::result(const List& arguments)
+inline void wamp_invocation_impl::result(const List& arguments, bool intermediate)
 {
     throw_if_not_sendable();
-
+    if (intermediate && !m_progressive_results_expected)
+    {
+        //Discard intermediate results.  Other option is to throw, since method could check if progressive results are expected
+        return;
+    }
     // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
     auto message = std::make_shared<wamp_message>(4);
     message->set_field(0, static_cast<int>(message_type::YIELD));
     message->set_field(1, m_request_id);
-    message->set_field(2, std::map<int, int>() /* No details */);
+    if (intermediate)
+    {
+        message->set_field(2, std::map<std::string, bool>{ {"progress", true} });
+    }
+    else
+    {
+        message->set_field(2, std::map<int, int>() /* No details */);
+    }
     message->set_field(3, arguments);
 
     m_send_result_fn(message);
-    m_send_result_fn = send_result_fn();
+    if (!intermediate)
+    {
+        //Final result clears send function
+        m_send_result_fn = send_result_fn();
+    }
 }
 
 template<typename List, typename Map>
 inline void wamp_invocation_impl::result(
-        const List& arguments, const Map& kw_arguments)
+        const List& arguments, const Map& kw_arguments, bool intermediate)
 {
     throw_if_not_sendable();
+    if (intermediate && !m_progressive_results_expected)
+    {
+        //Discard intermediate results.  Other option is to throw, since method could check if progressive results are expected
+        return;
+    }
 
     // [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
     auto message = std::make_shared<wamp_message>(5);
     message->set_field(0, static_cast<int>(message_type::YIELD));
     message->set_field(1, m_request_id);
-    message->set_field(2, std::map<int, int>() /* No details */);
+    
+    if (intermediate)
+    {
+        message->set_field(2, std::map<std::string, bool>{ {"progress", true} });
+    }
+    else
+    {
+        message->set_field(2, std::map<int, int>() /* No details */);
+    }
+
     message->set_field(3, arguments);
     message->set_field(4, kw_arguments);
 
     m_send_result_fn(message);
-    m_send_result_fn = send_result_fn();
+    if (!intermediate)
+    {
+        //Final result clears send function
+        m_send_result_fn = send_result_fn();
+    }
 }
 
 inline void wamp_invocation_impl::error(const std::string& error_uri)
@@ -283,6 +322,7 @@ inline void wamp_invocation_impl::set_send_result_fn(send_result_fn&& send_resul
 inline void wamp_invocation_impl::set_details(const msgpack::object& details)
 {
     m_uri = std::move(value_for_key_or<std::string>(details, "procedure", std::string()));
+    m_progressive_results_expected = value_for_key_or<bool>(details, "receive_progress", false);
 }
 
 inline void wamp_invocation_impl::set_request_id(std::uint64_t request_id)

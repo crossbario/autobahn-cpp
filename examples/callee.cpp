@@ -33,6 +33,7 @@
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -47,6 +48,22 @@ void add2(autobahn::wamp_invocation invocation)
     std::cerr << "Procedure com.examples.calculator.add2 invoked: " << a << ", " << b << std::endl;
 
     invocation->result(std::make_tuple(a + b));
+}
+
+void longop(autobahn::wamp_invocation invocation)
+{
+    auto a = invocation->argument<uint64_t>(0);
+    std::cerr << "Procedure com.myapp.longop invoked: " << a << std::endl;
+    int i = 0;
+    for (; i < a; i++)
+    {
+        boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
+        if (i < a)
+        {
+            invocation->result(std::make_tuple(i), true);
+        }
+    }
+    invocation->result(std::make_tuple(i));
 }
 
 int main(int argc, char** argv)
@@ -113,6 +130,18 @@ int main(int argc, char** argv)
                         try {
                             std::cerr << "registered procedure:" << registration.get().id() << std::endl;
                         } catch (const std::exception& e) {
+                            std::cerr << e.what() << std::endl;
+                            io.stop();
+                            return;
+                        }
+                    });
+
+                    provide_future = session->provide("com.myapp.longop", &longop).then(
+                        [&](boost::future<autobahn::wamp_registration> registration) {
+                        try {
+                            std::cerr << "registered procedure:" << registration.get().id() << std::endl;
+                        }
+                        catch (const std::exception& e) {
                             std::cerr << e.what() << std::endl;
                             io.stop();
                             return;
