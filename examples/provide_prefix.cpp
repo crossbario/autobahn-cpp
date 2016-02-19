@@ -32,19 +32,46 @@
 
 #include <autobahn/autobahn.hpp>
 #include <boost/asio.hpp>
+#include <boost/version.hpp>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <thread>
 #include <tuple>
 
-void on_topic1(const autobahn::wamp_event& event)
+const std::string PREFIX("com.examples.calculator");
+
+void calculator(autobahn::wamp_invocation invocation)
 {
-    std::cerr << "received event: " << event.argument<std::string>(0) << std::endl;
+    auto a = invocation->argument<uint64_t>(0);
+    auto b = invocation->argument<uint64_t>(1);
+
+    std::cerr << "Procedure " << invocation->uri() << "invoked: " << a << ", " << b << std::endl;
+
+	auto suffix = invocation->uri().substr(PREFIX.size());
+
+	if (suffix == ".add")
+	{
+		invocation->result(std::make_tuple(a + b));
+	}
+	else if (suffix == ".mul2")
+	{
+		invocation->result(std::make_tuple(a * b));
+	}
+	else
+	{
+		throw std::exception("procedure not found");
+	}
+}
+
+void on_topic(const autobahn::wamp_event& event)
+{
+	std::cerr << "received event: " << event.uri() << " with argument " << event.argument<std::string>(0) << std::endl;
 }
 
 int main(int argc, char** argv)
 {
     std::cerr << "Boost: " << BOOST_VERSION << std::endl;
-
     try {
         auto parameters = get_parameters(argc, argv);
 
@@ -54,8 +81,6 @@ int main(int argc, char** argv)
         auto transport = std::make_shared<autobahn::wamp_tcp_transport>(
                 io, parameters->rawsocket_endpoint(), true);
 
-        // create a WAMP session that talks WAMP-RawSocket over TCP
-        //
         bool debug = parameters->debug();
         auto session = std::make_shared<autobahn::wamp_session>(io, debug);
 
@@ -69,7 +94,9 @@ int main(int argc, char** argv)
         boost::future<void> connect_future;
         boost::future<void> start_future;
         boost::future<void> join_future;
+        boost::future<void> provide_future;
 		boost::future<void> subscribe_future;
+
         connect_future = transport->connect().then([&](boost::future<void> connected) {
             try {
                 connected.get();
@@ -100,11 +127,21 @@ int main(int argc, char** argv)
                         io.stop();
                         return;
                     }
+					provide_future = session->provide(PREFIX, &calculator, { { "match", msgpack::object("prefix") } }).then(
+						[&](boost::future<autobahn::wamp_registration> registration) {
+                        try {
+                            std::cerr << "registered procedure:" << registration.get().id() << std::endl;
+                        } catch (const std::exception& e) {
+                            std::cerr << e.what() << std::endl;
+                            io.stop();
+                            return;
+                        }
+                    });
 
-                    subscribe_future = session->subscribe("com.examples.subscriptions.topic1", &on_topic1).then([&] (boost::future<autobahn::wamp_subscription> subscribed)
-                    {
+					subscribe_future = session->subscribe("com.examples.subscriptions", &on_topic, autobahn::wamp_subscribe_options("prefix")).then([&](boost::future<autobahn::wamp_subscription> subscribed)
+					{
 						try {
-							
+
 							std::cerr << "subscribed to topic: " << subscribed.get().id() << std::endl;
 						}
 						catch (const std::exception& e) {
@@ -114,8 +151,6 @@ int main(int argc, char** argv)
 						}
 
 					});
-
-
                 });
             });
         });
@@ -124,9 +159,10 @@ int main(int argc, char** argv)
         io.run();
         std::cerr << "stopped io service" << std::endl;
     }
-    catch (std::exception& e) {
+    catch (const std::exception& e) {
         std::cerr << "exception: " << e.what() << std::endl;
-        return 1;
+        return -1;
     }
+
     return 0;
 }

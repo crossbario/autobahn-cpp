@@ -49,6 +49,11 @@ public:
     wamp_invocation_impl();
     wamp_invocation_impl(wamp_invocation_impl&&) = delete; // copy wamp_invocation instead
 
+	//add URI and details
+	/*!
+	* Invocatition procedure URI.  Used by prefix & wildcard registered procedures
+	*/
+	const std::string& uri() const;
     /*!
      * The number of positional arguments passed to the invocation.
      */
@@ -195,13 +200,13 @@ public:
      * Reply to the invocation with positional arguments.
      */
     template <typename List>
-    void result(const List& arguments);
+    void result(const List& arguments, bool intermediate = false);
 
     /*!
      * Reply to the invocation with positional and keyword arguments.
      */
     template <typename List, typename Map>
-    void result(const List& arguments, const Map& kw_arguments);
+    void result(const List& arguments, const Map& kw_arguments, bool intermediate = false);
 
     /*!
      * Reply to the invocation with an error and no further details.
@@ -227,7 +232,8 @@ public:
 
     using send_result_fn = std::function<void(const std::shared_ptr<wamp_message>&)>;
     void set_send_result_fn(send_result_fn&&);
-    void set_request_id(std::uint64_t);
+	void set_details(const msgpack::object& details);
+	void set_request_id(std::uint64_t);
     void set_zone(msgpack::zone&&);
     void set_arguments(const msgpack::object& arguments);
     void set_kw_arguments(const msgpack::object& kw_arguments);
@@ -242,6 +248,7 @@ private:
     msgpack::object m_kw_arguments;
     send_result_fn m_send_result_fn;
     std::uint64_t m_request_id;
+	std::string m_uri;
 };
 
 using wamp_invocation = std::shared_ptr<wamp_invocation_impl>;
