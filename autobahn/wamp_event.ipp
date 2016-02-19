@@ -30,6 +30,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <stdexcept>
+#include "wamp_arguments.hpp"
 
 namespace autobahn {
 
@@ -38,6 +39,11 @@ inline wamp_event::wamp_event(msgpack::zone&& zone)
     , m_arguments(EMPTY_ARGUMENTS)
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
 {
+}
+
+inline const std::string& wamp_event::uri() const
+{
+    return m_uri;
 }
 
 inline std::size_t wamp_event::number_of_arguments() const
@@ -168,6 +174,11 @@ inline void wamp_event::set_arguments(const msgpack::object& arguments)
 inline void wamp_event::set_kw_arguments(const msgpack::object& kw_arguments)
 {
     m_kw_arguments = kw_arguments;
+}
+
+inline void wamp_event::set_details(const msgpack::object& details)
+{
+    m_uri = std::move(value_for_key_or<std::string>(details, "topic", std::string()));
 }
 
 } // namespace autobahn

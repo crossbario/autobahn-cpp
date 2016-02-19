@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         boost::future<void> connect_future;
         boost::future<void> start_future;
         boost::future<void> join_future;
-
+		boost::future<void> subscribe_future;
         connect_future = transport->connect().then([&](boost::future<void> connected) {
             try {
                 connected.get();
@@ -102,7 +102,21 @@ int main(int argc, char** argv)
                         return;
                     }
 
-                    session->subscribe("com.examples.subscriptions.topic1", &on_topic1);
+                    subscribe_future = session->subscribe("com.examples.subscriptions.topic1", &on_topic1).then([&] (boost::future<autobahn::wamp_subscription> subscribed)
+                    {
+						try {
+							
+							std::cerr << "subscribed to topic: " << subscribed.get().id() << std::endl;
+						}
+						catch (const std::exception& e) {
+							std::cerr << e.what() << std::endl;
+							io.stop();
+							return;
+						}
+
+					});
+
+
                 });
             });
         });

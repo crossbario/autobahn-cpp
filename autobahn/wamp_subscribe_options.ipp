@@ -39,6 +39,13 @@ inline wamp_subscribe_options::wamp_subscribe_options()
 {
 }
 
+inline wamp_subscribe_options::wamp_subscribe_options(const std::string& match)
+    : m_match()
+{
+    //Verify match type
+    set_match(match);
+}
+
 inline const std::string& wamp_subscribe_options::match() const
 {
     return *m_match;
