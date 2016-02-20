@@ -60,7 +60,7 @@ void longop(autobahn::wamp_invocation invocation)
         boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
         if (i < a)
         {
-            invocation->result(std::make_tuple(i), true);
+            invocation->progress(std::make_tuple(i));
         }
     }
     invocation->result(std::make_tuple(i));

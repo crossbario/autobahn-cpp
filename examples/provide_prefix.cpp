@@ -48,25 +48,25 @@ void calculator(autobahn::wamp_invocation invocation)
 
     std::cerr << "Procedure " << invocation->uri() << "invoked: " << a << ", " << b << std::endl;
 
-	auto suffix = invocation->uri().substr(PREFIX.size());
+    auto suffix = invocation->uri().substr(PREFIX.size());
 
-	if (suffix == ".add")
-	{
-		invocation->result(std::make_tuple(a + b));
-	}
-	else if (suffix == ".mul2")
-	{
-		invocation->result(std::make_tuple(a * b));
-	}
-	else
-	{
+    if (suffix == ".add")
+    {
+        invocation->result(std::make_tuple(a + b));
+    }
+    else if (suffix == ".mul2")
+    {
+        invocation->result(std::make_tuple(a * b));
+    }
+    else
+    {
                 throw std::runtime_error("procedure not implemented " + invocation->uri());
-	}
+    }
 }
 
 void on_topic(const autobahn::wamp_event& event)
 {
-	std::cerr << "received event: " << event.uri() << " with argument " << event.argument<std::string>(0) << std::endl;
+    std::cerr << "received event: " << event.uri() << " with argument " << event.argument<std::string>(0) << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
         boost::future<void> start_future;
         boost::future<void> join_future;
         boost::future<void> provide_future;
-		boost::future<void> subscribe_future;
+        boost::future<void> subscribe_future;
 
         connect_future = transport->connect().then([&](boost::future<void> connected) {
             try {
@@ -127,8 +127,8 @@ int main(int argc, char** argv)
                         io.stop();
                         return;
                     }
-					provide_future = session->provide(PREFIX, &calculator, { { "match", msgpack::object("prefix") } }).then(
-						[&](boost::future<autobahn::wamp_registration> registration) {
+                    provide_future = session->provide(PREFIX, &calculator, { { "match", msgpack::object("prefix") } }).then(
+                        [&](boost::future<autobahn::wamp_registration> registration) {
                         try {
                             std::cerr << "registered procedure:" << registration.get().id() << std::endl;
                         } catch (const std::exception& e) {
@@ -138,19 +138,19 @@ int main(int argc, char** argv)
                         }
                     });
 
-					subscribe_future = session->subscribe("com.examples.subscriptions", &on_topic, autobahn::wamp_subscribe_options("prefix")).then([&](boost::future<autobahn::wamp_subscription> subscribed)
-					{
-						try {
+                    subscribe_future = session->subscribe("com.examples.subscriptions", &on_topic, autobahn::wamp_subscribe_options("prefix")).then([&](boost::future<autobahn::wamp_subscription> subscribed)
+                    {
+                        try {
 
-							std::cerr << "subscribed to topic: " << subscribed.get().id() << std::endl;
-						}
-						catch (const std::exception& e) {
-							std::cerr << e.what() << std::endl;
-							io.stop();
-							return;
-						}
+                            std::cerr << "subscribed to topic: " << subscribed.get().id() << std::endl;
+                        }
+                        catch (const std::exception& e) {
+                            std::cerr << e.what() << std::endl;
+                            io.stop();
+                            return;
+                        }
 
-					});
+                    });
                 });
             });
         });

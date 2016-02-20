@@ -49,11 +49,11 @@ public:
     wamp_invocation_impl();
     wamp_invocation_impl(wamp_invocation_impl&&) = delete; // copy wamp_invocation instead
 
-	//add URI and details
-	/*!
-	* Invocatition procedure URI.  Used by prefix & wildcard registered procedures
-	*/
-	const std::string& uri() const;
+    //add URI and details
+    /*!
+    * Invocatition procedure URI.  Used by prefix & wildcard registered procedures
+    */
+    const std::string& uri() const;
     /*!
      * The number of positional arguments passed to the invocation.
      */
@@ -202,16 +202,28 @@ public:
     void empty_result();
 
     /*!
+    * Send progressive/partial result with positional arguments.
+    */
+    template <typename List>
+    void progress(const List& arguments);
+
+    /*!
+    * Send progressive/partial result with positional and keyword arguments.
+    */
+    template <typename List, typename Map>
+    void progress(const List& arguments, const Map& kw_arguments);
+
+    /*!
      * Reply to the invocation with positional arguments.
      */
     template <typename List>
-    void result(const List& arguments, bool intermediate = false);
+    void result(const List& arguments);
 
     /*!
      * Reply to the invocation with positional and keyword arguments.
      */
     template <typename List, typename Map>
-    void result(const List& arguments, const Map& kw_arguments, bool intermediate = false);
+    void result(const List& arguments, const Map& kw_arguments);
 
     /*!
      * Reply to the invocation with an error and no further details.
@@ -235,19 +247,31 @@ public:
     //
     // functions only called internally by wamp_session
 
+    using result_type = enum {
+        final = 0,
+        intermediary
+    } ;
+
     using send_result_fn = std::function<void(const std::shared_ptr<wamp_message>&)>;
     void set_send_result_fn(send_result_fn&&);
-	void set_details(const msgpack::object& details);
-	void set_request_id(std::uint64_t);
+    void set_details(const msgpack::object& details);
+    void set_request_id(std::uint64_t);
     void set_zone(msgpack::zone&&);
     void set_arguments(const msgpack::object& arguments);
     void set_kw_arguments(const msgpack::object& kw_arguments);
     bool sendable() const;
 
 private:
-    void throw_if_not_sendable();
+    void throw_if_not_sendable() const;
 
+    template <typename List>
+    void send_result(const List& arguments, result_type resultType);
+
+    template <typename List, typename Map>
+    void send_result(const List& arguments, const Map& kw_arguments, result_type resultType);
 private:
+
+
     msgpack::zone m_zone;
     msgpack::object m_arguments;
     msgpack::object m_kw_arguments;

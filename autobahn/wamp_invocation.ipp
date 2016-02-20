@@ -193,10 +193,10 @@ inline void wamp_invocation_impl::empty_result()
 }
 
 template<typename List>
-inline void wamp_invocation_impl::result(const List& arguments, bool intermediate)
+inline void wamp_invocation_impl::send_result(const List& arguments, wamp_invocation_impl::result_type resultType)
 {
     throw_if_not_sendable();
-    if (intermediate && !m_progressive_results_expected)
+    if (resultType == intermediary && !m_progressive_results_expected)
     {
         //Discard intermediate results.  Other option is to throw, since method could check if progressive results are expected
         return;
@@ -205,7 +205,7 @@ inline void wamp_invocation_impl::result(const List& arguments, bool intermediat
     auto message = std::make_shared<wamp_message>(4);
     message->set_field(0, static_cast<int>(message_type::YIELD));
     message->set_field(1, m_request_id);
-    if (intermediate)
+    if (resultType == intermediary)
     {
         message->set_field(2, std::map<std::string, bool>{ {"progress", true} });
     }
@@ -216,7 +216,7 @@ inline void wamp_invocation_impl::result(const List& arguments, bool intermediat
     message->set_field(3, arguments);
 
     m_send_result_fn(message);
-    if (!intermediate)
+    if (resultType != intermediary)
     {
         //Final result clears send function
         m_send_result_fn = send_result_fn();
@@ -224,11 +224,11 @@ inline void wamp_invocation_impl::result(const List& arguments, bool intermediat
 }
 
 template<typename List, typename Map>
-inline void wamp_invocation_impl::result(
-        const List& arguments, const Map& kw_arguments, bool intermediate)
+inline void wamp_invocation_impl::send_result(
+        const List& arguments, const Map& kw_arguments, wamp_invocation_impl::result_type resultType)
 {
     throw_if_not_sendable();
-    if (intermediate && !m_progressive_results_expected)
+    if (resultType == intermediary && !m_progressive_results_expected)
     {
         //Discard intermediate results.  Other option is to throw, since method could check if progressive results are expected
         return;
@@ -239,7 +239,7 @@ inline void wamp_invocation_impl::result(
     message->set_field(0, static_cast<int>(message_type::YIELD));
     message->set_field(1, m_request_id);
     
-    if (intermediate)
+    if (resultType == intermediary)
     {
         message->set_field(2, std::map<std::string, bool>{ {"progress", true} });
     }
@@ -252,11 +252,35 @@ inline void wamp_invocation_impl::result(
     message->set_field(4, kw_arguments);
 
     m_send_result_fn(message);
-    if (!intermediate)
+    if (resultType != intermediary)
     {
         //Final result clears send function
         m_send_result_fn = send_result_fn();
     }
+}
+
+template <typename List>
+inline void wamp_invocation_impl::progress(const List& arguments)
+{
+    send_result<List>(arguments, intermediary);
+}
+
+template <typename List, typename Map>
+inline void wamp_invocation_impl::progress(const List& arguments, const Map& kw_arguments)
+{
+    send_result<List, Map>(arguments, kw_arguments, intermediary);
+}
+
+template <typename List>
+inline void wamp_invocation_impl::result(const List& arguments)
+{
+    send_result<List>(arguments, final);
+}
+
+template <typename List, typename Map>
+inline void wamp_invocation_impl::result(const List& arguments, const Map& kw_arguments)
+{
+    send_result<List, Map>(arguments, kw_arguments, final);
 }
 
 inline void wamp_invocation_impl::error(const std::string& error_uri)
@@ -350,7 +374,7 @@ inline bool wamp_invocation_impl::sendable() const
     return static_cast<bool>(m_send_result_fn);
 }
 
-inline void wamp_invocation_impl::throw_if_not_sendable()
+inline void wamp_invocation_impl::throw_if_not_sendable() const
 {
     if (!sendable()) {
         throw std::runtime_error("tried to call result() or error() but wamp_invocation "
