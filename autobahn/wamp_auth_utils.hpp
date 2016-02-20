@@ -110,7 +110,7 @@ inline std::string derive_key(
         const std::string & salt,
         int iterations,
         int keylen
-		)
+        )
 {
 
     int passwdLen = passwd.size();
@@ -127,19 +127,19 @@ inline std::string derive_key(
 
 
     int result = PKCS5_PBKDF2_HMAC(
-		    pwd, passwdLen,
-		    salt_value, saltLen,
-		    iterations,
-		    EVP_sha256(),
-		    keylen, out);
+            pwd, passwdLen,
+            salt_value, saltLen,
+            iterations,
+            EVP_sha256(),
+            keylen, out);
 
     if ( result != 0 )
     {
-	    return base_64_encode( str_out );
+        return base_64_encode( str_out );
     }
     else
     {
-	    throw derived_key_error();
+        throw derived_key_error();
     }
 }
 

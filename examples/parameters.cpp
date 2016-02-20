@@ -49,7 +49,7 @@ parameters::parameters()
     , m_realm(DEFAULT_REALM)
     , m_rawsocket_endpoint(LOCALHOST_IP_ADDRESS, DEFAULT_RAWSOCKET_PORT)
 #ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
-	, m_uds_endpoint(DEFAULT_UDS_PATH)
+    , m_uds_endpoint(DEFAULT_UDS_PATH)
 #endif
 {
 }

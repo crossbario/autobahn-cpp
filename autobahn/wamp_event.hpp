@@ -45,11 +45,11 @@ public:
     wamp_event(msgpack::zone&& zone);
 
 
-	//add URI and details
-	/*!
-	* Event URI.  Used by prefix & wildcard subscriptions
-	*/
-	const std::string& uri() const;
+    //add URI and details
+    /*!
+    * Event URI.  Used by prefix & wildcard subscriptions
+    */
+    const std::string& uri() const;
 
     /*!
      * The number of positional arguments published by the event.
@@ -193,13 +193,13 @@ public:
 
     void set_arguments(const msgpack::object& arguments);
     void set_kw_arguments(const msgpack::object& kw_arguments);
-	void set_details(const msgpack::object& details);
+    void set_details(const msgpack::object& details);
 
 private:
     msgpack::zone m_zone;
     msgpack::object m_arguments;
     msgpack::object m_kw_arguments;
-	std::string m_uri;
+    std::string m_uri;
 
 };
 
