@@ -111,6 +111,9 @@ elif os.environ.has_key('OPENSSL_INCLUDES') and os.environ.has_key('OPENSSL_LIBS
     env.Append(LIBPATH = [os.environ['OPENSSL_LIBS']])
 #not raising error, since this it may build fine and OpenSSL fix is for Mac only
     
+if os.environ.has_key('WEBSOCKETPP_ROOT'):
+    env.Append(CPPPATH = [os.path.join(os.environ['WEBSOCKETPP_ROOT'])])
+#not raising error, since this it may build when websocket is not used
     
 # Autobahn (is included as in `#include <autobahn/autobahn.hpp`)
 #
