@@ -47,6 +47,8 @@
     <ClInclude Include="..\..\..\autobahn\wamp_transport_handler.hpp" />
     <ClInclude Include="..\..\..\autobahn\wamp_uds_transport.hpp" />
     <ClInclude Include="..\..\..\autobahn\wamp_unsubscribe_request.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_websocketpp_websocket_transport.hpp" />
+    <ClInclude Include="..\..\..\autobahn\wamp_websocket_transport.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\autobahn\wamp_authenticate.ipp" />
@@ -67,6 +69,8 @@
     <None Include="..\..\..\autobahn\wamp_subscription.ipp" />
     <None Include="..\..\..\autobahn\wamp_tcp_transport.ipp" />
     <None Include="..\..\..\autobahn\wamp_unsubscribe_request.ipp" />
+    <None Include="..\..\..\autobahn\wamp_websocketpp_websocket_transport.ipp" />
+    <None Include="..\..\..\autobahn\wamp_websocket_transport.ipp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{94DB2E6B-5051-43EB-A4BD-D41F4D70D597}</ProjectGuid>
@@ -76,7 +80,6 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
