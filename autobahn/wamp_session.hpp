@@ -249,6 +249,8 @@ public:
      */
     virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
 
+    const std::unordered_map<std::string, msgpack::object>& welcome_details();
+
 private:
     // Implements the wamp transport handler interface.
     virtual void on_attach(const std::shared_ptr<wamp_transport>& transport) override;
@@ -333,6 +335,10 @@ private:
 
     // Map of registered procedures (registration ID -> procedure)
     std::map<uint64_t, wamp_procedure> m_procedures;
+
+    // Welcome details
+    std::unordered_map<std::string, msgpack::object> m_welcome_details;
+
 };
 
 } // namespace autobahn
