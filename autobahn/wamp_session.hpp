@@ -249,6 +249,38 @@ public:
      */
     virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
 
+    /*!
+    * Accessor method to WELCOME DETAILS dictionary containing router roles 
+    * and corresponding features, authid, authrole, ...)
+    *
+    *
+    * \return A dictionary of objects received with WELCOME message upon joining.
+    * i.e.
+    * {
+    *   "realm": "<string>",
+    *   "authprovider": "dynamic",
+    *   "roles": {
+    *     "broker": {
+    *       "features": {
+    *         "publisher_identification": true,
+    *         "pattern_based_subscription": true,
+    *         ...
+    *       }
+    *     },
+    *     "dealer": {
+    *       "features": {
+    *         "pattern_based_registration": true,
+    *         "progressive_call_results": true,
+    *          ...
+    *       }
+    *     }
+    *   },
+    * "authid": "<assigned authid>",
+    * "authrole": "<assigned auth role>",
+    * "authmethod": "wampcra",
+    *  ...
+    * }
+    */
     const std::unordered_map<std::string, msgpack::object>& welcome_details();
 
 private:
