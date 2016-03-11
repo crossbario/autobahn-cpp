@@ -772,6 +772,7 @@ void wamp_session::process_challenge(wamp_message&& message)
 inline void wamp_session::process_welcome(wamp_message&& message)
 {
     m_session_id = message.field<uint64_t>(1);
+    message.field(2).convert(m_welcome_details);
     m_session_join.set_value(m_session_id);
 }
 
@@ -1218,6 +1219,11 @@ inline void wamp_session::send_message(wamp_message&& message, bool session_esta
     }
 
     m_transport->send_message(std::move(message));
+}
+
+inline const std::unordered_map<std::string, msgpack::object>&  wamp_session::welcome_details()
+{
+    return m_welcome_details;
 }
 
 } // namespace autobahn

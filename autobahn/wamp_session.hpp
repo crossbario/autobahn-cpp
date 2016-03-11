@@ -249,6 +249,40 @@ public:
      */
     virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
 
+    /*!
+    * Accessor method to WELCOME DETAILS dictionary containing router roles 
+    * and corresponding features, authid, authrole, ...)
+    *
+    *
+    * \return A dictionary of objects received with WELCOME message upon joining.
+    * i.e.
+    * {
+    *   "realm": "<string>",
+    *   "authprovider": "dynamic",
+    *   "roles": {
+    *     "broker": {
+    *       "features": {
+    *         "publisher_identification": true,
+    *         "pattern_based_subscription": true,
+    *         ...
+    *       }
+    *     },
+    *     "dealer": {
+    *       "features": {
+    *         "pattern_based_registration": true,
+    *         "progressive_call_results": true,
+    *          ...
+    *       }
+    *     }
+    *   },
+    * "authid": "<assigned authid>",
+    * "authrole": "<assigned auth role>",
+    * "authmethod": "wampcra",
+    *  ...
+    * }
+    */
+    const std::unordered_map<std::string, msgpack::object>& welcome_details();
+
 private:
     // Implements the wamp transport handler interface.
     virtual void on_attach(const std::shared_ptr<wamp_transport>& transport) override;
@@ -333,6 +367,10 @@ private:
 
     // Map of registered procedures (registration ID -> procedure)
     std::map<uint64_t, wamp_procedure> m_procedures;
+
+    // Welcome details
+    std::unordered_map<std::string, msgpack::object> m_welcome_details;
+
 };
 
 } // namespace autobahn
