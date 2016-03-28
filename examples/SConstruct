@@ -76,7 +76,7 @@ else:
 env.Append(CPPPATH=['/usr/local/include'])
 env.Append(LIBPATH=['/usr/lib'])
 
-env.VariantDir('build', duplicate=0)
+env.VariantDir('build', '.', duplicate=0)
 
 examples = [('subscriber.cpp', []),
             ('publisher.cpp', []),
