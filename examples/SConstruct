@@ -28,33 +28,14 @@
 #
 ###############################################################################
 
-import os, sys, commands
+import os, commands
 
 env = Environment()
 
 if 'CXX' in os.environ:
     env['CXX'] = os.environ['CXX']
 
-if 'g++' in env['CXX']:
-
-    print('Using GNU toolchain')
-
-    GCC_VERSION = commands.getoutput(env['CXX'] + ' -dumpversion')
-    if GCC_VERSION < '4.3.0':
-        raise SCons.Errors.UserError, 'GCC version {} detected with no or insufficient C++ 11 support detected'.format(GCC_VERSION)
-
-    env.Append(CXXFLAGS=['-std=c++11',
-                         '-O2',
-                         '-Wall',
-                         '-pedantic',
-                         '-Wno-deprecated-declarations',
-                         '-Wno-unused-local-typedefs',
-                         '-Wl,--no-as-needed',
-                         '-pthread'])
-
-    env.Append(LINKFLAGS=['-pthread'])
-
-elif 'clang++' in env['CXX']:
+if 'clang++' in env['CXX']:
 
     print('Using clang toolchain')
 
@@ -68,6 +49,25 @@ elif 'clang++' in env['CXX']:
                          '-pthread'])
 
     env.Append(LINKFLAGS=['-stdlib=libc++', '-pthread'])
+
+elif 'g++' in env['CXX']:
+
+    print('Using GNU toolchain')
+
+    GCC_VERSION = commands.getoutput(env['CXX'] + ' -dumpversion')
+    if GCC_VERSION < '4.3.0':
+        raise Exception('GCC version {} detected with no or insufficient C++ 11 support detected'.format(GCC_VERSION))
+
+    env.Append(CXXFLAGS=['-std=c++11',
+                         '-O2',
+                         '-Wall',
+                         '-pedantic',
+                         '-Wno-deprecated-declarations',
+                         '-Wno-unused-local-typedefs',
+                         '-Wl,--no-as-needed',
+                         '-pthread'])
+
+    env.Append(LINKFLAGS=['-pthread'])
 
 else:
     raise Exception('Uups. The toolchain {} is new to me =('.format(env['CXX']))
