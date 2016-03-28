@@ -35,7 +35,7 @@ env = Environment()
 if 'CXX' in os.environ:
     env['CXX'] = os.environ['CXX']
 
-if env['CXX'].startswith('g++'):
+if 'g++' in env['CXX']:
 
     print('Using GNU toolchain')
 
@@ -54,7 +54,7 @@ if env['CXX'].startswith('g++'):
 
     env.Append(LINKFLAGS=['-pthread'])
 
-elif env['CXX'].startswith('clang++'):
+elif 'clang++' in env['CXX']:
 
     print('Using clang toolchain')
 
@@ -70,7 +70,7 @@ elif env['CXX'].startswith('clang++'):
     env.Append(LINKFLAGS=['-stdlib=libc++', '-pthread'])
 
 else:
-    raise SCons.Errors.UserError, 'Uups. The toolchain {} is new to me =('.format(env['CXX'])
+    raise Exception('Uups. The toolchain {} is new to me =('.format(env['CXX']))
 
 
 env.Append(CPPPATH=['/usr/local/include'])
