@@ -785,12 +785,12 @@ inline void wamp_session::process_abort(wamp_message&& message)
     }
 
     // Details|dict
-    if (message.is_field_type(1, msgpack::type::MAP)) {
+    if (!message.is_field_type(1, msgpack::type::MAP)) {
         throw protocol_error("ABORT - Details must be a dictionary");
     }
 
     // Reason|uri
-    if (message.is_field_type(2, msgpack::type::STR)) {
+    if (!message.is_field_type(2, msgpack::type::STR)) {
         throw protocol_error("ABORT - REASON must be a string (URI)");
     }
 
