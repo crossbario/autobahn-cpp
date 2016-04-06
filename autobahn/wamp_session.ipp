@@ -66,7 +66,7 @@ inline wamp_session::wamp_session(
     : m_debug_enabled(debug_enabled)
     , m_io_service(io_service)
     , m_transport()
-    , m_request_id(ATOMIC_VAR_INIT(0))
+    , m_request_id(0)
     , m_session_id(0)
     , m_goodbye_sent(false)
     , m_running(false)
@@ -861,7 +861,7 @@ inline void wamp_session::process_error(wamp_message&& message)
     if (!message.is_field_type(4, msgpack::type::STR)) {
         throw protocol_error("invalid ERROR message - Error must be a string (URI)");
     }
-    auto error = std::move(message.field<std::string>(4));
+    auto error = message.field<std::string>(4);
 
     // Arguments|list
     if (message.size() > 5) {

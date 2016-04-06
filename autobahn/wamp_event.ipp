@@ -178,7 +178,7 @@ inline void wamp_event::set_kw_arguments(const msgpack::object& kw_arguments)
 
 inline void wamp_event::set_details(const msgpack::object& details)
 {
-    m_uri = std::move(value_for_key_or<std::string>(details, "topic", std::string()));
+    m_uri = value_for_key_or<std::string>(details, "topic", std::string());
 }
 
 } // namespace autobahn
