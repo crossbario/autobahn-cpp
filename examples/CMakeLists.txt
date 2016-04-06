@@ -1,5 +1,5 @@
-include_directories(${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIRS} ${Libmsgpack_INCLUDE_DIRS})
-link_libraries(${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+include_directories(${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${Websocketpp_INCLUDE_DIRS} ${Msgpack_INCLUDE_DIRS})
+link_libraries(${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 set(PARAMETERS_SOURCES parameters.cpp)
 set(PARAMETERS_HEADERS parameters.hpp)
