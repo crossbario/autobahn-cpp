@@ -656,7 +656,7 @@ inline void wamp_session::on_message(wamp_message&& message)
     }
 }
 
-void wamp_session::process_challenge(wamp_message&& message)
+inline void wamp_session::process_challenge(wamp_message&& message)
 {
     // kind of authentication
     std::string whatAuth = message.field<std::string>(1);
