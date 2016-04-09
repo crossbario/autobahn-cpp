@@ -33,11 +33,8 @@
 
 #include "wamp_procedure.hpp"
 #include "wamp_registration.hpp"
+#include "boost_config.hpp"
 
-// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
-#define BOOST_THREAD_PROVIDES_FUTURE
-#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
 #include <boost/thread/future.hpp>
 
 namespace autobahn {

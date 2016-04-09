@@ -31,10 +31,7 @@
 #ifndef AUTOBAHN_WEBSOCKETPP_WEBSOCKET_TRANSPORT_HPP
 #define AUTOBAHN_WEBSOCKETPP_WEBSOCKET_TRANSPORT_HPP
 
-// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
-#define BOOST_THREAD_PROVIDES_FUTURE
-#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
+#include "boost_config.hpp"
 
 #ifdef _WIN32
 #pragma warning(disable:4996) //Windows XP cancel async IO always fails with operation_not_supported

@@ -31,10 +31,7 @@
 #ifndef AUTOBAHN_WAMP_TRANSPORT_HPP
 #define AUTOBAHN_WAMP_TRANSPORT_HPP
 
-// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
-#define BOOST_THREAD_PROVIDES_FUTURE
-#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
+#include "boost_config.hpp"
 
 #include <boost/thread/future.hpp>
 #include <memory>
