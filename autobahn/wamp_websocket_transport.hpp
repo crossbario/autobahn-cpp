@@ -34,8 +34,6 @@
 #include "boost_config.hpp"
 #include "wamp_transport.hpp"
 
-
-#include <boost/thread/future.hpp>
 #include <boost/asio/io_service.hpp>
 #include <cstddef>
 #include <memory>

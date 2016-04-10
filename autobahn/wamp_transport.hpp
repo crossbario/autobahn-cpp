@@ -33,7 +33,6 @@
 
 #include "boost_config.hpp"
 
-#include <boost/thread/future.hpp>
 #include <memory>
 #include <string>
 

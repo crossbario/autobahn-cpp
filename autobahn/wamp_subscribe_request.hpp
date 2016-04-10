@@ -35,8 +35,6 @@
 #include "wamp_subscription.hpp"
 #include "boost_config.hpp"
 
-#include <boost/thread/future.hpp>
-
 namespace autobahn {
 
 /// An outstanding wamp call.

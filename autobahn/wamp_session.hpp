@@ -41,7 +41,6 @@
 #include "boost_config.hpp"
 
 #include <boost/asio.hpp>
-#include <boost/thread/future.hpp>
 #include <cstdint>
 #include <functional>
 #include <istream>

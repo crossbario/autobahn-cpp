@@ -34,7 +34,6 @@
 #include "boost_config.hpp"
 #include "wamp_message.hpp"
 
-#include <boost/thread/future.hpp>
 #include <memory>
 #include <string>
 
