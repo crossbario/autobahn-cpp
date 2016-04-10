@@ -31,11 +31,7 @@
 #ifndef AUTOBAHN_WAMP_UNSUBSCRIBE_REQUEST_HPP
 #define AUTOBAHN_WAMP_UNSUBSCRIBE_REQUEST_HPP
 
-// http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
-#define BOOST_THREAD_PROVIDES_FUTURE
-#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-#define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
-#include <boost/thread/future.hpp>
+#include "boost_config.hpp"
 
 namespace autobahn {
 
