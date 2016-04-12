@@ -863,12 +863,31 @@ inline void wamp_session::process_error(wamp_message&& message)
     }
     auto error = message.field<std::string>(4);
 
+    auto args_msg = std::string();
+
     // Arguments|list
     if (message.size() > 5) {
         if (!message.is_field_type(5, msgpack::type::ARRAY)) {
             throw protocol_error("invalid ERROR message structure - Arguments must be a list");
         }
+        try {
+          auto args = message.field<std::vector<std::string>>(5);
+          args_msg = ", args=[";
+          for (auto itr=args.begin(); itr!=args.end(); ++itr) {
+            if (itr != args.begin()) {
+              args_msg += ", ";
+            }
+            args_msg += *itr;
+          }
+          args_msg += "]";
+        } catch (const std::exception& e) {
+          if (m_debug_enabled) {
+            std::cerr << "failed to parse error message arguments" << std::endl;
+          }
+        }
     }
+
+    auto kwargs_msg = std::string();
 
     // ArgumentsKw|list
     if (message.size() > 6) {
@@ -881,15 +900,27 @@ inline void wamp_session::process_error(wamp_message&& message)
             if (itr != kw_args.end()) {
                 error += ": ";
                 error += itr->second;
+                kw_args.erase(itr);
             }
+            kwargs_msg = ", kwargs={";
+            for (auto itr=kw_args.begin(); itr!=kw_args.end(); ++itr) {
+              if (itr != kw_args.begin()) {
+                kwargs_msg += ", ";
+              }
+              kwargs_msg += itr->first + ": " + itr->second;
+            }
+            kwargs_msg += "}";
         } catch (const std::exception& e) {
             if (m_debug_enabled) {
                 std::cerr << "failed to parse error message keyword arguments" << std::endl;
             }
 
-            error += ": unknown exception";
+
+            error += ": unknown exception: " + e.what();
         }
     }
+
+    error += args_msg + kwargs_msg;
 
     switch (request_type) {
 
@@ -901,7 +932,6 @@ inline void wamp_session::process_error(wamp_message&& message)
                 auto call_itr = m_calls.find(request_id);
 
                 if (call_itr != m_calls.end()) {
-                    // FIXME: Forward all error info.
                     call_itr->second->result().set_exception(std::runtime_error(error));
                     m_calls.erase(call_itr);
                 } else {
