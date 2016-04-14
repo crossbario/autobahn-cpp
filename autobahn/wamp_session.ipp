@@ -1245,6 +1245,7 @@ inline void wamp_session::process_unregistered(wamp_message&& message)
         throw protocol_error("UNREGISTERED - UNREGISTERED.Request must be an integer");
     }
 
+    // TODO:: release m_procedures[] registered callback
 	uint64_t request_id = message.field<uint64_t>(1);
 	auto unregister_request_itr = m_unregister_requests.find(request_id);
     if (unregister_request_itr != m_unregister_requests.end()) {
