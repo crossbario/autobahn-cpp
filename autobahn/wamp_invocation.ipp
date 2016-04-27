@@ -238,7 +238,7 @@ inline void wamp_invocation_impl::send_result(
     auto message = std::make_shared<wamp_message>(5);
     message->set_field(0, static_cast<int>(message_type::YIELD));
     message->set_field(1, m_request_id);
-    
+
     if (resultType == intermediary)
     {
         message->set_field(2, std::map<std::string, bool>{ {"progress", true} });
@@ -345,7 +345,7 @@ inline void wamp_invocation_impl::set_send_result_fn(send_result_fn&& send_resul
 
 inline void wamp_invocation_impl::set_details(const msgpack::object& details)
 {
-    m_uri = std::move(value_for_key_or<std::string>(details, "procedure", std::string()));
+    m_uri = value_for_key_or<std::string>(details, "procedure", std::string());
     m_progressive_results_expected = value_for_key_or<bool>(details, "receive_progress", false);
 }
 

@@ -66,7 +66,7 @@ inline wamp_session::wamp_session(
     : m_debug_enabled(debug_enabled)
     , m_io_service(io_service)
     , m_transport()
-    , m_request_id(ATOMIC_VAR_INIT(0))
+    , m_request_id(0)
     , m_session_id(0)
     , m_goodbye_sent(false)
     , m_running(false)
@@ -522,7 +522,7 @@ inline boost::future<wamp_registration> wamp_session::provide(
     return register_request->response().get_future();
 }
 
-boost::future<wamp_authenticate> wamp_session::on_challenge(const wamp_challenge& challenge)
+inline boost::future<wamp_authenticate> wamp_session::on_challenge(const wamp_challenge& challenge)
 {
     // a dummy implementation
     boost::promise<wamp_authenticate> dummy;
@@ -656,7 +656,7 @@ inline void wamp_session::on_message(wamp_message&& message)
     }
 }
 
-void wamp_session::process_challenge(wamp_message&& message)
+inline void wamp_session::process_challenge(wamp_message&& message)
 {
     // kind of authentication
     std::string whatAuth = message.field<std::string>(1);
@@ -785,12 +785,12 @@ inline void wamp_session::process_abort(wamp_message&& message)
     }
 
     // Details|dict
-    if (message.is_field_type(1, msgpack::type::MAP)) {
+    if (!message.is_field_type(1, msgpack::type::MAP)) {
         throw protocol_error("ABORT - Details must be a dictionary");
     }
 
     // Reason|uri
-    if (message.is_field_type(2, msgpack::type::STR)) {
+    if (!message.is_field_type(2, msgpack::type::STR)) {
         throw protocol_error("ABORT - REASON must be a string (URI)");
     }
 
@@ -861,7 +861,7 @@ inline void wamp_session::process_error(wamp_message&& message)
     if (!message.is_field_type(4, msgpack::type::STR)) {
         throw protocol_error("invalid ERROR message - Error must be a string (URI)");
     }
-    auto error = std::move(message.field<std::string>(4));
+    auto error = message.field<std::string>(4);
 
     // Arguments|list
     if (message.size() > 5) {

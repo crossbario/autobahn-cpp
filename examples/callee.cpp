@@ -54,7 +54,7 @@ void longop(autobahn::wamp_invocation invocation)
 {
     auto a = invocation->argument<uint64_t>(0);
     std::cerr << "Procedure com.myapp.longop invoked: " << a << std::endl;
-    int i = 0;
+    uint64_t i = 0;
     for (; i < a; i++)
     {
         boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
