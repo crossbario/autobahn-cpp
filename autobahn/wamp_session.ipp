@@ -40,6 +40,7 @@
 #include "wamp_subscribe_request.hpp"
 #include "wamp_subscription.hpp"
 #include "wamp_transport.hpp"
+#include "wamp_unregister_request.hpp"
 #include "wamp_unsubscribe_request.hpp"
 #include "wamp_authenticate.hpp"
 #include "wamp_challenge.hpp"
@@ -520,6 +521,35 @@ inline boost::future<wamp_registration> wamp_session::provide(
     });
 
     return register_request->response().get_future();
+}
+
+inline boost::future<void> wamp_session::unprovide(const wamp_registration& registration){
+    uint64_t request_id = ++m_request_id;
+
+	auto message = std::make_shared<wamp_message>(3);
+	message->set_field(0, static_cast<int>(message_type::UNREGISTER));
+	message->set_field(1, request_id);
+	message->set_field(2, registration.id());
+
+	auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
+	auto unregister_request = std::make_shared<wamp_unregister_request>();
+
+	m_io_service.dispatch([=]() {
+		auto shared_self = weak_self.lock();
+		if (!shared_self) {
+			return;
+		}
+
+		try {
+			send_message(std::move(*message));
+			m_unregister_requests.emplace(request_id, unregister_request);
+		}
+		catch (const std::exception& e) {
+			unregister_request->response().set_exception(boost::copy_exception(e));
+		}
+	});
+
+	return unregister_request->response().get_future();
 }
 
 inline boost::future<wamp_authenticate> wamp_session::on_challenge(const wamp_challenge& challenge)
@@ -1201,6 +1231,28 @@ inline void wamp_session::process_registered(wamp_message&& message)
         m_register_requests.erase(register_request_itr);
     } else {
         throw protocol_error("REGISTERED - no pending request ID");
+    }
+}
+
+inline void wamp_session::process_unregistered(wamp_message&& message)
+{
+    // [UNREGISTERED, UNREGISTER.Request|id]
+    if (message.size() != 2) {
+        throw protocol_error("UNREGISTERED - length must be 2");
+    }
+
+    if (!message.is_field_type(1, msgpack::type::POSITIVE_INTEGER)) {
+        throw protocol_error("UNREGISTERED - UNREGISTERED.Request must be an integer");
+    }
+
+    // TODO:: release m_procedures[] registered callback
+	uint64_t request_id = message.field<uint64_t>(1);
+	auto unregister_request_itr = m_unregister_requests.find(request_id);
+    if (unregister_request_itr != m_unregister_requests.end()) {
+        unregister_request_itr->second->set_response();
+        m_unregister_requests.erase(request_id);
+    } else {
+        throw protocol_error("UNREGISTERED - no pending request ID");
     }
 }
 
