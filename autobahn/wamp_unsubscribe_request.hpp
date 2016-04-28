@@ -32,6 +32,7 @@
 #define AUTOBAHN_WAMP_UNSUBSCRIBE_REQUEST_HPP
 
 #include "boost_config.hpp"
+#include "wamp_subscription.hpp"
 
 namespace autobahn {
 
@@ -39,12 +40,14 @@ namespace autobahn {
 class wamp_unsubscribe_request
 {
 public:
-    wamp_unsubscribe_request();
+    wamp_unsubscribe_request(const wamp_subscription& subscription);
 
     boost::promise<void>& response();
     void set_response();
+    wamp_subscription &subscription();
 
 private:
+    wamp_subscription m_subscription;
     boost::promise<void> m_response;
 };
 

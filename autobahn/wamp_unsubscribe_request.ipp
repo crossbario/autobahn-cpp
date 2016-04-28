@@ -30,8 +30,9 @@
 
 namespace autobahn {
 
-inline wamp_unsubscribe_request::wamp_unsubscribe_request()
-    : m_response()
+inline wamp_unsubscribe_request::wamp_unsubscribe_request(const wamp_subscription &subscription)
+    : m_subscription(subscription)
+    , m_response()
 {
 }
 
@@ -43,6 +44,11 @@ inline boost::promise<void>& wamp_unsubscribe_request::response()
 inline void wamp_unsubscribe_request::set_response()
 {
     m_response.set_value();
+}
+
+inline wamp_subscription& wamp_unsubscribe_request::subscription()
+{
+   return m_subscription;
 }
 
 } // namespace autobahn
