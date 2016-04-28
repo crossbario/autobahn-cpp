@@ -18,8 +18,9 @@
 
 namespace autobahn {
 
-inline wamp_unregister_request::wamp_unregister_request()
-    : m_response()
+inline wamp_unregister_request::wamp_unregister_request(const wamp_registration& registration)
+    : m_registration(registration)
+    , m_response()
 {
 }
 
@@ -31,6 +32,11 @@ inline boost::promise<void>& wamp_unregister_request::response()
 inline void wamp_unregister_request::set_response()
 {
     m_response.set_value();
+}
+
+inline wamp_registration& wamp_unregister_request::registration()
+{
+    return m_registration;
 }
 
 } // namespace autobahn
