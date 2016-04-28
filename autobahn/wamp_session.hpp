@@ -176,7 +176,7 @@ public:
             const wamp_subscribe_options& options = wamp_subscribe_options());
 
     /*!
-     * Unubscribe a handler to previosly subscribed topic.
+     * Unubscribe a handler to previously subscribed topic.
      *
      * \param subscription The subscription to unsubscribe from.
      * \return A future that resolves to the unsubscribed response.
