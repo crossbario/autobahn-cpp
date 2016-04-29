@@ -242,7 +242,7 @@ public:
     * \param registration The registration to unregister.
     * \return A future that resolves to the unregistered response.
     */
-    boost::future<void> wamp_session::unprovide(const wamp_registration& registration);
+    boost::future<void> unprovide(const wamp_registration& registration);
 
     /*!
      * Function called by the session when authenticating. It always has to be
