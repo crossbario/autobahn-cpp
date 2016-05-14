@@ -1,5 +1,7 @@
 # **Autobahn**|Cpp
 
+> This documentation is quite outdated (and also woefully incomplete). When in doubt ask on the [mailing list](https://groups.google.com/forum/#!forum/autobahnws) or read the code!
+
 **Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
 
 It implements version 2 of WAMP with the following roles:
