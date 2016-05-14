@@ -113,7 +113,7 @@ namespace autobahn {
         typename client_type::connection_ptr con = m_client.get_connection(uri, ec);
         if (ec) {
             //Log  "Get Connection Error: " + ec.message());
-            connect_promise.set_exception(std::system_error(ec.value(), ec.category(), "connect"));
+            connect_promise.set_exception(websocketpp::lib::system_error(ec.value(), ec.category(), "connect"));
             return;
         }
 
