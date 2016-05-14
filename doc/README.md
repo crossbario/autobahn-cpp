@@ -1,11 +1,3 @@
-<<<<<<< HEAD:doc/index.rst
-|ab|
-====
-
-|ab| is a networking library for C++ created by the `Autobahn project <http://autobahn.ws/>`_ that implements the `Web Application Messaging Protocol (WAMP) <http://wamp.ws/>`_ for creating C++ components communicating with a WAMP router via Unix pipes.
-
-|ab| is open-source software licensed under the `Boost Software License 1.0 <http://opensource.org/licenses/BSL-1.0>`__.
-=======
 Autobahn|CPP Documentation
 ==================
 
@@ -15,8 +7,6 @@ Autobahn|CPP Documentation
 
 
 Autobahn|CPP is an open-source networking library for C++ created by the [Autobahn project ](http://autobahn.ws/) that implements the [Web Application Messaging Protocol (WAMP)]( http://wamp.ws/) for creating C++ components communicating with a WAMP router via Unix pipes.
-
->>>>>>> c1eca4746fbee616d6d76eea4c98381ad8e6dccd:doc/README.md
 
 Web Application Messaging Protocol (WAMP)
 -----------------------------------------
