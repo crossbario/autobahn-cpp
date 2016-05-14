@@ -87,7 +87,7 @@ Here is what programming with C++ and |ab| looks like.
 
 Here is JavaScript running in Chrome call into C++ running on command line. Both are connected via a WAMP router, in this case `Autobahn|Python <http://autobahn.ws/python>`_ based.
 
-![image of chrome dev tools](img/cpp_from_js.png)
+![image of chrome dev tools](_static/img/cpp_from_js.png)
 
 * [Example C++ code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/register2.cpp)
 * [Example JavaScript code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/index.html)
