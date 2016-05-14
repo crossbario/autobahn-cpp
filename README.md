@@ -1,6 +1,8 @@
 # **Autobahn**|Cpp
 
-**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which implements the [Web Application Messaging Protocol (WAMP)](http://wamp.ws/) in C++ supporting the following application roles
+> This documentation is quite outdated (and also woefully incomplete). When in doubt ask on the [mailing list](https://groups.google.com/forum/#!forum/autobahnws) or read the code!
+
+**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
 
  * **Caller**
  * **Callee**
@@ -124,7 +126,7 @@ Then make Clang available:
 
 ```console
 oberstet@corei7ub1310:~$ sudo update-alternatives --config c++
-[sudo] password for oberstet: 
+[sudo] password for oberstet:
 Es gibt 3 Auswahlmöglichkeiten für die Alternative c++ (welche /usr/bin/c++ bereitstellen).
 
   Auswahl      Pfad                     Priorität Status
