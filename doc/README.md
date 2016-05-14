@@ -32,62 +32,62 @@ Here is what programming with C++ and |ab| looks like.
 
 **Calling a remote Procedure**
 
-   auto c1 = session.call("com.mathservice.add2", {23, 777})
-   .then(
-      [&](future<any> f) {
-         cout << "Got call result " << any_cast<uint64_t> (f.get()) << endl;
-      });
+    auto c1 = session.call("com.mathservice.add2", {23, 777})
+    .then(
+       [&](future<any> f) {
+          cout << "Got call result " << any_cast<uint64_t> (f.get()) << endl;
+       });
 
 
 
 **Registering a remoted Procedure**
 
-   auto r1 = session.provide("com.myapp.cpp.square",
-      [](const anyvec& args, const anymap& kwargs) {
-         cout << "Procedure is invoked .." << endl;
-         uint64_t x = any_cast<uint64_t> (args[0]);
-         return x * x;
-      })
-   .then(
-      [](future<registration> reg) {
-         cout << "Registered with ID " << reg.get().id << endl;
-      });
+    auto r1 = session.provide("com.myapp.cpp.square",
+       [](const anyvec& args, const anymap& kwargs) {
+          cout << "Procedure is invoked .." << endl;
+          uint64_t x = any_cast<uint64_t> (args[0]);
+          return x * x;
+       })
+    .then(
+       [](future<registration> reg) {
+          cout << "Registered with ID " << reg.get().id << endl;
+       });
 
 
 **Publishing an Event**
 
 
-   session.publish("com.myapp.topic2", {23, true, string("hello")});
+    session.publish("com.myapp.topic2", {23, true, string("hello")});
 
 
 **Publishing an Event (acknowledged)**
 
-   auto opts = PublishOptions();
-   opts.acknowledge = True;
+    auto opts = PublishOptions();
+    opts.acknowledge = True;
 
-   auto p1 = session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
-   .then(
-      [](future<publication> pub) {
-         cout << "Published with ID " << pub.get().id << endl;
-      });
+    auto p1 = session.publish("com.myapp.topic2", {23, true, string("hello")}, opts)
+    .then(
+       [](future<publication> pub) {
+          cout << "Published with ID " << pub.get().id << endl;
+       });
 
 
 **Subscribing to a Topic**
 
-   auto s1 = session.subscribe("com.myapp.topic1",
-      [](const anyvec& args, const anymap& kwargs) {
-         cout << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
-      })
-   .then(
-      [](future<subscription> sub) {
-         cout << "Subscribed with ID " << sub.get().id << endl;
-      });
+    auto s1 = session.subscribe("com.myapp.topic1",
+       [](const anyvec& args, const anymap& kwargs) {
+          cout << "Got event: " << any_cast<uint64_t>(args[0]) << endl;
+       })
+    .then(
+       [](future<subscription> sub) {
+          cout << "Subscribed with ID " << sub.get().id << endl;
+       });
 
 
 
 Here is JavaScript running in Chrome call into C++ running on command line. Both are connected via a WAMP router, in this case `Autobahn|Python <http://autobahn.ws/python>`_ based.
 
-.. image:: /_static/img/cpp_from_js.png
+![image of chrome dev tools](img/cpp_from_js.png)
 
 * [Example C++ code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/register2.cpp)
 * [Example JavaScript code](https://github.com/crossbario/autobahn-cpp/blob/master/examples/index.html)
@@ -98,10 +98,10 @@ Download
 
 To get Autobahn|CPP library and examples, clone the repo
 
-   shell
-   cd $HOME
-   git clone git@github.com:crossbario/autobahn-cpp.git
-   cd AutobahnCpp
+    shell
+    cd $HOME
+    git clone git@github.com:crossbario/autobahn-cpp.git
+    cd AutobahnCpp
 
 
 The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
