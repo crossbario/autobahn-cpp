@@ -28,7 +28,7 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-find_package(Boost REQUIRED COMPONENTS program_options system thread)
+find_package(Boost REQUIRED COMPONENTS program_options system thread random)
 find_package(Websocketpp REQUIRED)
 find_package(Msgpack REQUIRED)
 find_package(Threads REQUIRED)
