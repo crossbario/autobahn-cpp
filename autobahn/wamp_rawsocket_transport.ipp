@@ -62,7 +62,7 @@ template <class Socket>
 boost::future<void> wamp_rawsocket_transport<Socket>::connect()
 {
     if (m_socket.is_open()) {
-        m_connect.set_exception(network_error("network transport already connected"));
+        m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
         return m_connect.get_future();
     }
 
@@ -74,8 +74,8 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
         }
 
         if (error_code) {
-            m_connect.set_exception(
-                            std::system_error(error_code.value(), std::system_category(), "connect"));
+            m_connect.set_exception(boost::copy_exception(
+                            std::system_error(error_code.value(), std::system_category(), "connect")));
             return;
         }
 
@@ -232,8 +232,8 @@ void wamp_rawsocket_transport<Socket>::handshake_reply_handler(
             std::cerr << "rawsocket handshake error: " << error_code << std::endl;
         }
 
-        m_connect.set_exception(
-                std::system_error(error_code.value(), std::system_category(), "async_read"));
+        m_connect.set_exception(boost::copy_exception(
+                std::system_error(error_code.value(), std::system_category(), "async_read")));
         return;
     }
 
@@ -242,7 +242,7 @@ void wamp_rawsocket_transport<Socket>::handshake_reply_handler(
     }
 
     if (m_handshake_buffer[0] != 0x7F) {
-        m_connect.set_exception(protocol_error("invalid handshake frame"));
+        m_connect.set_exception(boost::copy_exception(protocol_error("invalid handshake frame")));
         return;
     }
 
@@ -268,13 +268,13 @@ void wamp_rawsocket_transport<Socket>::handshake_reply_handler(
             error_string << "unknown/reserved error code (" << error << ")";
         }
 
-        m_connect.set_exception(protocol_error(error_string.str()));
+        m_connect.set_exception(boost::copy_exception(protocol_error(error_string.str())));
         return;
     }
 
     uint32_t serializer_type = (m_handshake_buffer[1] & 0x0F);
     if (serializer_type == 0x01) {
-        m_connect.set_exception(protocol_error("json currently not supported"));
+        m_connect.set_exception(boost::copy_exception(protocol_error("json currently not supported")));
     } else if (serializer_type == 0x02) {
         if (m_debug_enabled) {
             std::cerr << "connect successful: valid handshake" << std::endl;
@@ -284,7 +284,7 @@ void wamp_rawsocket_transport<Socket>::handshake_reply_handler(
     } else {
         std::stringstream error_string;
         error_string << "rawsocket handshake error: invalid serializer type (" << serializer_type << ")";
-        m_connect.set_exception(protocol_error(error_string.str()));
+        m_connect.set_exception(boost::copy_exception(protocol_error(error_string.str())));
     }
 }
 

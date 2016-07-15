@@ -89,12 +89,12 @@ inline boost::future<void> wamp_session::start()
         }
 
         if (m_running) {
-            m_session_start.set_exception(protocol_error("session already started"));
+            m_session_start.set_exception(boost::copy_exception(protocol_error("session already started")));
             return;
         }
 
         if (!m_transport) {
-            m_session_start.set_exception(no_transport_error());
+            m_session_start.set_exception(boost::copy_exception(no_transport_error()));
             return;
         }
 
@@ -116,17 +116,17 @@ inline boost::future<void> wamp_session::stop()
         }
 
         if (!m_running) {
-            m_session_stop.set_exception(protocol_error("session already stopped"));
+            m_session_stop.set_exception(boost::copy_exception(protocol_error("session already stopped")));
             return;
         }
 
         if (!m_transport) {
-            m_session_start.set_exception(no_transport_error());
+            m_session_start.set_exception(boost::copy_exception(no_transport_error()));
             return;
         }
 
         if (m_session_id) {
-            m_session_stop.set_exception(protocol_error("session still joined"));
+            m_session_stop.set_exception(boost::copy_exception(protocol_error("session still joined")));
             return;
         }
 
@@ -182,7 +182,7 @@ inline boost::future<uint64_t> wamp_session::join(
         }
 
         if (m_session_id) {
-            m_session_join.set_exception(protocol_error("session already joined"));
+            m_session_join.set_exception(boost::copy_exception(protocol_error("session already joined")));
             return;
         }
 
@@ -212,7 +212,7 @@ inline boost::future<std::string> wamp_session::leave(const std::string& reason)
         }
 
         if (m_goodbye_sent) {
-            m_session_leave.set_exception(protocol_error("goodbye already sent"));
+            m_session_leave.set_exception(boost::copy_exception(protocol_error("goodbye already sent")));
         }
 
         try {
@@ -826,7 +826,7 @@ inline void wamp_session::process_abort(wamp_message&& message)
     }
 
     std::string uri = message.field<std::string>(2);
-    m_session_join.set_exception(abort_error(uri));
+    m_session_join.set_exception(boost::copy_exception(abort_error(uri)));
 }
 
 inline void wamp_session::process_goodbye(wamp_message&& message)
@@ -933,7 +933,7 @@ inline void wamp_session::process_error(wamp_message&& message)
 
                 if (call_itr != m_calls.end()) {
                     // FIXME: Forward all error info.
-                    call_itr->second->result().set_exception(std::runtime_error(error));
+                    call_itr->second->result().set_exception(boost::copy_exception(std::runtime_error(error)));
                     m_calls.erase(call_itr);
                 } else {
                     throw protocol_error("bogus ERROR message for non-pending CALL request ID");

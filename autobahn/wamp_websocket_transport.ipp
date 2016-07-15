@@ -55,7 +55,7 @@ inline wamp_websocket_transport::wamp_websocket_transport(
 inline boost::future<void> wamp_websocket_transport::connect()
 {
     if (is_open()) {
-        m_connect.set_exception(network_error("network transport already connected"));
+        m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
         return m_connect.get_future();
     }
 
