@@ -90,7 +90,7 @@ namespace autobahn {
     inline void wamp_websocketpp_websocket_transport<Config>::on_ws_fail(websocketpp::connection_hdl hdl) {
         //Log "Connection failed!");
         if (!m_open)
-            m_connect.set_exception(network_error("failed to connect"));
+            m_connect.set_exception(boost::copy_exception(network_error("failed to connect")));
 
         scoped_lock guard(m_lock);
         m_done = true;
@@ -113,7 +113,7 @@ namespace autobahn {
         typename client_type::connection_ptr con = m_client.get_connection(uri, ec);
         if (ec) {
             //Log  "Get Connection Error: " + ec.message());
-            connect_promise.set_exception(websocketpp::lib::system_error(ec.value(), ec.category(), "connect"));
+            connect_promise.set_exception(boost::copy_exception(websocketpp::lib::system_error(ec.value(), ec.category(), "connect")));
             return;
         }
 
