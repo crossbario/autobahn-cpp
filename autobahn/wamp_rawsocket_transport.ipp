@@ -61,6 +61,8 @@ wamp_rawsocket_transport<Socket>::wamp_rawsocket_transport(
 template <class Socket>
 boost::future<void> wamp_rawsocket_transport<Socket>::connect()
 {
+    m_connect =  boost::promise<void>();  // reset the promise
+
     if (m_socket.is_open()) {
         m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
         return m_connect.get_future();
@@ -74,6 +76,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
         }
 
         if (error_code) {
+            m_socket.close();  // async_connect will leave it open
             m_connect.set_exception(boost::copy_exception(
                             std::system_error(error_code.value(), std::system_category(), "connect")));
             return;
