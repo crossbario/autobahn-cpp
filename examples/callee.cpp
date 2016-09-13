@@ -92,7 +92,8 @@ int main(int argc, char** argv)
         boost::future<void> connect_future;
         boost::future<void> start_future;
         boost::future<void> join_future;
-        boost::future<void> provide_future;
+        boost::future<void> provide_future_add;
+        boost::future<void> provide_future_longop;
 
         connect_future = transport->connect().then([&](boost::future<void> connected) {
             try {
@@ -125,7 +126,7 @@ int main(int argc, char** argv)
                         return;
                     }
 
-                    provide_future = session->provide("com.examples.calculator.add2", &add2).then(
+                    provide_future_add = session->provide("com.examples.calculator.add2", &add2).then(
                         [&](boost::future<autobahn::wamp_registration> registration) {
                         try {
                             std::cerr << "registered procedure:" << registration.get().id() << std::endl;
@@ -136,7 +137,7 @@ int main(int argc, char** argv)
                         }
                     });
 
-                    provide_future = session->provide("com.myapp.longop", &longop).then(
+                    provide_future_longop = session->provide("com.myapp.longop", &longop).then(
                         [&](boost::future<autobahn::wamp_registration> registration) {
                         try {
                             std::cerr << "registered procedure:" << registration.get().id() << std::endl;
