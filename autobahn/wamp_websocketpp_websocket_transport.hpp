@@ -34,7 +34,9 @@
 #include "boost_config.hpp"
 
 #ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning(disable:4996) //Windows XP cancel async IO always fails with operation_not_supported
+#endif
 //Recommended WebSocket++ settings for Windows
 #define _WEBSOCKETPP_CPP11_FUNCTIONAL_
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
