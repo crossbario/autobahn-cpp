@@ -35,6 +35,7 @@
 #include "wamp_transport.hpp"
 
 #include <boost/asio/io_service.hpp>
+#include <boost/asio/ssl.hpp>
 #include <cstddef>
 #include <memory>
 #include <msgpack.hpp>
@@ -65,7 +66,7 @@ public:
     /*!
      * Convenience type for the endpoint being used.
      */
-    typedef typename Socket::endpoint_type endpoint_type;
+    typedef typename Socket::lowest_layer_type::endpoint_type endpoint_type;
 
 public:
     /*!
@@ -78,6 +79,19 @@ public:
             boost::asio::io_service& io_service,
             const endpoint_type& remote_endpoint,
             bool debug_enabled=false);
+
+    /*!
+     * Constructs a rawsocket transport with ssl context.
+     *
+     * @param io_service The io service to use for asynchronous operations.
+     * @param remote_endpoint The remote endpoint to connect to.
+     */
+    wamp_rawsocket_transport(
+            boost::asio::io_service& io_service,
+            const endpoint_type& remote_endpoint,
+	    boost::asio::ssl::context& context,
+            bool debug_enabled=false
+	    );
 
     virtual ~wamp_rawsocket_transport() override = default;
 
@@ -151,6 +165,21 @@ public:
 
 protected:
     socket_type& socket();
+
+    /*!
+     *  A function that does the actual async connection, and  
+     *  call the given connection handler with the result.
+     *
+     *  This function is overwritten on the ssl_transport, to do a 
+     *  ssl-handshake before calling the connect_handler
+     *
+     *  @param endpoint_type the endpoint to connect to 
+     *  @param connect_handler the generic connection handler, that initiates the wamp protocol. 
+     */
+    virtual void async_connect( 
+        endpoint_type & endpoint,
+	std::function<void (const boost::system::error_code&)> connect_handler
+    );
 
 private:
 

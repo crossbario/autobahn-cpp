@@ -59,11 +59,31 @@ wamp_rawsocket_transport<Socket>::wamp_rawsocket_transport(
 }
 
 template <class Socket>
+wamp_rawsocket_transport<Socket>::wamp_rawsocket_transport(
+            boost::asio::io_service& io_service,
+            const endpoint_type& remote_endpoint,
+	    boost::asio::ssl::context& context,
+            bool debug_enabled)
+    : wamp_transport()
+    , m_socket(io_service,context)
+    , m_remote_endpoint(remote_endpoint)
+    , m_connect()
+    , m_disconnect()
+    , m_handshake_buffer()
+    , m_message_length(0)
+    , m_message_unpacker()
+    , m_debug_enabled(debug_enabled)
+{
+    memset(m_handshake_buffer, 0, sizeof(m_handshake_buffer));
+}
+
+
+template <class Socket>
 boost::future<void> wamp_rawsocket_transport<Socket>::connect()
 {
-    m_connect =  boost::promise<void>();  // reset the promise
+    m_connect = boost::promise<void>();  // reset the promise
 
-    if (m_socket.is_open()) {
+    if (m_socket.lowest_layer().is_open()) {
         m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
         return m_connect.get_future();
     }
@@ -76,7 +96,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
         }
 
         if (error_code) {
-            m_socket.close();  // async_connect will leave it open
+            m_socket.lowest_layer().close();  // async_connect will leave it open
             m_connect.set_exception(boost::copy_exception(
                             std::system_error(error_code.value(), std::system_category(), "connect")));
             return;
@@ -117,19 +137,30 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
         }
     };
 
-    m_socket.async_connect(m_remote_endpoint, connect_handler);
+    // the async_connect is a virtual function, that on the ssl_transport
+    // is doint a ssl-handshake, before calling the handler. 
+    async_connect( m_remote_endpoint, connect_handler );
 
     return m_connect.get_future();
+}
+
+
+template <class Socket>
+void wamp_rawsocket_transport<Socket>::async_connect(
+        endpoint_type & endpoint,
+	std::function<void (const boost::system::error_code&)> connect_handler )
+{
+    socket().lowest_layer().async_connect( endpoint, connect_handler );
 }
 
 template <class Socket>
 boost::future<void> wamp_rawsocket_transport<Socket>::disconnect()
 {
-    if (!m_socket.is_open()) {
+    if (!m_socket.lowest_layer().is_open()) {
         throw network_error("network transport already disconnected");
     }
 
-    m_socket.close();
+    m_socket.lowest_layer().close();
 
     m_disconnect.set_value();
     return m_disconnect.get_future();
@@ -138,7 +169,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::disconnect()
 template <class Socket>
 bool wamp_rawsocket_transport<Socket>::is_connected() const
 {
-    return m_socket.is_open();
+    return m_socket.lowest_layer().is_open();
 }
 
 template <class Socket>

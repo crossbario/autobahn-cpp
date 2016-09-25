@@ -28,29 +28,46 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_HPP
-#define AUTOBAHN_HPP
+#ifndef AUTOBAHN_WAMP_SSL_TRANSPORT_HPP
+#define AUTOBAHN_WAMP_SSL_TRANSPORT_HPP
 
-#ifdef _WIN32
-#define MSGPACK_DISABLE_LEGACY_CONVERT
-#define MSGPACK_DEFAULT_API_VERSION 1
-#define MSGPACK_DISABLE_LEGACY_CONVERT
-#endif
+#include "boost_config.hpp"
+#include "wamp_rawsocket_transport.hpp"
 
-#include "wamp_event.hpp"
-#include "wamp_invocation.hpp"
-#include "wamp_session.hpp"
-#include "wamp_tcp_transport.hpp"
-#include "wamp_ssl_transport.hpp"
-#include "wamp_transport.hpp"
-#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
-#include "wamp_uds_transport.hpp"
-#endif
-/*! \mainpage Reference Documentation
- *
- * Welcome to the reference documentation of <b>Autobahn</b>|Cpp.<br>
- *
- * For a more gentle introduction, please visit http://autobahn.ws/cpp/.
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
+
+namespace autobahn {
+
+/*!
+ * A transport that provides ssl wrapped rawsocket support over TCP.
  */
 
-#endif // AUTOBAHN_HPP
+
+typedef boost::asio::ssl::stream< boost::asio::ip::tcp::socket > ssl_wrapped_socket;
+
+class wamp_ssl_transport :
+        public wamp_rawsocket_transport<ssl_wrapped_socket>
+{
+public:
+    wamp_ssl_transport(
+            boost::asio::io_service& io_service,
+            const boost::asio::ip::tcp::endpoint& remote_endpoint,
+	    boost::asio::ssl::context& context,
+            bool debug_enabled=false);
+    virtual ~wamp_ssl_transport() override;
+
+    virtual boost::future<void> connect() override;
+
+    virtual void async_connect( 
+        endpoint_type & endpoint,
+	std::function<void (const boost::system::error_code&)> connect_handler
+    );
+};
+
+} // namespace autobahn
+
+#include "wamp_ssl_transport.ipp"
+
+#endif // AUTOBAHN_WAMP_SSL_TRANSPORT_HPP
