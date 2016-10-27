@@ -51,7 +51,7 @@ public:
             boost::asio::io_service& io_service,
             const uds_endpoint_type& remote_endpoint,
             bool debug_enabled=false)
-    : wamp_rawsocket_transport<boost::asio::local::stream_protocol::socket>(
+    : wamp_rawsocket_transport<uds_socket_type>(
             remote_endpoint, debug_enabled)
     , m_socket(io_service) {}
 
