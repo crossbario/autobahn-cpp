@@ -37,12 +37,29 @@
 
 namespace autobahn {
 
+typedef boost::asio::local::stream_protocol::socket uds_socket_type;
+typedef typename uds_socket_type::lowest_layer_type::endpoint_type uds_endpoint_type;
+
 /*!
  * A transport that provides rawsocket support over unix domain sockets (UDS).
  */
-using wamp_uds_transport =
-        wamp_rawsocket_transport<
-                boost::asio::local::stream_protocol::socket>;
+class wamp_uds_transport :
+        public wamp_rawsocket_transport<uds_socket_type>
+{
+public:
+    wamp_uds_transport(
+            boost::asio::io_service& io_service,
+            const uds_endpoint_type& remote_endpoint,
+            bool debug_enabled=false)
+    : wamp_rawsocket_transport<boost::asio::local::stream_protocol::socket>(
+            remote_endpoint, debug_enabled)
+    , m_socket(io_service) {}
+
+    virtual uds_socket_type& socket() { return m_socket; }
+    virtual const uds_socket_type& const_socket() const { return m_socket; }
+private:
+    uds_socket_type m_socket;
+};
 
 } // namespace autobahn
 

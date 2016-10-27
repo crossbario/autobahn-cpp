@@ -36,11 +36,12 @@ namespace autobahn {
 
 inline wamp_ssl_transport::wamp_ssl_transport(
         boost::asio::io_service& io_service,
-        const boost::asio::ip::tcp::endpoint& remote_endpoint,
+        const ssl_endpoint_type& remote_endpoint,
 	boost::asio::ssl::context& context,
         bool debug_enabled)
-    : wamp_rawsocket_transport<ssl_wrapped_socket>(
-            io_service, remote_endpoint, context, debug_enabled)
+    : wamp_rawsocket_transport<ssl_socket_type>(
+            remote_endpoint, debug_enabled)
+    , m_socket(io_service,context)
 {
 }
 
@@ -51,7 +52,7 @@ inline wamp_ssl_transport::~wamp_ssl_transport()
 
 inline boost::future<void> wamp_ssl_transport::connect()
 {
-    return wamp_rawsocket_transport<ssl_wrapped_socket>::connect().then(
+    return wamp_rawsocket_transport<ssl_socket_type>::connect().then(
         [&](boost::future<void> connected) {
             // Check the originating future for exceptions.
             connected.get();

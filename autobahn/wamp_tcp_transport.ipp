@@ -36,10 +36,11 @@ namespace autobahn {
 
 inline wamp_tcp_transport::wamp_tcp_transport(
         boost::asio::io_service& io_service,
-        const boost::asio::ip::tcp::endpoint& remote_endpoint,
+        const tcp_endpoint_type& remote_endpoint,
         bool debug_enabled)
-    : wamp_rawsocket_transport<boost::asio::ip::tcp::socket>(
-            io_service, remote_endpoint, debug_enabled)
+    : wamp_rawsocket_transport<tcp_socket_type>(
+            remote_endpoint, debug_enabled)
+    , m_socket(io_service)
 {
 }
 
@@ -49,7 +50,7 @@ inline wamp_tcp_transport::~wamp_tcp_transport()
 
 inline boost::future<void> wamp_tcp_transport::connect()
 {
-    return wamp_rawsocket_transport<boost::asio::ip::tcp::socket>::connect().then(
+    return wamp_rawsocket_transport<tcp_socket_type>::connect().then(
         [&](boost::future<void> connected) {
             // Check the originating future for exceptions.
             connected.get();
@@ -60,5 +61,6 @@ inline boost::future<void> wamp_tcp_transport::connect()
         }
     );
 }
+
 
 } // namespace autobahn

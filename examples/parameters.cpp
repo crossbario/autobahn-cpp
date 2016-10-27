@@ -41,6 +41,7 @@ const boost::asio::ip::address LOCALHOST_IP_ADDRESS(
         boost::asio::ip::address::from_string(LOCALHOST_IP_ADDRESS_STRING));
 const std::string DEFAULT_REALM("realm1");
 const uint16_t DEFAULT_RAWSOCKET_PORT(8000);
+const uint16_t DEFAULT_RAWSOCKET_SSL_PORT(8010);
 const std::string DEFAULT_UDS_PATH("/tmp/crossbar.sock");
 }
 
@@ -48,6 +49,7 @@ parameters::parameters()
     : m_debug(false)
     , m_realm(DEFAULT_REALM)
     , m_rawsocket_endpoint(LOCALHOST_IP_ADDRESS, DEFAULT_RAWSOCKET_PORT)
+    , m_rawsocket_ssl_endpoint(LOCALHOST_IP_ADDRESS, DEFAULT_RAWSOCKET_SSL_PORT)
 #ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
     , m_uds_endpoint(DEFAULT_UDS_PATH)
 #endif
@@ -67,6 +69,11 @@ const std::string& parameters::realm() const
 const boost::asio::ip::tcp::endpoint& parameters::rawsocket_endpoint() const
 {
     return m_rawsocket_endpoint;
+}
+
+const boost::asio::ip::tcp::endpoint& parameters::rawsocket_ssl_endpoint() const
+{
+    return m_rawsocket_ssl_endpoint;
 }
 
 #ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
@@ -89,6 +96,12 @@ void parameters::set_realm(const std::string& realm)
 void parameters::set_rawsocket_endpoint(const std::string& ip_address, uint16_t port)
 {
     m_rawsocket_endpoint = boost::asio::ip::tcp::endpoint(
+            boost::asio::ip::address::from_string(ip_address), port);
+}
+
+void parameters::set_rawsocket_ssl_endpoint(const std::string& ip_address, uint16_t port)
+{
+    m_rawsocket_ssl_endpoint = boost::asio::ip::tcp::endpoint(
             boost::asio::ip::address::from_string(ip_address), port);
 }
 

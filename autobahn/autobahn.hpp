@@ -41,7 +41,7 @@
 #include "wamp_invocation.hpp"
 #include "wamp_session.hpp"
 #include "wamp_tcp_transport.hpp"
-#include "wamp_ssl_transport.hpp"
+//#include "wamp_ssl_transport.hpp"
 #include "wamp_transport.hpp"
 #ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
 #include "wamp_uds_transport.hpp"

@@ -42,30 +42,9 @@ namespace autobahn {
 
 template <class Socket>
 wamp_rawsocket_transport<Socket>::wamp_rawsocket_transport(
-            boost::asio::io_service& io_service,
             const endpoint_type& remote_endpoint,
             bool debug_enabled)
     : wamp_transport()
-    , m_socket(io_service)
-    , m_remote_endpoint(remote_endpoint)
-    , m_connect()
-    , m_disconnect()
-    , m_handshake_buffer()
-    , m_message_length(0)
-    , m_message_unpacker()
-    , m_debug_enabled(debug_enabled)
-{
-    memset(m_handshake_buffer, 0, sizeof(m_handshake_buffer));
-}
-
-template <class Socket>
-wamp_rawsocket_transport<Socket>::wamp_rawsocket_transport(
-            boost::asio::io_service& io_service,
-            const endpoint_type& remote_endpoint,
-	    boost::asio::ssl::context& context,
-            bool debug_enabled)
-    : wamp_transport()
-    , m_socket(io_service,context)
     , m_remote_endpoint(remote_endpoint)
     , m_connect()
     , m_disconnect()
@@ -83,7 +62,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
 {
     m_connect = boost::promise<void>();  // reset the promise
 
-    if (m_socket.lowest_layer().is_open()) {
+    if (socket().lowest_layer().is_open()) {
         m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
         return m_connect.get_future();
     }
@@ -96,7 +75,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
         }
 
         if (error_code) {
-            m_socket.lowest_layer().close();  // async_connect will leave it open
+            socket().lowest_layer().close();  // async_connect will leave it open
             m_connect.set_exception(boost::copy_exception(
                             std::system_error(error_code.value(), std::system_category(), "connect")));
             return;
@@ -114,7 +93,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
         m_handshake_buffer[3] = 0x00; // reserved
 
         boost::asio::write(
-                m_socket,
+                socket(),
                 boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)));
 
         auto handshake_reply = [=](
@@ -129,7 +108,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
         try {
             // Read the 4-byte handshake reply from the server
             boost::asio::async_read(
-                    m_socket,
+                    socket(),
                     boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)),
                     handshake_reply);
         } catch (const std::exception& e) {
@@ -156,11 +135,11 @@ void wamp_rawsocket_transport<Socket>::async_connect(
 template <class Socket>
 boost::future<void> wamp_rawsocket_transport<Socket>::disconnect()
 {
-    if (!m_socket.lowest_layer().is_open()) {
+    if (!socket().lowest_layer().is_open()) {
         throw network_error("network transport already disconnected");
     }
 
-    m_socket.lowest_layer().close();
+    socket().lowest_layer().close();
 
     m_disconnect.set_value();
     return m_disconnect.get_future();
@@ -169,7 +148,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::disconnect()
 template <class Socket>
 bool wamp_rawsocket_transport<Socket>::is_connected() const
 {
-    return m_socket.lowest_layer().is_open();
+    return const_socket().lowest_layer().is_open();
 }
 
 template <class Socket>
@@ -181,10 +160,10 @@ void wamp_rawsocket_transport<Socket>::send_message(wamp_message&& message)
 
     // Write the length prefix as the message header.
     uint32_t length = htonl(buffer->size());
-    boost::asio::write(m_socket, boost::asio::buffer(&length, sizeof(length)));
+    boost::asio::write(socket(), boost::asio::buffer(&length, sizeof(length)));
 
     // Write actual serialized message.
-    boost::asio::write(m_socket, boost::asio::buffer(buffer->data(), buffer->size()));
+    boost::asio::write(socket(), boost::asio::buffer(buffer->data(), buffer->size()));
 
     if (m_debug_enabled) {
         std::cerr << "TX message (" << buffer->size() << " octets) ..." << std::endl;
@@ -250,11 +229,11 @@ bool wamp_rawsocket_transport<Socket>::has_handler() const
     return m_handler != nullptr;
 }
 
-template <class Socket>
-Socket& wamp_rawsocket_transport<Socket>::socket()
-{
-    return m_socket;
-}
+//template <class Socket>
+//Socket& wamp_rawsocket_transport<Socket>::socket()
+//{
+//    return m_socket;
+//}
 
 template <class Socket>
 void wamp_rawsocket_transport<Socket>::handshake_reply_handler(
@@ -330,7 +309,7 @@ void wamp_rawsocket_transport<Socket>::receive_message()
     }
 
     boost::asio::async_read(
-        m_socket,
+        socket(),
         boost::asio::buffer(&m_message_length, sizeof(m_message_length)),
         bind(&wamp_rawsocket_transport<Socket>::receive_message_header,
             this->shared_from_this(),
@@ -353,7 +332,7 @@ void wamp_rawsocket_transport<Socket>::receive_message_header(
         m_message_unpacker.reserve_buffer(m_message_length);
 
         boost::asio::async_read(
-            m_socket,
+            socket(),
             boost::asio::buffer(m_message_unpacker.buffer(), m_message_length),
             bind(&wamp_rawsocket_transport<Socket>::receive_message_body,
                 this->shared_from_this(),

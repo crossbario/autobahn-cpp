@@ -45,15 +45,16 @@ namespace autobahn {
  */
 
 
-typedef boost::asio::ssl::stream< boost::asio::ip::tcp::socket > ssl_wrapped_socket;
+typedef boost::asio::ssl::stream< boost::asio::ip::tcp::socket > ssl_socket_type;
+typedef typename ssl_socket_type::lowest_layer_type::endpoint_type ssl_endpoint_type;
 
 class wamp_ssl_transport :
-        public wamp_rawsocket_transport<ssl_wrapped_socket>
+        public wamp_rawsocket_transport<ssl_socket_type>
 {
 public:
     wamp_ssl_transport(
             boost::asio::io_service& io_service,
-            const boost::asio::ip::tcp::endpoint& remote_endpoint,
+            const ssl_endpoint_type& remote_endpoint,
 	    boost::asio::ssl::context& context,
             bool debug_enabled=false);
     virtual ~wamp_ssl_transport() override;
@@ -64,6 +65,14 @@ public:
         endpoint_type & endpoint,
 	std::function<void (const boost::system::error_code&)> connect_handler
     );
+    virtual ssl_socket_type& socket() { return m_socket; }
+    virtual const ssl_socket_type& const_socket() const { return m_socket; }
+private:
+
+    /*!
+     * The underlying socket for the transport.
+     */
+    ssl_socket_type m_socket;
 };
 
 } // namespace autobahn
