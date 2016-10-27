@@ -229,12 +229,6 @@ bool wamp_rawsocket_transport<Socket>::has_handler() const
     return m_handler != nullptr;
 }
 
-//template <class Socket>
-//Socket& wamp_rawsocket_transport<Socket>::socket()
-//{
-//    return m_socket;
-//}
-
 template <class Socket>
 void wamp_rawsocket_transport<Socket>::handshake_reply_handler(
         const boost::system::error_code& error_code,
