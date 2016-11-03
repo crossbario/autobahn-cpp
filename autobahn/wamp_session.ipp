@@ -936,14 +936,68 @@ inline void wamp_session::process_error(wamp_message&& message)
                     call_itr->second->result().set_exception(boost::copy_exception(std::runtime_error(error)));
                     m_calls.erase(call_itr);
                 } else {
-                    throw protocol_error("bogus ERROR message for non-pending CALL request ID");
+                    throw protocol_error("bogus ERROR message for non-pending CALL request ID: " + error);
                 }
             }
             break;
-
-        // FIXME: handle other error messages
+        case message_type::REGISTER:
+            {
+                auto reg_itr = m_register_requests.find(request_id);
+                if (reg_itr != m_register_requests.end())
+                {
+                    reg_itr->second->response().set_exception(boost::copy_exception(std::runtime_error(error)));
+                    m_register_requests.erase(reg_itr);
+                } else {
+                    throw protocol_error("bogus ERROR message for non-pending REGISTER request ID: " + error);
+                }
+            }
+            break;
+        case message_type::UNREGISTER:
+            {
+                auto unreg_itr = m_unregister_requests.find(request_id);
+                if (unreg_itr != m_unregister_requests.end())
+                {
+                   unreg_itr->second->response().set_exception(boost::copy_exception(std::runtime_error(error)));
+                   m_unregister_requests.erase(unreg_itr);
+                } else {
+                    throw protocol_error("bogus ERROR message for non-pending UNREGISTER request ID: " + error);
+                }
+            }
+            break;
+        case message_type::PUBLISH:
+            {
+                //TODO: there's currently no way to get to the future returned by the publish function
+                // but there needs to be something more sensibly then just propagating the error to the
+                // function running the io_service
+                throw protocol_error("Received ERROR for a PUBLISH request: " + error);
+            }
+            break;
+        case message_type::SUBSCRIBE:
+            {
+                auto sub_itr = m_subscribe_requests.find(request_id);
+                if (sub_itr != m_subscribe_requests.end())
+                {
+                    sub_itr->second->response().set_exception(boost::copy_exception(std::runtime_error(error)));
+                    m_subscribe_requests.erase(sub_itr);
+                } else {
+                    throw protocol_error("bogus ERROR message for non-pending SUBSCRIBE request ID: " + error);
+                }
+            }
+            break;
+        case message_type::UNSUBSCRIBE:
+            {
+                auto unsub_itr = m_unsubscribe_requests.find(request_id);
+                if (unsub_itr != m_unsubscribe_requests.end())
+                {
+                    unsub_itr->second->response().set_exception(boost::copy_exception(std::runtime_error(error)));
+                    m_unsubscribe_requests.erase(unsub_itr);
+                } else {
+                    throw protocol_error("bogus ERROR message for non-pending UNSUBSCRIBE request ID: " + error);
+                }
+            }
+            break;
         default:
-            throw protocol_error("unhandled ERROR message");
+            throw protocol_error("unhandled ERROR message: " + error);
             break;
     }
 }
