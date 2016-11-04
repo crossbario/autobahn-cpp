@@ -36,6 +36,7 @@ find_package(OpenSSL REQUIRED)
 
 set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/autobahn.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/boost_config.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/exceptions.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_arguments.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_auth_utils.hpp
