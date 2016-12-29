@@ -53,6 +53,9 @@ namespace autobahn {
         m_client.set_close_handler(bind(&wamp_websocketpp_websocket_transport<Config>::on_ws_close, this, _1));
         m_client.set_fail_handler(bind(&wamp_websocketpp_websocket_transport<Config>::on_ws_fail, this, _1));
         m_client.set_message_handler(bind(&wamp_websocketpp_websocket_transport<Config>::on_ws_message, this, ::_1, ::_2));
+        if(!debug_enabled) {
+            m_client.clear_access_channels(websocketpp::log::alevel::all);
+        }
     }
 
     template <class Config>
