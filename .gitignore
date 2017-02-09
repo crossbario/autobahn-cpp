@@ -62,3 +62,7 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
+
+# IntelliJ/Clion
+.idea/
+cmake-build-*/
