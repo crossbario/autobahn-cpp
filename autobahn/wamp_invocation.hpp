@@ -192,28 +192,75 @@ public:
     void get_kw_arguments(Map& kw_args) const;
 
     /*!
-     * The details field of the invocation, converted to a map type.
-     *
-     * @tparam Map The map type.
-     *
-     * @return A Map type populated with the details of the invocation.
-     *
-     * @throw std::bad_cast
-     */
+    * The call detail passed to the invocation with the given @p key, converted to type T.
+    *
+    * Overloads are provided for `std::string` and `char*` as @p key type.
+    *
+    * This function uses key string comparisons to find the matching value, O(n) with n being
+    * the number of map elements. Memory allocation for keys is avoided though. For larger maps,
+    * you might want to prioritize look-up performance by using `std::map`, `std::unordered_map`
+    * or custom types with custom deserialization. To do this, use details<Map>() or
+    * get_details<Map>(map), then access the items from there.
+    *
+    * Example:
+    * `std::string caller_authid = invocation->detail<std::string>("caller_authid");`
+    *
+    * @throw std::out_of_range
+    * @throw std::bad_cast
+    */
+    template <typename T>
+    T detail(const std::string& key) const;
+
+    template <typename T>
+    T detail(const char* key) const;
+
+    /*!
+    * The call detail passed to the invocation with the given @p key, converted to type T,
+    * or the given @p fallback if no such key was passed.
+    *
+    * Overloads are provided for `std::string` and `char*` as @p key type.
+    *
+    * This function uses key string comparisons to find the matching value, O(n) with n being
+    * the number of map elements. Memory allocation for keys is avoided though. For larger maps,
+    * you might want to prioritize look-up performance by using `std::map`, `std::unordered_map`
+    * or custom types with custom deserialization. To do this, use details<Map>() or
+    * get_details<Map>(map), then access the items from there.
+    *
+    * Example:
+    * `std::string caller_authid = invocation->detail_or("caller_authid", std::string());`
+    *
+    * @throw std::bad_cast
+    */
+    template <typename T>
+    T detail_or(const std::string& key, const T& fallback) const;
+
+    template <typename T>
+    T detail_or(const char* key, const T& fallback) const;
+
+    /*!
+    * The call details passed to the invocation, converted to a map type.
+    *
+    * Example:
+    * `auto kw_args = invocation->details<std::unordered_map<std::string, msgpack::object>>();`
+    *
+    * @throw std::bad_cast
+    */
     template <typename Map>
     Map details() const;
 
     /*!
-     * Convert and assign the keyword arguments to the given @p details.
-     *
-     * @tparam Map The map type.
-     *
-     * @param details A reference to a Map type object to receive the
-     * invocation details.
-     */
+    * Convert and assign the call details  to the given @p details map.
+    *
+    * Example:
+    * ```
+    * std::unordered_map<std::string, msgpack::object> kw_args;
+    * invocation->get_details(details);
+    * ```
+    *
+    * @throw std::bad_cast
+    */
     template <typename Map>
     void get_details(Map& details) const;
-
     /*!
     * Checks if caller expects progressive results.
     */
@@ -297,8 +344,8 @@ private:
 
     msgpack::zone m_zone;
     msgpack::object m_arguments;
-    msgpack::object m_details;
     msgpack::object m_kw_arguments;
+    msgpack::object m_details;
     send_result_fn m_send_result_fn;
     std::uint64_t m_request_id;
     std::string m_uri;
