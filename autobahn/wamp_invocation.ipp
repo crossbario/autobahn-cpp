@@ -173,6 +173,18 @@ inline void wamp_invocation_impl::get_kw_arguments(Map& kw_args) const
     m_kw_arguments.convert(kw_args);
 }
 
+template <typename Map>
+inline Map wamp_invocation_impl::details() const
+{
+    return m_details.as<Map>();
+}
+
+template <typename Map>
+inline void wamp_invocation_impl::get_details(Map& details) const
+{
+    m_details.convert(details);
+}
+
 inline bool wamp_invocation_impl::progressive_results_expected() const
 {
     return m_progressive_results_expected;
@@ -347,6 +359,7 @@ inline void wamp_invocation_impl::set_details(const msgpack::object& details)
 {
     m_uri = value_for_key_or<std::string>(details, "procedure", std::string());
     m_progressive_results_expected = value_for_key_or<bool>(details, "receive_progress", false);
+    m_details = details;
 }
 
 inline void wamp_invocation_impl::set_request_id(std::uint64_t request_id)

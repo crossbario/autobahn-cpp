@@ -192,6 +192,29 @@ public:
     void get_kw_arguments(Map& kw_args) const;
 
     /*!
+     * The details field of the invocation, converted to a map type.
+     *
+     * @tparam Map The map type.
+     *
+     * @return A Map type populated with the details of the invocation.
+     *
+     * @throw std::bad_cast
+     */
+    template <typename Map>
+    Map details() const;
+
+    /*!
+     * Convert and assign the keyword arguments to the given @p details.
+     *
+     * @tparam Map The map type.
+     *
+     * @param details A reference to a Map type object to receive the
+     * invocation details.
+     */
+    template <typename Map>
+    void get_details(Map& details) const;
+
+    /*!
     * Checks if caller expects progressive results.
     */
     bool progressive_results_expected() const;
@@ -274,6 +297,7 @@ private:
 
     msgpack::zone m_zone;
     msgpack::object m_arguments;
+    msgpack::object m_details;
     msgpack::object m_kw_arguments;
     send_result_fn m_send_result_fn;
     std::uint64_t m_request_id;
