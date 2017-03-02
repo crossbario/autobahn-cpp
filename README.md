@@ -193,10 +193,9 @@ Get [WebSocket++](https://github.com/zaphoyd/websocketpp) and install:
 
 ```console
 cd ~
-https://github.com/zaphoyd/websocketpp.git
+git clone https://github.com/zaphoyd/websocketpp.git
 cd websocketpp
 cmake .
-make
 make install
 ```
 
@@ -205,10 +204,10 @@ make install
 To get **Autobahn**|Cpp library and examples, clone the repo
 
 ```console
-cd $HOME
+cd ~
 git clone https://github.com/crossbario/autobahn-cpp.git
 cd autobahn-cpp
-cp -r ../autobahn/ /usr/local/include/
+cp -r autobahn/ /usr/local/include/
 ```
 
 The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
