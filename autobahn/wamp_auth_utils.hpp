@@ -159,12 +159,13 @@ inline std::string compute_wcs(
     unsigned int len = 32;
     unsigned char hash[32];
 
-    HMAC_CTX hmac;
-    HMAC_CTX_init(&hmac);
-    HMAC_Init_ex(&hmac, key.data(), key.length(), EVP_sha256(), NULL);
-    HMAC_Update(&hmac, ( unsigned char* ) challenge.data(), challenge.length());
-    HMAC_Final(&hmac, hash, &len);
-    HMAC_CTX_cleanup(&hmac);
+    HMAC_CTX *hmac = HMAC_CTX_new();
+    if (!hmac)
+        return "";
+    HMAC_Init_ex(hmac, key.data(), key.length(), EVP_sha256(), NULL);
+    HMAC_Update(hmac, ( unsigned char* ) challenge.data(), challenge.length());
+    HMAC_Final(hmac, hash, &len);
+    HMAC_CTX_free(hmac);
 
 
     std::string str_out;
