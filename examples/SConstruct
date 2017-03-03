@@ -92,7 +92,7 @@ prgs = []
 for e, extralibs in examples:
     prgs.append(env.Program(e, LIBS=[
         parameters,
-        'boost_thread-mt',
+        'boost_thread',
         'boost_system',
         'boost_program_options',
         'msgpackc'] + extralibs))
