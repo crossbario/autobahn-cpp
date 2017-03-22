@@ -36,6 +36,7 @@
 #include "wamp_event_handler.hpp"
 #include "wamp_message.hpp"
 #include "wamp_procedure.hpp"
+#include "wamp_publish_options.hpp"
 #include "wamp_subscribe_options.hpp"
 #include "wamp_transport_handler.hpp"
 #include "boost_config.hpp"
@@ -136,7 +137,8 @@ public:
      * \param topic The URI of the topic to publish to.
      * \return A future that resolves once the the topic has been published to.
      */
-    boost::future<void> publish(const std::string& topic);
+    boost::future<void> publish(const std::string& topic,
+                                const wamp_publish_options& options = wamp_publish_options());
 
     /*!
      * Publish an event with positional payload to a topic.
@@ -146,7 +148,8 @@ public:
      * \return A future that resolves once the the topic has been published to.
      */
     template <typename List>
-    boost::future<void> publish(const std::string& topic, const List& arguments);
+    boost::future<void> publish(const std::string& topic, const List& arguments,
+                                const wamp_publish_options& options = wamp_publish_options());
 
     /*!
      * Publish an event with both positional and keyword payload to a topic.
@@ -160,7 +163,8 @@ public:
     boost::future<void> publish(
             const std::string& topic,
             const List& arguments,
-            const Map& kw_arguments);
+            const Map& kw_arguments,
+            const wamp_publish_options& options = wamp_publish_options());
 
     /*!
      * Subscribe a handler to a topic to receive events.
