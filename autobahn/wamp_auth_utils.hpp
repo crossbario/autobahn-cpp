@@ -158,7 +158,14 @@ inline std::string compute_wcs(
 
     unsigned int len = 32;
     unsigned char hash[32];
-
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+    HMAC_CTX hmac;
+    HMAC_CTX_init(&hmac);
+    HMAC_Init_ex(&hmac, key.data(), key.length(), EVP_sha256(), NULL);
+    HMAC_Update(&hmac, (unsigned char*) challenge.data(), challenge.length());
+    HMAC_Final(&hmac, hash, &len);
+    HMAC_CTX_cleanup(&hmac);
+#else
     HMAC_CTX *hmac = HMAC_CTX_new();
     if (!hmac)
         return "";
@@ -166,7 +173,7 @@ inline std::string compute_wcs(
     HMAC_Update(hmac, ( unsigned char* ) challenge.data(), challenge.length());
     HMAC_Final(hmac, hash, &len);
     HMAC_CTX_free(hmac);
-
+#endif
 
     std::string str_out;
     str_out.assign( ( char * ) &hash , 32 );
