@@ -17,7 +17,7 @@ WAMP enables application architectures with application code distributed freely 
 
 To enable this, WAMP implements both the Remote Procedure Call (RPC) and  and the Publish and Subscribe (PubSub) messaging pattern.
 
-|ab| supports the following application roles:
+Autobahn|CPP supports the following application roles:
 
 * **Caller**
 * **Callee**
@@ -28,7 +28,7 @@ To enable this, WAMP implements both the Remote Procedure Call (RPC) and  and th
 Show me some code!
 ------------------
 
-Here is what programming with C++ and |ab| looks like.
+Here is what programming with C++ and Autobahn|CPP looks like.
 
 **Calling a remote Procedure**
 
