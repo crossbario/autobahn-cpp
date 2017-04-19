@@ -72,6 +72,8 @@ namespace autobahn {
 
         virtual ~wamp_websocketpp_websocket_transport() override;
 
+		virtual bool is_connected() const override;
+
     private:
         virtual bool is_open() const override;
         virtual void close() override;

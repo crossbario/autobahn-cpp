@@ -70,6 +70,12 @@ namespace autobahn {
         return m_open;
     }
 
+	template <class Config>
+	inline bool wamp_websocketpp_websocket_transport<Config>::is_connected() const
+	{
+		return is_open() && !m_done;
+	}
+
     // The open handler will signal that we are ready to start sending telemetry
     template <class Config>
     inline void wamp_websocketpp_websocket_transport<Config>::on_ws_open(websocketpp::connection_hdl) {
