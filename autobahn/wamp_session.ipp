@@ -1320,9 +1320,13 @@ inline void wamp_session::send_message(wamp_message&& message, bool session_esta
         throw protocol_error("session not running");
     }
 
-    if (!m_transport) {
+	if (!m_transport) {
         throw no_transport_error();
     }
+
+	if (!m_transport->is_connected()) {
+		throw no_transport_error();
+	}
 
     if (session_established && !m_session_id) {
         throw no_session_error();
