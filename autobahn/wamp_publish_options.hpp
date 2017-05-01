@@ -35,6 +35,10 @@
 
 namespace autobahn {
 
+/*!
+ * \ingroup PUB
+ * Options for publishing.
+ */
 class wamp_publish_options
 {
 public:

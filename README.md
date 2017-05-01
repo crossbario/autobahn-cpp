@@ -1,3 +1,14 @@
+Autobahn-C++ allows to create WAMP application components in C++ that can be built as a single,
+statically linked executable with size below 2 MB. Once your component is built, this single
+self contained file has a lot of advantages on the deployment side. However, C++ is also not
+very developer friendly, and the development turnaround can run into the minutes. Compare that with
+the save in editor and "it's live" workflow which is the norm in Web development.
+\n\n
+
+So we hope provides all you need to start creating Autobahn-C++ based client applications
+and WAMP components in C++!
+
+
 # **Autobahn**|Cpp
 
 > This documentation is quite outdated (and also woefully incomplete). When in doubt ask on the [mailing list](https://groups.google.com/forum/#!forum/autobahnws) or read the code!

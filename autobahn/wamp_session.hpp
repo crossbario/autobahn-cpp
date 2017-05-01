@@ -76,6 +76,14 @@ class wamp_unsubscribe_request;
 class wamp_authenticate;
 class wamp_challenge;
 
+/** \defgroup PUB Publishing events
+    \brief Publishing events is done from a session using one of the following functions
+
+When a WAMP session has been established, the session can be used to publish
+event at the router, which in turn will dispatch the event to all eligible and
+authorized subscribes to the topic.
+ */
+
 /// Representation of a WAMP session.
 class wamp_session :
         public wamp_transport_handler,
@@ -132,7 +140,9 @@ public:
             const std::string& reason = std::string("wamp.error.close_realm"));
 
     /*!
+     * \ingroup PUB
      * Publish an event with empty payload to a topic.
+     *
      *
      * \param topic The URI of the topic to publish to.
      * \return A future that resolves once the the topic has been published to.
@@ -141,6 +151,7 @@ public:
                                 const wamp_publish_options& options = wamp_publish_options());
 
     /*!
+     * \ingroup PUB
      * Publish an event with positional payload to a topic.
      *
      * \param topic The URI of the topic to publish to.
@@ -152,6 +163,7 @@ public:
                                 const wamp_publish_options& options = wamp_publish_options());
 
     /*!
+     * \ingroup PUB
      * Publish an event with both positional and keyword payload to a topic.
      *
      * \param topic The URI of the topic to publish to.
@@ -259,7 +271,7 @@ public:
     virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
 
     /*!
-    * Accessor method to WELCOME DETAILS dictionary containing router roles 
+    * Accessor method to WELCOME DETAILS dictionary containing router roles
     * and corresponding features, authid, authrole, ...)
     *
     *
