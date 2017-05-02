@@ -1,33 +1,28 @@
-Autobahn-C++ allows to create WAMP application components in C++ that can be built as a single,
-statically linked executable with size below 2 MB. Once your component is built, this single
-self contained file has a lot of advantages on the deployment side. However, C++ is also not
-very developer friendly, and the development turnaround can run into the minutes. Compare that with
-the save in editor and "it's live" workflow which is the norm in Web development.
-\n\n
+# AutobahnC++
 
-So we hope provides all you need to start creating Autobahn-C++ based client applications
-and WAMP components in C++!
+[![Docker Hub](https://img.shields.io/badge/docker-ready-blue.svg)](https://registry.hub.docker.com/u/gliderlabs/registrator/)
 
+[![Docker Hub](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/crossbario/autobahn-cpp/)
 
-# **Autobahn**|Cpp
+https://crossbario.github.io/autobahn-cpp-docs/
 
 > This documentation is quite outdated (and also woefully incomplete). When in doubt ask on the [mailing list](https://groups.google.com/forum/#!forum/autobahnws) or read the code!
 
-**Autobahn**|Cpp is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
+AutobahnC++ is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
 
  * **Caller**
  * **Callee**
  * **Publisher**
  * **Subscriber**
 
-**Autobahn**|Cpp is open-source, licensed under the [Boost Software License](LICENSE).
+AutobahnC++ is open-source, licensed under the [Boost Software License](LICENSE).
 
 The API and implementation make use of modern C++ 11 and new asynchronous idioms using (upcoming) features of the standard C++ library, in particular **Futures**, [**Continuations**](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3634.pdf) and **Lambdas**.
 
 > [Continuations](http://en.wikipedia.org/wiki/Continuation) are *one* way of managing control flow in an asynchronous program. Other styles include: asynchronous [Callbacks](http://en.wikipedia.org/wiki/Callback_%28computer_programming%29), [Coroutines](http://en.wikipedia.org/wiki/Coroutine) (`yield` or `await`), Actors ([Erlang/OTP](http://www.erlang.org/), [Scala](http://www.scala-lang.org/)/[Akka](http://akka.io/) or [Rust](http://www.scala-lang.org/)) and [Transactional memory](http://en.wikipedia.org/wiki/Transactional_Synchronization_Extensions).
 >
 
-**Autobahn**|Cpp supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Unix domain sockets** or **pipes** (`stdio`). The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
+AutobahnC++ supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Unix domain sockets** or **pipes** (`stdio`). The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
  * C++11 compiler
  * [`boost::future`](http://www.boost.org/doc/libs/1_63_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
@@ -40,7 +35,7 @@ For getting help, questions or feedback, get in touch on the **[mailing list](ht
 
 ## Show me some code!
 
-Here is how programming with C++ and **Autobahn**|Cpp looks like.
+Here is how programming with C++ and AutobahnC++ looks like.
 
 **Calling a remote Procedure**
 
@@ -210,9 +205,9 @@ cmake .
 make install
 ```
 
-### **Autobahn**|Cpp
+### AutobahnC++
 
-To get **Autobahn**|Cpp library and examples, clone the repo
+To get AutobahnC++ library and examples, clone the repo
 
 ```console
 cd ~
