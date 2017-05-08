@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) Crossbar.io Technologies GmbH and contributors
+// Copyright (c) Tavendo GmbH
 //
 // Boost Software License - Version 1.0 - August 17th, 2003
 //
@@ -28,39 +28,55 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
-#define AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
+#ifndef AUTOBAHN_WAMP_SSL_TRANSPORT_HPP
+#define AUTOBAHN_WAMP_SSL_TRANSPORT_HPP
 
+#include "boost_config.hpp"
 #include "wamp_rawsocket_transport.hpp"
 
-#include <boost/asio/local/stream_protocol.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
 
 namespace autobahn {
 
-typedef boost::asio::local::stream_protocol::socket uds_socket_type;
-typedef typename uds_socket_type::lowest_layer_type::endpoint_type uds_endpoint_type;
-
 /*!
- * A transport that provides rawsocket support over unix domain sockets (UDS).
+ * A transport that provides ssl wrapped rawsocket support over TCP.
  */
-class wamp_uds_transport :
-        public wamp_rawsocket_transport<uds_socket_type>
+
+
+typedef boost::asio::ssl::stream< boost::asio::ip::tcp::socket > ssl_socket_type;
+typedef typename ssl_socket_type::lowest_layer_type::endpoint_type ssl_endpoint_type;
+
+class wamp_ssl_transport :
+        public wamp_rawsocket_transport<ssl_socket_type>
 {
 public:
-    wamp_uds_transport(
+    wamp_ssl_transport(
             boost::asio::io_service& io_service,
-            const uds_endpoint_type& remote_endpoint,
-            bool debug_enabled=false)
-    : wamp_rawsocket_transport<uds_socket_type>(
-            remote_endpoint, debug_enabled)
-    , m_socket(io_service) {}
+            const ssl_endpoint_type& remote_endpoint,
+	    boost::asio::ssl::context& context,
+            bool debug_enabled=false);
+    virtual ~wamp_ssl_transport() override;
 
-    virtual uds_socket_type& socket() { return m_socket; }
-    virtual const uds_socket_type& const_socket() const { return m_socket; }
+    virtual boost::future<void> connect() override;
+
+    virtual void async_connect( 
+        endpoint_type & endpoint,
+	std::function<void (const boost::system::error_code&)> connect_handler
+    );
+    virtual ssl_socket_type& socket() { return m_socket; }
+    virtual const ssl_socket_type& const_socket() const { return m_socket; }
 private:
-    uds_socket_type m_socket;
+
+    /*!
+     * The underlying socket for the transport.
+     */
+    ssl_socket_type m_socket;
 };
 
 } // namespace autobahn
 
-#endif // AUTOBAHN_WAMP_UDS_TRANSPORT_HPP
+#include "wamp_ssl_transport.ipp"
+
+#endif // AUTOBAHN_WAMP_SSL_TRANSPORT_HPP

@@ -39,6 +39,8 @@
 
 namespace autobahn {
 
+typedef boost::asio::ip::tcp::socket tcp_socket_type;
+typedef typename tcp_socket_type::lowest_layer_type::endpoint_type tcp_endpoint_type;
 /*!
  * A transport that provides rawsocket support over TCP.
  */
@@ -46,13 +48,19 @@ class wamp_tcp_transport :
         public wamp_rawsocket_transport<boost::asio::ip::tcp::socket>
 {
 public:
+public:
     wamp_tcp_transport(
             boost::asio::io_service& io_service,
-            const boost::asio::ip::tcp::endpoint& remote_endpoint,
+            const tcp_endpoint_type& remote_endpoint,
             bool debug_enabled=false);
     virtual ~wamp_tcp_transport() override;
 
     virtual boost::future<void> connect() override;
+
+    virtual tcp_socket_type& socket() { return m_socket; }
+    virtual const tcp_socket_type& const_socket() const { return m_socket; }
+private:
+    tcp_socket_type m_socket;
 };
 
 } // namespace autobahn

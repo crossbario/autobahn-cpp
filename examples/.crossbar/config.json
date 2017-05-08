@@ -98,6 +98,33 @@
                 {
                     "type": "rawsocket",
                     "endpoint": {
+                        "type": "tcp",
+                        "port": 8010,
+                        "tls": {
+                            "key": "ssl/server.key",
+                            "certificate": "ssl/server.crt",
+                            "dhparam": "ssl/dhparam"
+                    	}
+                    },
+                    "auth": {
+                        "anonymous": {
+                            "type": "static",
+                            "role": "public"
+                        },
+                        "wampcra": {
+                            "type": "static",
+                            "users": {
+                                "homer": {
+                                    "secret": "secret123",
+                                    "role": "user"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "rawsocket",
+                    "endpoint": {
                         "type": "unix",
                         "path": "/tmp/crossbar.sock"
                     },

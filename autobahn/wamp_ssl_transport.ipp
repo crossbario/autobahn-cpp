@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) Crossbar.io Technologies GmbH and contributors
+// Copyright (c) Tavendo GmbH
 //
 // Boost Software License - Version 1.0 - August 17th, 2003
 //
@@ -28,38 +28,62 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "wamp_tcp_transport.hpp"
+#include "wamp_ssl_transport.hpp"
 
 #include <boost/system/error_code.hpp>
 
 namespace autobahn {
 
-inline wamp_tcp_transport::wamp_tcp_transport(
+inline wamp_ssl_transport::wamp_ssl_transport(
         boost::asio::io_service& io_service,
-        const tcp_endpoint_type& remote_endpoint,
+        const ssl_endpoint_type& remote_endpoint,
+	boost::asio::ssl::context& context,
         bool debug_enabled)
-    : wamp_rawsocket_transport<tcp_socket_type>(
+    : wamp_rawsocket_transport<ssl_socket_type>(
             remote_endpoint, debug_enabled)
-    , m_socket(io_service)
+    , m_socket(io_service,context)
 {
 }
 
-inline wamp_tcp_transport::~wamp_tcp_transport()
+inline wamp_ssl_transport::~wamp_ssl_transport()
 {
 }
 
-inline boost::future<void> wamp_tcp_transport::connect()
+
+inline boost::future<void> wamp_ssl_transport::connect()
 {
-    return wamp_rawsocket_transport<tcp_socket_type>::connect().then(
+    return wamp_rawsocket_transport<ssl_socket_type>::connect().then(
         [&](boost::future<void> connected) {
             // Check the originating future for exceptions.
             connected.get();
 
             // Disable naggle for improved performance.
             boost::asio::ip::tcp::no_delay option(true);
-            socket().set_option(option);
+            socket().lowest_layer().set_option(option);
         }
     );
+}
+
+inline void wamp_ssl_transport::async_connect(
+        endpoint_type & endpoint,
+	std::function<void (const boost::system::error_code&)> connect_handler )
+{
+
+    auto do_ssl_handshake = [=](const boost::system::error_code& error_code) {
+	
+	if ( !error_code ) {
+    		std::cerr << "connection succeded!" << std::endl;
+    		std::cerr << "start ssl handshake" << std::endl;
+                socket().async_handshake(boost::asio::ssl::stream_base::client,connect_handler);
+	}else{
+	   // we just pass the error to the generic connect handler
+    	   std::cerr << "connection failed!" << std::endl;
+           connect_handler( error_code );
+	}
+    };
+
+    // before calling the connect_handler, we do a ssl-handshake
+    socket().lowest_layer().async_connect( endpoint, do_ssl_handshake );
 }
 
 

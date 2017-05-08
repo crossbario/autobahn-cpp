@@ -34,7 +34,6 @@
 #include "boost_config.hpp"
 #include "wamp_transport.hpp"
 
-#include <boost/asio/io_service.hpp>
 #include <cstddef>
 #include <memory>
 #include <msgpack.hpp>
@@ -43,6 +42,7 @@ namespace autobahn {
 
 class wamp_message;
 class wamp_transport_handler;
+
 
 /*!
  * A class that represents a rawsocket transport. It is templated based
@@ -65,17 +65,15 @@ public:
     /*!
      * Convenience type for the endpoint being used.
      */
-    typedef typename Socket::endpoint_type endpoint_type;
+    typedef typename Socket::lowest_layer_type::endpoint_type endpoint_type;
 
 public:
     /*!
      * Constructs a rawsocket transport.
      *
-     * @param io_service The io service to use for asynchronous operations.
      * @param remote_endpoint The remote endpoint to connect to.
      */
     wamp_rawsocket_transport(
-            boost::asio::io_service& io_service,
             const endpoint_type& remote_endpoint,
             bool debug_enabled=false);
 
@@ -149,8 +147,24 @@ public:
      */
     virtual bool has_handler() const override;
 
+    virtual socket_type& socket() = 0;
+    virtual const socket_type& const_socket() const = 0;
 protected:
-    socket_type& socket();
+
+    /*!
+     *  A function that does the actual async connection, and  
+     *  call the given connection handler with the result.
+     *
+     *  This function is overwritten on the ssl_transport, to do a 
+     *  ssl-handshake before calling the connect_handler
+     *
+     *  @param endpoint_type the endpoint to connect to 
+     *  @param connect_handler the generic connection handler, that initiates the wamp protocol. 
+     */
+    virtual void async_connect( 
+        endpoint_type & endpoint,
+	std::function<void (const boost::system::error_code&)> connect_handler
+    );
 
 private:
 
@@ -169,10 +183,6 @@ private:
             std::size_t /* bytes transferred */);
 
 private:
-    /*!
-     * The underlying socket for the transport.
-     */
-    socket_type m_socket;
 
     /*!
      * The remote endpoint to connect the socket to.
