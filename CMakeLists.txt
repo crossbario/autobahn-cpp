@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(autobahn-cpp)
 
+option(AUTOBAHN_BUILD_EXAMPLES "Build examples" ON)
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "-stdlib=libc++ -Wno-unused-local-typedefs -Wno-unknown-warning-option ${CMAKE_CXX_FLAGS}")
     if ("${CMAKE_GENERATOR}" STREQUAL "Ninja")
@@ -26,7 +28,7 @@ endif()
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
-    "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 find_package(Boost REQUIRED COMPONENTS program_options system thread random)
 find_package(Websocketpp REQUIRED)
@@ -93,6 +95,12 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_websocketpp_websocket_transport.ipp
     )
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${Websocketpp_INCLUDE_DIRS} ${Msgpack_INCLUDE_DIRS})
+link_libraries(${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+add_library(autobahn_cpp INTERFACE)
+target_include_directories(autobahn_cpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
 foreach(h ${PUBLIC_HEADERS})
     string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "include/" include "${h}")
     get_filename_component(HEADER_INCLUDE_DIRECTORY ${include} DIRECTORY)
@@ -101,4 +109,6 @@ foreach(h ${PUBLIC_HEADERS})
         COMPONENT "headers")
 endforeach()
 
-add_subdirectory(examples)
+if(AUTOBAHN_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif(AUTOBAHN_BUILD_EXAMPLES)
