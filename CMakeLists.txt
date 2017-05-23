@@ -95,11 +95,17 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/wamp_websocketpp_websocket_transport.ipp
     )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${Websocketpp_INCLUDE_DIRS} ${Msgpack_INCLUDE_DIRS})
-link_libraries(${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-
 add_library(autobahn_cpp INTERFACE)
-target_include_directories(autobahn_cpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(autobahn_cpp INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+    ${Websocketpp_INCLUDE_DIRS}
+    ${Msgpack_INCLUDE_DIRS})
+target_link_libraries(autobahn_cpp INTERFACE
+    ${Boost_LIBRARIES}
+    ${OPENSSL_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT})
 
 foreach(h ${PUBLIC_HEADERS})
     string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "include/" include "${h}")
