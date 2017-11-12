@@ -675,7 +675,7 @@ inline void wamp_session::on_message(wamp_message&& message)
         case message_type::UNREGISTER:
             throw protocol_error("received UNREGISTER message unexpected for WAMP client roles");
         case message_type::UNREGISTERED:
-            // FIXME
+            process_unregistered(std::move(message));
             break;
         case message_type::INVOCATION:
             process_invocation(std::move(message));
