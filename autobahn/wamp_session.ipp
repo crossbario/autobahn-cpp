@@ -1075,6 +1075,11 @@ inline void wamp_session::process_invocation(wamp_message&& message)
                 std::cerr << "Invoking procedure registered under " << registration_id << std::endl;
             }
             procedure_itr->second(invocation);
+
+            // If still sendable, send default empty result
+            if(invocation->sendable()) {
+            	invocation->empty_result();
+            }
         }
 
         // FIXME: implement Autobahn-specific exception with error URI
