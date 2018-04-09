@@ -1,0 +1,13 @@
+diff --git a/examples/SConstruct b/examples/SConstruct
+index 84dbb40..a45be9c 100644
+--- a/examples/SConstruct
++++ b/examples/SConstruct
+@@ -82,7 +82,7 @@ examples = [('subscriber.cpp', []),
+             ('callee.cpp', []),
+             ('caller.cpp', []),
+             ('wampcra.cpp', ['crypto']),
+-            ('websocket_callee.cpp', ['crypto', 'ssl']),
++            #('websocket_callee.cpp', ['crypto', 'ssl']),
+             ('uds.cpp', [])]
+ 
+ parameters = env.StaticLibrary('parameters', ['parameters.cpp'])
