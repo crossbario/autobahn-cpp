@@ -1,7 +1,13 @@
-.PHONY: build
+.PHONY: build clean publish
 
 HOSTIP=$(shell ip route get 1 | awk '{print $$NF;exit}')
 
+#
+# Don't forget: set and source docker/versions.sh before
+# building and publishing the toolchain images!
+#
+
+# build toolchain images
 build: build_gcc build_clang
 
 build_gcc:
@@ -23,29 +29,7 @@ build_clang:
 		-t crossbario/autobahn-cpp:clang-${AUTOBAHN_CPP_VERSION} \
 		-f docker/Dockerfile.clang .
 
-build_test_gcc:
-	docker run -it --rm \
-		--net=host \
-		-v ${PWD}/.build:/build \
-		-e AUTOBAHN_CPP_VERSION=${AUTOBAHN_CPP_VERSION} \
-		crossbario/autobahn-cpp:gcc \
-		/usr/local/bin/build_scons
-
-build_test_clang:
-	docker run -it --rm \
-		--net=host \
-		-v ${PWD}/.build:/build \
-		-e AUTOBAHN_CPP_VERSION=${AUTOBAHN_CPP_VERSION} \
-		crossbario/autobahn-cpp:clang \
-		/usr/local/bin/build_scons
-
-test_gcc:
-	docker run -it --rm crossbario/autobahn-cpp:gcc bash -c "cd /usr/local/app && make && ./client ws://$(HOSTIP):8080/ws realm1"
-
-test_clang:
-	docker run -it --rm crossbario/autobahn-cpp:clang bash -c "cd /usr/local/app && make && ./client ws://$(HOSTIP):8080/ws realm1"
-
-
+# publish toolchain images
 publish: publish_gcc publish_clang
 
 publish_gcc:
@@ -57,8 +41,9 @@ publish_clang:
 	docker push crossbario/autobahn-cpp:clang
 	docker push crossbario/autobahn-cpp:clang-${AUTOBAHN_CPP_VERSION}
 
+# list/clean (local) toolchain images
 list:
 	-docker images crossbario/autobahn-cpp:*
 
 clean:
-	./removeall.sh
+	./docker/removeall.sh
