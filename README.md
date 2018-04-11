@@ -438,3 +438,19 @@ oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$
 * `[=, &foo]` Capture any referenced variable by making a copy, but capture variable `foo` by reference
 * `[bar]` Capture `bar` by making a copy; don't copy anything else
 * `[this]` Capture the this pointer of the enclosing class
+
+---
+
+
+## Release process
+
+To push a new release of the toolchain Docker image:
+
+```console
+git tag -a v18.4.1 -m "tagged release"
+source docker/versions.sh
+make build_gcc
+make publish_gcc
+```
+
+> Note: clang is currently broken.
