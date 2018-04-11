@@ -75,6 +75,7 @@ RUN cd /tmp \
 
 #### all dependencies and tools are now in place
 
+
 # setup and build example project
 
 RUN mkdir -p /autobahn/build
@@ -89,5 +90,8 @@ RUN cd build \
     && cmake .. \
     && make -j4 \
     && find examples/ -executable -type f -exec file {} \;
+
+
+# drop into shell by default
 
 CMD ["bash"]

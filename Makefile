@@ -21,7 +21,7 @@ build_clang:
 		--build-arg AUTOBAHN_CPP_VERSION=${AUTOBAHN_CPP_VERSION} \
 		-t crossbario/autobahn-cpp:clang \
 		-t crossbario/autobahn-cpp:clang-${AUTOBAHN_CPP_VERSION} \
-		-f Dockerfile.clang .
+		-f docker/Dockerfile.clang .
 
 build_test_gcc:
 	docker run -it --rm \
