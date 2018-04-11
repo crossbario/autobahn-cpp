@@ -12,7 +12,7 @@ build_gcc:
 		-t crossbario/autobahn-cpp \
 		-t crossbario/autobahn-cpp:gcc \
 		-t crossbario/autobahn-cpp:gcc-${AUTOBAHN_CPP_VERSION} \
-		-f Dockerfile.gcc .
+		-f docker/Dockerfile.gcc .
 
 build_clang:
 	time docker build \

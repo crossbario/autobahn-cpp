@@ -1,6 +1,4 @@
-FROM aarch64/debian:stretch
-
-COPY .qemu/qemu-aarch64-static /usr/bin/qemu-aarch64-static
+FROM ubuntu:xenial
 
 MAINTAINER The Crossbar.io Project <support@crossbario.com>
 
@@ -21,15 +19,15 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.schema-version="1.0"
 
 # Crossbar.io connection defaults
-ENV CBURL ws://crossbar:8080/ws
+ENV CBURL ws://localhost:8080/ws
 ENV CBREALM realm1
 
 # user env
 ENV DEBIAN_FRONTEND noninteractive
-ENV HOME /usr/local/app
-ENV PATH /usr/local/app:$PATH
+
+ENV HOME /autobahn
+ENV PATH /autobahn:$PATH
 ENV LD_LIBRARY_PATH /usr/local/lib
-RUN mkdir -p /usr/local/app
 
 # env vars to configure websocketpp
 ENV WSPP_ENABLE_CPP11 1
@@ -37,18 +35,22 @@ ENV WSPP_ENABLE_CPP11 1
 # update system, get dev tools and libs
 RUN apt-get update \
     && apt-get install -y wget curl unzip git-core \
-                          build-essential autotools-dev autoconf libtool cmake scons \
+                          build-essential autotools-dev autoconf libtool \
                           zlib1g-dev libbz2-dev libssl-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 # get, build and install Boost from upstream
 RUN cd /tmp \
-    && wget http://downloads.sourceforge.net/project/boost/boost/1.64.0/boost_1_64_0.tar.bz2 \
-    && tar xvjf boost_1_64_0.tar.bz2 && cd boost_1_64_0 \
+    && wget http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.bz2 \
+    && tar xvjf boost_1_66_0.tar.bz2 && cd boost_1_66_0 \
     && ./bootstrap.sh --with-toolset=gcc \
     && ./b2 toolset=gcc link=shared link=static threading=single threading=multi --layout=tagged --without-python -j 8 install \
     && cd / && rm -rf /tmp/boost*
+
+# https://askubuntu.com/a/486184
+RUN cd /usr/local/lib && \
+    ln -s libboost_thread-mt.a libboost_thread.a
 
 # get, build and install msgpack-c from upstream
 RUN cd /tmp \
@@ -60,29 +62,32 @@ RUN cd /tmp \
 
 # get and install websocketpp from upstream
 RUN cd /tmp \
-    && wget https://github.com/zaphoyd/websocketpp/archive/0.7.0.zip -O websocketpp.zip \
+    && wget https://github.com/zaphoyd/websocketpp/archive/master.zip -O websocketpp.zip \
     && unzip websocketpp.zip \
-    && cp -r /tmp/websocketpp-0.7.0/websocketpp/ /usr/local/include/ \
+    && cp -r /tmp/websocketpp-master/websocketpp/ /usr/local/include/ \
     && cd / && rm -rf /tmp/websocketpp*
 
-# https://askubuntu.com/a/486184
-RUN cd /usr/local/lib && \
-    ln -s libboost_thread-mt.a libboost_thread.a
-
-# get and install autobahn-cpp from upstream
+# get and install cmake from upstream
 RUN cd /tmp \
-    && wget https://github.com/crossbario/autobahn-cpp/archive/v${AUTOBAHN_CPP_VERSION}.zip -O autobahn-cpp.zip \
-    && unzip autobahn-cpp.zip \
-    && cp -r /tmp/autobahn-cpp-${AUTOBAHN_CPP_VERSION}/autobahn/ /usr/local/include/ \
-    && cp -r /tmp/autobahn-cpp-${AUTOBAHN_CPP_VERSION}/examples/ /usr/local/app/ \
-    && cd / && rm -rf /tmp/autobahn*
+    && wget https://cmake.org/files/v3.11/cmake-3.11.0-Linux-x86_64.sh \
+    && sh cmake-3.11.0-Linux-x86_64.sh --skip-license --prefix=/usr/local \
+    && which cmake && cmake --version
 
-WORKDIR /usr/local/app/examples/
+#### all dependencies and tools are now in place
 
-COPY example1.patch /usr/local/app/examples/example1.patch
+# setup and build example project
 
-RUN patch SConstruct example1.patch
+RUN mkdir -p /autobahn/build
+WORKDIR /autobahn
 
-COPY build_scons /usr/local/bin
+COPY autobahn /autobahn/autobahn
+COPY examples /autobahn/examples
+COPY cmake /autobahn/cmake
+COPY CMakeLists.txt /autobahn/
 
-CMD ["build_scons"]
+RUN cd build \
+    && cmake .. \
+    && make -j4 \
+    && find examples/ -executable -type f -exec file {} \;
+
+CMD ["bash"]

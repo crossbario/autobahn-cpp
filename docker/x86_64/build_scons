@@ -1,5 +1,0 @@
-#!/bin/bash
-
-cd /usr/local/app/examples
-scons
-find . -type f -executable -exec cp {} /build \;

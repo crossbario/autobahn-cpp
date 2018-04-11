@@ -3,7 +3,7 @@
 #
 # CHANGE FOR NEW RELEASES (these need to be proper Git tags in the respective repo):
 #
-export AUTOBAHN_CPP_VERSION='17.5.1'
+export AUTOBAHN_CPP_VERSION='18.4.1'
 #
 # END OF CONFIG
 #
@@ -13,7 +13,6 @@ export AUTOBAHN_CPP_VERSION='17.5.1'
 # in parallel (as siblings) to this repository
 #
 export AUTOBAHN_CPP_VCS_REF=`git --git-dir="../.git" rev-list -n 1 v${AUTOBAHN_CPP_VERSION} --abbrev-commit`
-
 export BUILD_DATE=`date -u +"%Y-%m-%d"`
 
 echo ""
