@@ -2,9 +2,17 @@
 
 WAMP for C++ on Boost/ASIO.
 
-[![Docker Hub](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/crossbario/autobahn-cpp/) [![Docker Hub](https://img.shields.io/badge/Docs-latest-ff69b4.svg)](https://crossbario.github.io/autobahn-cpp-docs/)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://crossbario.github.io/autobahn-cpp-docs/) [![Docker toolchain image](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/crossbario/autobahn-cpp/)
 
 ---
+
+**[See here](https://crossbario.github.io/autobahn-cpp-docs/) for the Autobahn C++ reference documentation.**
+
+Get in touch on IRC `#autobahn` on `chat.freenode.net`, follow us on [Twitter](https://twitter.com/autobahnws) or join the [mailing list](http://groups.google.com/group/autobahnws).
+
+---
+
+## Introduction
 
 AutobahnC++ is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
 
@@ -29,6 +37,8 @@ AutobahnC++ supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Un
  * [`WebSocket++`](https://github.com/zaphoyd/websocketpp)
 
 For getting help, questions or feedback, get in touch on the **[mailing list](https://groups.google.com/forum/#!forum/autobahnws)**, **[Twitter](https://twitter.com/autobahnws)** or **IRC `#autobahn`** (Freenode).
+
+---
 
 
 ## Show me some code!
@@ -401,20 +411,6 @@ oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$ ldd examples/websoc
     libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f8516b05000)
 oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$
 ```
-
----
-
-
-## Documentation
-
-[Click here](http://autobahn.ws/cpp/reference/) for the Autobahn C++ reference documentation.
-
----
-
-
-## Get in touch
-
-Get in touch on IRC `#autobahn` on `chat.freenode.net`, follow us on [Twitter](https://twitter.com/autobahnws) or join the [mailing list](http://groups.google.com/group/autobahnws).
 
 ---
 
