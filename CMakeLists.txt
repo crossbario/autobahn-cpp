@@ -1,4 +1,15 @@
-# Use this for installing AutobahnCpp into <prefix>/include.
+# AutobahnC++ cmake build script.
+#
+# This script uses the following environment variables (if defined):
+#
+# * BOOST_ROOT
+# * MSGPACK_ROOT
+# * WEBSOCKETPP_ROOT
+#
+# When those are defined, they take precedence over any host system
+# installations for the respective library. When an explicit library
+# root location hasn't been set, cmake will look in other places.
+
 cmake_minimum_required(VERSION 2.8)
 
 project(autobahn-cpp)
@@ -30,11 +41,20 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
-find_package(Boost REQUIRED COMPONENTS program_options system thread random)
-find_package(Websocketpp REQUIRED)
-find_package(Msgpack REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options system thread random)
+find_package(Msgpack REQUIRED)
+find_package(Websocketpp REQUIRED)
+
+MESSAGE( STATUS "AUTOBAHN_BUILD_EXAMPLES:  " ${AUTOBAHN_BUILD_EXAMPLES} )
+MESSAGE( STATUS "CMAKE_ROOT:               " ${CMAKE_ROOT} )
+MESSAGE( STATUS "Boost_INCLUDE_DIRS:       " ${Boost_INCLUDE_DIRS} )
+MESSAGE( STATUS "Boost_LIBRARIES:          " ${Boost_LIBRARIES} )
+MESSAGE( STATUS "Msgpack_INCLUDE_DIRS:     " ${Msgpack_INCLUDE_DIRS} )
+MESSAGE( STATUS "Msgpack_LIBRARIES:        " ${Msgpack_LIBRARIES} )
+MESSAGE( STATUS "Websocketpp_INCLUDE_DIRS: " ${Websocketpp_INCLUDE_DIRS} )
+MESSAGE( STATUS "Websocketpp_LIBRARIES:    " ${Websocketpp_LIBRARIES} )
 
 set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/autobahn.hpp
@@ -96,12 +116,14 @@ set(PUBLIC_HEADERS
     )
 
 add_library(autobahn_cpp INTERFACE)
+
 target_include_directories(autobahn_cpp INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
     ${Websocketpp_INCLUDE_DIRS}
     ${Msgpack_INCLUDE_DIRS})
+
 target_link_libraries(autobahn_cpp INTERFACE
     ${Boost_LIBRARIES}
     ${OPENSSL_LIBRARIES}

@@ -1,3 +1,124 @@
+sudo apt install libboost-dev libwebsocketpp-dev libmsgpack-dev
+
+
+```console
+mkdir build
+/opt/cmake/bin/cmake ..
+make -j4
+```
+
+
+```console
+oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$ /opt/cmake/bin/cmake ..
+-- The C compiler identification is GNU 5.4.0
+-- The CXX compiler identification is GNU 5.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - not found
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE
+-- Boost version: 1.66.0
+-- Found the following Boost libraries:
+--   program_options
+--   system
+--   thread
+--   random
+--   chrono
+--   date_time
+--   atomic
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "1.0.2g")
+-- AUTOBAHN_BUILD_EXAMPLES:  ON
+-- CMAKE_ROOT:               /opt/cmake/share/cmake-3.11
+-- Boost_INCLUDE_DIRS:       /opt/boost/include
+-- Boost_LIBRARIES:          /opt/boost/lib/libboost_program_options.so/opt/boost/lib/libboost_system.so/opt/boost/lib/libboost_thread.so/opt/boost/lib/libboost_random.so/opt/boost/lib/libboost_chrono.so/opt/boost/lib/libboost_date_time.so/opt/boost/lib/libboost_atomic.so
+-- Msgpack_INCLUDE_DIRS:     /opt/msgpack/include
+-- Msgpack_LIBRARIES:        /opt/msgpack/libs
+-- Websocketpp_INCLUDE_DIRS: /opt/websocketpp/include
+-- Websocketpp_LIBRARIES:    /opt/websocketpp/libs
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/oberstet/scm/crossbario/autobahn-cpp/build
+oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$ make -j4
+Scanning dependencies of target examples_parameters
+[  5%] Building CXX object examples/CMakeFiles/examples_parameters.dir/parameters.cpp.o
+[ 11%] Linking CXX static library libexamples_parameters.a
+[ 11%] Built target examples_parameters
+Scanning dependencies of target callee
+Scanning dependencies of target caller
+Scanning dependencies of target provide_prefix
+Scanning dependencies of target wampcra
+[ 16%] Building CXX object examples/CMakeFiles/caller.dir/caller.cpp.o
+[ 22%] Building CXX object examples/CMakeFiles/callee.dir/callee.cpp.o
+[ 27%] Building CXX object examples/CMakeFiles/provide_prefix.dir/callee.cpp.o
+[ 33%] Building CXX object examples/CMakeFiles/wampcra.dir/wampcra.cpp.o
+[ 38%] Linking CXX executable wampcra
+[ 38%] Built target wampcra
+Scanning dependencies of target subscriber
+[ 44%] Linking CXX executable caller
+[ 50%] Building CXX object examples/CMakeFiles/subscriber.dir/subscriber.cpp.o
+[ 50%] Built target caller
+Scanning dependencies of target uds
+[ 55%] Linking CXX executable callee
+[ 61%] Linking CXX executable provide_prefix
+[ 66%] Building CXX object examples/CMakeFiles/uds.dir/uds.cpp.o
+[ 66%] Built target callee
+Scanning dependencies of target publisher
+[ 66%] Built target provide_prefix
+Scanning dependencies of target websocket_callee
+[ 72%] Building CXX object examples/CMakeFiles/publisher.dir/publisher.cpp.o
+[ 77%] Building CXX object examples/CMakeFiles/websocket_callee.dir/websocket_callee.cpp.o
+[ 83%] Linking CXX executable subscriber
+[ 83%] Built target subscriber
+[ 88%] Linking CXX executable publisher
+[ 94%] Linking CXX executable uds
+[ 94%] Built target publisher
+[ 94%] Built target uds
+[100%] Linking CXX executable websocket_callee
+[100%] Built target websocket_callee
+oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$
+```
+
+
+```console
+oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$ file examples/websocket_callee
+examples/websocket_callee: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=bfcab40b2350acd5869d913226723999cf0b822e, not stripped
+oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$ ldd examples/websocket_callee
+    linux-vdso.so.1 =>  (0x00007fff44760000)
+    libboost_program_options.so.1.66.0 => /opt/boost/lib/libboost_program_options.so.1.66.0 (0x00007f8518873000)
+    libboost_system.so.1.66.0 => /opt/boost/lib/libboost_system.so.1.66.0 (0x00007f851866f000)
+    libboost_thread.so.1.66.0 => /opt/boost/lib/libboost_thread.so.1.66.0 (0x00007f8518446000)
+    libssl.so.1.0.0 => /lib/x86_64-linux-gnu/libssl.so.1.0.0 (0x00007f85181dd000)
+    libcrypto.so.1.0.0 => /lib/x86_64-linux-gnu/libcrypto.so.1.0.0 (0x00007f8517d99000)
+    libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f8517b7c000)
+    libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f85177fa000)
+    libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f85175e4000)
+    libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f851721a000)
+    librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007f8517012000)
+    libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f8516e0e000)
+    /lib64/ld-linux-x86-64.so.2 (0x00007f8518af3000)
+    libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f8516b05000)
+oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$
+```
+
+
+
+
 # AutobahnC++
 
 WAMP for C++ on Boost/ASIO.
@@ -23,8 +144,8 @@ The API and implementation make use of modern C++ 11 and new asynchronous idioms
 AutobahnC++ supports running WAMP (`rawsocket-msgpack`) over **TCP(-TLS)**, **Unix domain sockets** or **pipes** (`stdio`). The library is "header-only", light-weight (< 2k code lines) and **depends on** the following:
 
  * C++11 compiler
- * [`boost::future`](http://www.boost.org/doc/libs/1_63_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
- * [`boost::asio`](http://www.boost.org/doc/libs/1_63_0/doc/html/boost_asio.html)
+ * [`boost::future`](http://www.boost.org/doc/libs/1_66_0/doc/html/thread/synchronization.html#thread.synchronization.futures)
+ * [`boost::asio`](http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio.html)
  * [`msgpack-c`](https://github.com/msgpack/msgpack-c)
  * [`WebSocket++`](https://github.com/zaphoyd/websocketpp)
 
@@ -103,6 +224,13 @@ The Autobahn|Cpp repository contains a number of [examples](examples) that demon
 
 ## Building
 
+The instructions below were tested on Debian/Ubuntu and build and install the following:
+
+* Boost in `/opt/boost`
+* MsgPack-C in `/opt/msgpackc`
+* WebSocketC++ in `/opt/websocketpp`
+* AutobahnC++ in `/opt/autobahncpp`
+
 > *Notes*
 >
 > * The library code is written in standard C++ 11. Target toolchains currently include **clang** and **gcc**. Support for MSVC is tracked on this [issue](https://github.com/crossbario/autobahn-cpp/issues/2).
@@ -110,14 +238,19 @@ The Autobahn|Cpp repository contains a number of [examples](examples) that demon
 > * Support for `when_all` and `when_any` as described in above proposal depends on Boost 1.56 or higher.
 > * The library and example programs were tested and developed with **clang 3.4**, **libc++** and **Boost trunk/1.56** on an Ubuntu 13.10 x86-64 bit system. It also works with **gcc 4.8**, **libstdc++** and **Boost trunk/1.56**. Your mileage with other versions of the former may vary, but we accept PRs;)
 
+---
+
 
 ### Build tools
 
-Install some libs and build tools (these are for Ubuntu):
+Install some libs and build tools (these are for Debian/Ubuntu):
 
 ```console
 sudo apt-get install -y libbz2-dev libssl-dev cmake
 ```
+
+---
+
 
 ### Clang
 
@@ -146,36 +279,50 @@ oder geben Sie die Auswahlnummer ein: 1
 update-alternatives: /usr/bin/clang++ wird verwendet, um /usr/bin/c++ (c++) im manueller Modus bereitzustellen
 ```
 
+---
+
+
 ### Boost
 
-Most of the time, your distro's Boost libraries will be outdated (unless you're using Arch or Homebrew). Don't waste time with those: to build the latest Boost 1.63 (current release as of 2016/12) from sources.
+Most of the time, your distro's Boost libraries will be outdated (unless you're using Arch or Homebrew). Don't waste time with those. To build the latest Boost 1.66 (current release as of 2018/4) from sources.
 
-Get Boost 1.63:
+Get Boost:
+
 ```console
 cd ~
-wget https://sourceforge.net/projects/boost/files/boost/1.63.0/boost_1_63_0.tar.bz2
-tar xvjf boost_1_63_0.tar.bz2
-cd boost_1_63_0
-```
-To build using Clang:
-```console
-./bootstrap.sh --with-toolset=clang
-./b2 toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" -j 4
-```
-To build using GCC:
-```console
-./bootstrap.sh --with-toolset=gcc
-./b2 toolset=gcc -j 4 install --prefix=/usr/local
+wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.bz2
+tar xvjf boost_1_66_0.tar.bz2
+cd boost_1_66_0
 ```
 
-> Note: The `-j 4` option will allow use of 4 cores for building.
+Then, to build using the *GCC* toolchain:
+
+```console
+./bootstrap.sh --with-toolset=gcc
+./b2 toolset=gcc -j4
+sudo ./b2 install --prefix=/opt/boost
+```
+
+> Note: The `-j 4` option will allow use of 4 CPU cores for building.
+
+Instead, to build using the *Clang* toolchain:
+
+```console
+./bootstrap.sh --with-toolset=clang
+./b2 toolset=clang -j4 \
+    cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++"
+sudo ./b2 install --prefix=/opt/boost
+```
 
 Then add the following to your `~/.profile` or `~/.bashrc`:
 
 ```shell
-export BOOST_ROOT=${HOME}/boost_1_63_0
-export LD_LIBRARY_PATH=${BOOST_ROOT}/stage/lib:${LD_LIBRARY_PATH}
+export BOOST_ROOT=/opt/boost
+export LD_LIBRARY_PATH=${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}
 ```
+
+---
+
 
 ### MsgPack-C
 
@@ -186,10 +333,21 @@ cd ~
 git clone https://github.com/msgpack/msgpack-c.git
 cd msgpack-c
 git checkout cpp-1.4.2
-cmake -DMSGPACK_CXX11=ON .
-make install
+cmake -DMSGPACK_CXX11=ON -DCMAKE_INSTALL_PREFIX=/opt/msgpackc .
+make
+sudo make install
 ```
 > On FreeBSD, you need to `pkg install autotools` and invoke `gmake` instead of `make`.
+
+Then add the following to your `~/.profile` or `~/.bashrc`:
+
+```shell
+export MSGPACKC_ROOT=/opt/msgpackc
+export LD_LIBRARY_PATH=${MSGPACKC_ROOT}/lib:${LD_LIBRARY_PATH}
+```
+
+---
+
 
 ### WebSocket++
 
@@ -199,9 +357,19 @@ Get [WebSocket++](https://github.com/zaphoyd/websocketpp) and install:
 cd ~
 git clone https://github.com/zaphoyd/websocketpp.git
 cd websocketpp
-cmake .
-make install
+cmake -DCMAKE_INSTALL_PREFIX=/opt/websocketpp .
+sudo make install
 ```
+
+Then add the following to your `~/.profile` or `~/.bashrc`:
+
+```shell
+export WEBSOCKETPP_ROOT=/opt/websocketpp
+export LD_LIBRARY_PATH=${WEBSOCKETPP_ROOT}/lib:${LD_LIBRARY_PATH}
+```
+
+---
+
 
 ### AutobahnC++
 
@@ -216,6 +384,8 @@ cp -r autobahn/ /usr/local/include/
 
 The library is "header-only", means there isn't anything to compile or build. Just include the relevant headers.
 
+
+
 ## Examples
 
 ```console
@@ -223,6 +393,8 @@ apt-get install scons
 cd $HOME/autobahn-cpp/examples
 scons
 ```
+
+
 ## Documentation
 
 [Click here](http://autobahn.ws/cpp/reference/) for the Autobahn|Cpp reference documentation.
