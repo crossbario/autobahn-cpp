@@ -68,3 +68,5 @@ ipch/
 # IntelliJ/Clion
 .idea/
 cmake-build-*/
+*.bz2
+*.gz

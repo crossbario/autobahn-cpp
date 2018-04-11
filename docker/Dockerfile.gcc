@@ -41,8 +41,11 @@ RUN apt-get update \
     && apt-get clean
 
 # get, build and install Boost from upstream
+#RUN cd /tmp \
+#    && wget http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.bz2 \
+COPY boost_1_66_0.tar.bz2 /tmp
+
 RUN cd /tmp \
-    && wget http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.bz2 \
     && tar xvjf boost_1_66_0.tar.bz2 && cd boost_1_66_0 \
     && ./bootstrap.sh --with-toolset=gcc \
     && ./b2 toolset=gcc link=shared link=static threading=single threading=multi --layout=tagged --without-python -j 8 install \
