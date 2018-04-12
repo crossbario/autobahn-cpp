@@ -28,6 +28,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 if(NOT MSVC)
+    # https://stackoverflow.com/a/31010221/884770
+    set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Werror -Wno-unused-variable ${CMAKE_CXX_FLAGS}")
 endif()
 
@@ -37,7 +39,11 @@ set(CMAKE_MODULE_PATH
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
+
+# https://stackoverflow.com/a/3176086/884770
+set(Boost_USE_STATIC_LIBS   ON)
 find_package(Boost REQUIRED COMPONENTS program_options system thread random)
+
 find_package(Msgpack REQUIRED)
 find_package(Websocketpp REQUIRED)
 
@@ -122,7 +128,8 @@ target_include_directories(autobahn_cpp INTERFACE
 target_link_libraries(autobahn_cpp INTERFACE
     ${Boost_LIBRARIES}
     ${OPENSSL_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT})
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${CMAKE_DL_LIBS})
 
 foreach(h ${PUBLIC_HEADERS})
     string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "include/" include "${h}")

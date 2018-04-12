@@ -11,7 +11,7 @@ HOSTIP=$(shell ip route get 1 | awk '{print $$NF;exit}')
 build: build_gcc build_clang
 
 build_gcc:
-	time docker build --no-cache \
+	time docker build \
 		--build-arg BUILD_DATE=${BUILD_DATE} \
 		--build-arg AUTOBAHN_CPP_VCS_REF=${AUTOBAHN_CPP_VCS_REF} \
 		--build-arg AUTOBAHN_CPP_VERSION=${AUTOBAHN_CPP_VERSION} \
@@ -21,7 +21,7 @@ build_gcc:
 		-f docker/Dockerfile.gcc .
 
 build_clang:
-	time docker build --no-cache \
+	time docker build \
 		--build-arg BUILD_DATE=${BUILD_DATE} \
 		--build-arg AUTOBAHN_CPP_VCS_REF=${AUTOBAHN_CPP_VCS_REF} \
 		--build-arg AUTOBAHN_CPP_VERSION=${AUTOBAHN_CPP_VERSION} \

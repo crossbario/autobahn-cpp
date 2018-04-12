@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(autobahn-cpp)
 
-include(cmake/Includes/CMakeLists.txt)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Includes/CMakeLists.txt)
 
 option(AUTOBAHN_BUILD_EXAMPLES "Build examples" ON)
 

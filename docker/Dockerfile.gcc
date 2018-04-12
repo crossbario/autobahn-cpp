@@ -87,7 +87,9 @@ WORKDIR /autobahn
 COPY autobahn /autobahn/autobahn
 COPY examples /autobahn/examples
 COPY cmake /autobahn/cmake
-COPY CMakeLists.txt /autobahn/
+COPY cmake/Modules /autobahn/cmake/Modules
+COPY cmake/Includes /autobahn/cmake/Includes
+COPY CMakeLists.txt /autobahn/CMakeLists.txt
 
 RUN cd build \
     && cmake .. \

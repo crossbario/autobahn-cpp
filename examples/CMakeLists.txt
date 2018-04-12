@@ -1,3 +1,5 @@
+set(CMAKE_EXE_LINKER_FLAGS " -static")
+
 set(PARAMETERS_SOURCES parameters.cpp)
 set(PARAMETERS_HEADERS parameters.hpp)
 add_library(examples_parameters ${PARAMETERS_SOURCES} ${PARAMETERS_HEADERS})
