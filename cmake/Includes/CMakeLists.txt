@@ -40,8 +40,13 @@ set(CMAKE_MODULE_PATH
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-# https://stackoverflow.com/a/3176086/884770
-set(Boost_USE_STATIC_LIBS   ON)
+if(BUILD_SHARED_LIBS)
+    set(Boost_USE_STATIC_LIBS OFF )
+else()
+    # https://stackoverflow.com/a/3176086/884770
+    set(Boost_USE_STATIC_LIBS ON )
+endif()
+
 find_package(Boost REQUIRED COMPONENTS program_options system thread random)
 
 find_package(Msgpack REQUIRED)
