@@ -180,20 +180,19 @@ sudo apt-get install -y clang libc++1 libc++-dev
 Then make Clang available:
 
 ```console
-oberstet@corei7ub1310:~$ sudo update-alternatives --config c++
-[sudo] password for oberstet:
-Es gibt 3 Auswahlmöglichkeiten für die Alternative c++ (welche /usr/bin/c++ bereitstellen).
+$ sudo update-alternatives --config c++
+There are 2 choices for the alternative c++ (providing /usr/bin/c++).
 
-  Auswahl      Pfad                     Priorität Status
+  Selection    Path                      Priority   Status
 ------------------------------------------------------------
-* 0            /usr/bin/g++              20        Auto-Modus
-  1            /usr/bin/clang++          10        manueller Modus
-  2            /usr/bin/clang++-libc++   5         manueller Modus
-  3            /usr/bin/g++              20        manueller Modus
+* 0            /usr/bin/g++              20        auto mode
+  1            /usr/bin/clang++          10        manual mode
+  2            /usr/bin/clang++-libc++   5         manual mode
+  3            /usr/bin/g++              20        manual mode
 
-Drücken Sie die Eingabetaste, um die aktuelle Wahl[*] beizubehalten,
-oder geben Sie die Auswahlnummer ein: 1
-update-alternatives: /usr/bin/clang++ wird verwendet, um /usr/bin/c++ (c++) im manueller Modus bereitzustellen
+Press <enter> to keep the current choice[*], or type selection number: 1
+update-alternatives: using /usr/bin/clang++ to provide /usr/bin/c++ (c++) in manual mode
+
 ```
 
 ---
