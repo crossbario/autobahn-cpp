@@ -33,10 +33,12 @@
 
 #include "wamp_arguments.hpp"
 
+#include <msgpack/zone.hpp>
+#include <msgpack/object.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <msgpack.hpp>
 #include <string>
 
 namespace autobahn {

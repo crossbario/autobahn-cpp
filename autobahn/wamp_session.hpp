@@ -42,13 +42,15 @@
 #include "boost_config.hpp"
 
 #include <boost/asio.hpp>
+
+#include <msgpack/object.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <istream>
 #include <ostream>
 #include <map>
 #include <memory>
-#include <msgpack.hpp>
 #include <stdexcept>
 #include <string>
 #include <utility>

@@ -31,8 +31,10 @@
 #ifndef AUTOBAHN_WAMP_ARGUMENTS_HPP
 #define AUTOBAHN_WAMP_ARGUMENTS_HPP
 
+#include <msgpack/object.hpp>
+#include <msgpack/zone.hpp>
+
 #include <array>
-#include <msgpack.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -44,11 +46,11 @@ using wamp_kw_arguments = std::unordered_map<std::string, msgpack::object>;
 
 static msgpack::zone EMPTY_ARGUMENTS_ZONE;
 static msgpack::zone EMPTY_KW_ARGUMENTS_ZONE;
-static const msgpack::object EMPTY_ARGUMENTS(std::array<msgpack::object, 0>(), &EMPTY_ARGUMENTS_ZONE);
-static const msgpack::object EMPTY_KW_ARGUMENTS(wamp_kw_arguments(), &EMPTY_KW_ARGUMENTS_ZONE);
+static const msgpack::object EMPTY_ARGUMENTS(std::array<msgpack::object, 0>(), EMPTY_ARGUMENTS_ZONE);
+static const msgpack::object EMPTY_KW_ARGUMENTS(wamp_kw_arguments(), EMPTY_KW_ARGUMENTS_ZONE);
 
 
-//msgpack map utilities.  
+//msgpack map utilities.
 //TODO: refactor event & invocation to used these
 template <typename T>
 inline T value_for_key(const msgpack::object& object, const std::string& key)

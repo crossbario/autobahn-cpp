@@ -37,7 +37,7 @@
 #include <boost/asio/io_service.hpp>
 #include <cstddef>
 #include <memory>
-#include <msgpack.hpp>
+#include <msgpack/unpack.hpp>
 
 namespace autobahn {
 

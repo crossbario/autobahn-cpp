@@ -31,7 +31,9 @@
 #ifndef AUTOBAHN_WAMP_CALL_RESULT_HPP
 #define AUTOBAHN_WAMP_CALL_RESULT_HPP
 
-#include <msgpack.hpp>
+#include <msgpack/zone.hpp>
+#include <msgpack/object.hpp>
+
 #include <string>
 
 namespace autobahn {

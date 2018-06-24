@@ -34,8 +34,6 @@
 #include "wamp_call_result.hpp"
 #include "boost_config.hpp"
 
-#include <msgpack.hpp>
-
 namespace autobahn {
 
 /// An outstanding wamp call.

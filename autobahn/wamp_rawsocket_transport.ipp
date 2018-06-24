@@ -352,7 +352,7 @@ void wamp_rawsocket_transport<Socket>::receive_message_body(
         m_message_unpacker.buffer_consumed(m_message_length);
         msgpack::unpacked result;
 
-        while (m_message_unpacker.next(&result)) {
+        while (m_message_unpacker.next(result)) {
             wamp_message::message_fields fields;
             result.get().convert(fields);
 
