@@ -87,7 +87,7 @@ inline void wamp_websocket_transport::send_message(wamp_message&& message)
     msgpack::packer<msgpack::sbuffer> packer(*buffer);
     packer.pack(message.fields());
 
-   
+
     // Write actual serialized message.
     write(buffer->data(), buffer->size());
 
@@ -162,7 +162,7 @@ inline void wamp_websocket_transport::receive_message(const std::string& msg)
 
         msgpack::unpacked result;
 
-        while (m_message_unpacker.next(&result)) {
+        while (m_message_unpacker.next(result)) {
             wamp_message::message_fields fields;
             result.get().convert(fields);
 

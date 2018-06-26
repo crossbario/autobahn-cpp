@@ -31,8 +31,10 @@
 #ifndef AUTOBAHN_WAMP_MESSAGE_HPP
 #define AUTOBAHN_WAMP_MESSAGE_HPP
 
+#include <msgpack/zone.hpp>
+#include <msgpack/object.hpp>
+
 #include <cstddef>
-#include <msgpack.hpp>
 #include <vector>
 
 namespace autobahn {
