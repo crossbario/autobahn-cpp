@@ -47,6 +47,13 @@ inline wamp_invocation_impl::wamp_invocation_impl()
 {
 }
 
+inline wamp_invocation_impl::~wamp_invocation_impl() {
+	// If still sendable, send default empty result
+	if(sendable()) {
+		empty_result();
+	}
+}
+
 inline const std::string& wamp_invocation_impl::uri() const
 {
     return m_uri;

@@ -51,6 +51,8 @@ public:
     wamp_invocation_impl();
     wamp_invocation_impl(wamp_invocation_impl&&) = delete; // copy wamp_invocation instead
 
+    ~wamp_invocation_impl();
+
     //add URI and details
     /*!
     * Invocatition procedure URI.  Used by prefix & wildcard registered procedures
