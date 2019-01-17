@@ -35,25 +35,26 @@ ENV WSPP_ENABLE_CPP11 1
 # update system, get dev tools and libs
 RUN apt-get update \
     && apt-get install -y wget curl unzip git-core \
-                          build-essential autotools-dev autoconf libtool \
+                          build-essential autotools-dev autoconf libtool cmake \
                           zlib1g-dev libbz2-dev libssl-dev \
+                          libboost-all-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 # get, build and install Boost from upstream
-#RUN cd /tmp \
-#    && wget http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.bz2 \
-COPY boost_1_66_0.tar.bz2 /tmp
+# RUN    cd /tmp \
+#     && wget https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.bz2 \
+#     && tar xvjf boost_1_69_0.tar.bz2
 
-RUN cd /tmp \
-    && tar xvjf boost_1_66_0.tar.bz2 && cd boost_1_66_0 \
-    && ./bootstrap.sh --with-toolset=gcc \
-    && ./b2 toolset=gcc link=shared link=static threading=single threading=multi --layout=tagged --without-python -j 8 install \
-    && cd / && rm -rf /tmp/boost*
+# RUN    cd /tmp/boost_1_69_0 \
+#     && ./bootstrap.sh --with-toolset=gcc \
+#     && ./b2 toolset=gcc link=shared link=static threading=single threading=multi --layout=tagged --without-python -j 8 install \
+#     && cd / \
+#     && rm -rf /tmp/boost*
 
 # https://askubuntu.com/a/486184
-RUN cd /usr/local/lib && \
-    ln -s libboost_thread-mt.a libboost_thread.a
+# RUN cd /usr/local/lib && \
+#     ln -s libboost_thread-mt.a libboost_thread.a
 
 # get, build and install msgpack-c from upstream
 RUN cd /tmp \
@@ -71,10 +72,10 @@ RUN cd /tmp \
     && cd / && rm -rf /tmp/websocketpp*
 
 # get and install cmake from upstream
-RUN cd /tmp \
-    && wget https://cmake.org/files/v3.11/cmake-3.11.0-Linux-x86_64.sh \
-    && sh cmake-3.11.0-Linux-x86_64.sh --skip-license --prefix=/usr/local \
-    && which cmake && cmake --version
+# RUN cd /tmp \
+#     && wget https://cmake.org/files/v3.11/cmake-3.11.0-Linux-x86_64.sh \
+#     && sh cmake-3.11.0-Linux-x86_64.sh --skip-license --prefix=/usr/local \
+#     && which cmake && cmake --version
 
 #### all dependencies and tools are now in place
 
