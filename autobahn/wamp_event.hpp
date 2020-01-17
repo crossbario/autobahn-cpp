@@ -41,10 +41,10 @@
 
 namespace autobahn {
 
-class wamp_event
+class wamp_event_impl
 {
 public:
-    wamp_event(msgpack::zone&& zone);
+    wamp_event_impl(msgpack::zone&& zone);
 
 
     //add URI and details
@@ -204,6 +204,8 @@ private:
     std::string m_uri;
 
 };
+
+using wamp_event = std::shared_ptr<wamp_event_impl>;
 
 } // namespace autobahn
 

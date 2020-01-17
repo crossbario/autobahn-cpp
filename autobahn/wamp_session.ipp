@@ -1222,21 +1222,21 @@ inline void wamp_session::process_event(wamp_message&& message)
             throw protocol_error("EVENT - Details must be a dictionary");
         }
 
-        wamp_event event(std::move(message.zone()));
+        wamp_event event = std::make_shared<wamp_event_impl>(std::move(message.zone()));
 
-        event.set_details(message.field(3));
+        event->set_details(message.field(3));
 
         if (message.size() > 4) {
             if (!message.is_field_type(4, msgpack::type::ARRAY)) {
                 throw protocol_error("EVENT - EVENT.Arguments must be a list");
             }
-            event.set_arguments(message.field(4));
+            event->set_arguments(message.field(4));
 
             if (message.size() > 5) {
                 if (!message.is_field_type(5, msgpack::type::MAP)) {
                     throw protocol_error("EVENT - EVENT.ArgumentsKw must be a dictionary");
                 }
-                event.set_kw_arguments(message.field(5));
+                event->set_kw_arguments(message.field(5));
             }
         }
 
