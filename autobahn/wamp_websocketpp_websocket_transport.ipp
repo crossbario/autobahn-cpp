@@ -116,13 +116,13 @@ namespace autobahn {
     }
 
     template <class Config>
-    inline void wamp_websocketpp_websocket_transport<Config>::async_connect(const std::string& uri, boost::promise<void>& connect_promise)
+    inline void wamp_websocketpp_websocket_transport<Config>::async_connect(const std::string& uri, wamp_async<void>& connect_async)
     {
         websocketpp::lib::error_code ec;
         typename client_type::connection_ptr con = m_client.get_connection(uri, ec);
         if (ec) {
             //Log  "Get Connection Error: " + ec.message());
-            connect_promise.set_exception(boost::copy_exception(websocketpp::lib::system_error(ec.value(), ec.category(), "connect")));
+            connect_async.set_exception(boost::copy_exception(websocketpp::lib::system_error(ec.value(), ec.category(), "connect")));
             return;
         }
 

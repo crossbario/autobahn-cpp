@@ -36,7 +36,15 @@ inline wamp_unsubscribe_request::wamp_unsubscribe_request(const wamp_subscriptio
 {
 }
 
-inline boost::promise<void>& wamp_unsubscribe_request::response()
+inline wamp_unsubscribe_request::wamp_unsubscribe_request(const wamp_subscription &subscription,
+                                                          on_success_handler&& on_success,
+                                                          on_exception_handler&& on_exception)
+    : m_subscription(subscription)
+    , m_response(std::move(on_success), std::move(on_exception))
+{
+}
+
+inline wamp_async<void>& wamp_unsubscribe_request::response()
 {
     return m_response;
 }

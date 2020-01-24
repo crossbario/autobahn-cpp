@@ -64,6 +64,7 @@ int main(int argc, char** argv)
         boost::future<void> start_future;
         boost::future<void> join_future;
         boost::future<void> call_future;
+        boost::future<void> call_future2;
         boost::future<void> leave_future;
         boost::future<void> stop_future;
 
@@ -105,25 +106,42 @@ int main(int argc, char** argv)
                     [&](boost::future<autobahn::wamp_call_result> result) {
                         try {
                             uint64_t sum = result.get().argument<uint64_t>(0);
-                            std::cerr << "call result: " << sum << std::endl;
+                            std::cerr << "add2 result: " << sum << std::endl;
                         } catch (const std::exception& e) {
-                            std::cerr << "call failed: " << e.what() << std::endl;
+                            std::cerr << "add2 failed: " << e.what() << std::endl;
                             io.stop();
                             return;
                         }
 
-                        leave_future = session->leave().then([&](boost::future<std::string> reason) {
+                        autobahn::wamp_call_options call_options;
+                        call_options.set_timeout(std::chrono::seconds(10));
+
+                        std::tuple<uint64_t> arguments(5);
+
+                        call_future2 = session->call("com.myapp.longop", arguments, call_options).then(
+                        [&](boost::future<autobahn::wamp_call_result> result) {
                             try {
-                                std::cerr << "left session (" << reason.get() << ")" << std::endl;
+                                uint64_t sum = result.get().argument<uint64_t>(0);
+                                std::cerr << "longop result: " << sum << std::endl;
                             } catch (const std::exception& e) {
-                                std::cerr << "failed to leave session: " << e.what() << std::endl;
+                                std::cerr << "longop failed: " << e.what() << std::endl;
                                 io.stop();
                                 return;
                             }
 
-                            stop_future = session->stop().then([&](boost::future<void> stopped) {
-                                std::cerr << "stopped session" << std::endl;
-                                io.stop();
+                            leave_future = session->leave().then([&](boost::future<std::string> reason) {
+                                try {
+                                    std::cerr << "left session (" << reason.get() << ")" << std::endl;
+                                } catch (const std::exception& e) {
+                                    std::cerr << "failed to leave session: " << e.what() << std::endl;
+                                    io.stop();
+                                    return;
+                                }
+
+                                stop_future = session->stop().then([&](boost::future<void> stopped) {
+                                    std::cerr << "stopped session" << std::endl;
+                                    io.stop();
+                                });
                             });
                         });
                     });

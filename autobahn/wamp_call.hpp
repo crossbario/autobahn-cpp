@@ -31,8 +31,9 @@
 #ifndef AUTOBAHN_WAMP_CALL_HPP
 #define AUTOBAHN_WAMP_CALL_HPP
 
-#include "wamp_call_result.hpp"
 #include "boost_config.hpp"
+#include "wamp_async.hpp"
+#include "wamp_call_result.hpp"
 
 namespace autobahn {
 
@@ -40,13 +41,18 @@ namespace autobahn {
 class wamp_call
 {
 public:
-    wamp_call();
+    using on_success_handler = wamp_async<wamp_call_result>::on_success_handler;
+    using on_exception_handler = wamp_async<wamp_call_result>::on_exception_handler;
 
-    boost::promise<wamp_call_result>& result();
+    wamp_call();
+    wamp_call(on_success_handler&& on_success,
+              on_exception_handler&& on_exception);
+
+    wamp_async<wamp_call_result>& result();
     void set_result(wamp_call_result&& value);
 
 private:
-    boost::promise<wamp_call_result> m_result;
+    wamp_async<wamp_call_result> m_result;
 };
 
 } // namespace autobahn

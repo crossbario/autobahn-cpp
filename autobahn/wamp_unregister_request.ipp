@@ -24,7 +24,15 @@ inline wamp_unregister_request::wamp_unregister_request(const wamp_registration&
 {
 }
 
-inline boost::promise<void>& wamp_unregister_request::response()
+inline wamp_unregister_request::wamp_unregister_request(const wamp_registration& registration,
+                                                        on_success_handler&& on_success,
+                                                        on_exception_handler&& on_exception)
+    : m_registration(registration)
+    , m_response(std::move(on_success), std::move(on_exception))
+{
+}
+
+inline wamp_async<void>& wamp_unregister_request::response()
 {
     return m_response;
 }

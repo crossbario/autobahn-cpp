@@ -36,9 +36,24 @@ inline wamp_register_request::wamp_register_request()
 {
 }
 
+inline wamp_register_request::wamp_register_request(on_success_handler&& on_success,
+                                                    on_exception_handler&& on_exception)
+    : m_procedure()
+    , m_response(std::move(on_success), std::move(on_exception))
+{
+}
+
 inline wamp_register_request::wamp_register_request(const wamp_procedure& procedure)
     : m_procedure(procedure)
     , m_response()
+{
+}
+
+inline wamp_register_request::wamp_register_request(const wamp_procedure& procedure,
+                                                    on_success_handler&& on_success,
+                                                    on_exception_handler&& on_exception)
+    : m_procedure(procedure)
+    , m_response(std::move(on_success), std::move(on_exception))
 {
 }
 
@@ -53,7 +68,7 @@ inline const wamp_procedure& wamp_register_request::procedure() const
     return m_procedure;
 }
 
-inline boost::promise<wamp_registration>& wamp_register_request::response()
+inline wamp_async<wamp_registration>& wamp_register_request::response()
 {
     return m_response;
 }

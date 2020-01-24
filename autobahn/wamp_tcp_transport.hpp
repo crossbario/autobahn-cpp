@@ -53,6 +53,9 @@ public:
     virtual ~wamp_tcp_transport() override;
 
     virtual boost::future<void> connect() override;
+
+    virtual void connect(on_success_handler&& on_success,
+                         on_exception_handler&& on_exception) override;
 };
 
 } // namespace autobahn

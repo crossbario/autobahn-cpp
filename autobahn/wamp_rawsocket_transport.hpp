@@ -90,9 +90,23 @@ public:
     virtual boost::future<void> connect() override;
 
     /*!
+     * @copydoc wamp_transport::connect(on_success_handler&& on_success,
+                                        on_exception_handler&& on_exception)
+     */
+    virtual void connect(on_success_handler&& on_success,
+                         on_exception_handler&& on_exception) override;
+
+    /*!
      * @copydoc wamp_transport::disconnect()
      */
     virtual boost::future<void> disconnect() override;
+
+    /*!
+     * @copydoc wamp_transport::disconnect(on_success_handler&& on_success,
+                                           on_exception_handler&& on_exception)
+     */
+    virtual void disconnect(on_success_handler&& on_success,
+                            on_exception_handler&& on_exception) override;
 
     /*!
      * @copydoc wamp_transport::is_connected()
@@ -150,9 +164,19 @@ public:
     virtual bool has_handler() const override;
 
 protected:
+
+    wamp_async<void>& connect_async() const;
+
+    wamp_async<void>& disconnect_async() const;
+
+protected:
     socket_type& socket();
 
 private:
+
+    void do_connect();
+
+    void do_disconnect();
 
     void handshake_reply_handler(
             const boost::system::error_code& error_code,
@@ -180,14 +204,14 @@ private:
     endpoint_type m_remote_endpoint;
 
     /*!
-     * The promise that is fulfilled when the connect attempt is complete.
+     * The async operation that is fulfilled when the connect attempt is complete.
      */
-    boost::promise<void> m_connect;
+    wamp_async<void> m_connect;
 
     /*!
-     * The promise that is fulfilled when the disconnect attempt is complete.
+     * The async operation that is fulfilled when the disconnect attempt is complete.
      */
-    boost::promise<void> m_disconnect;
+    wamp_async<void> m_disconnect;
 
     /*!
      * The handler to be called when pausing.

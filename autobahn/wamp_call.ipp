@@ -35,7 +35,13 @@ inline wamp_call::wamp_call()
 {
 }
 
-inline boost::promise<wamp_call_result>& wamp_call::result()
+inline wamp_call::wamp_call(on_success_handler&& on_success,
+    	                    on_exception_handler&& on_exception)
+    : m_result(std::move(on_success), std::move(on_exception))
+{
+}
+
+inline wamp_async<wamp_call_result>& wamp_call::result()
 {
     return m_result;
 }

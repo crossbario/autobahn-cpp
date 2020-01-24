@@ -77,7 +77,7 @@ namespace autobahn {
     private:
         virtual bool is_open() const override;
         virtual void close() override;
-        virtual void async_connect(const std::string& uri, boost::promise<void>& connect_promise) override;
+        virtual void async_connect(const std::string& uri, wamp_async<void>& connect_async) override;
         virtual void write(void const * payload, size_t len) override;
 
     private:

@@ -31,15 +31,19 @@
 #ifndef AUTOBAHN_SESSION_HPP
 #define AUTOBAHN_SESSION_HPP
 
+#include "boost_config.hpp"
+#include "wamp_async.hpp"
+#include "wamp_authenticate.hpp"
 #include "wamp_call_options.hpp"
 #include "wamp_call_result.hpp"
 #include "wamp_event_handler.hpp"
 #include "wamp_message.hpp"
 #include "wamp_procedure.hpp"
 #include "wamp_publish_options.hpp"
+#include "wamp_registration.hpp"
 #include "wamp_subscribe_options.hpp"
+#include "wamp_subscription.hpp"
 #include "wamp_transport_handler.hpp"
-#include "boost_config.hpp"
 
 #include <boost/asio.hpp>
 
@@ -69,13 +73,10 @@ namespace autobahn {
 class wamp_call;
 class wamp_message;
 class wamp_register_request;
-class wamp_registration;
 class wamp_subscribe_request;
-class wamp_subscription;
 class wamp_transport;
 class wamp_unregister_request;
 class wamp_unsubscribe_request;
-class wamp_authenticate;
 class wamp_challenge;
 
 /** \defgroup PUB Publishing events
@@ -93,6 +94,33 @@ class wamp_session :
 {
 public:
 
+    /** Handler aliases
+     */
+    using start_on_success_handler = wamp_async<void>::on_success_handler;
+    using start_on_exception_handler = wamp_async<void>::on_exception_handler;
+    using stop_on_success_handler = wamp_async<void>::on_success_handler;
+    using stop_on_exception_handler = wamp_async<void>::on_exception_handler;
+    using join_on_success_handler = wamp_async<uint64_t>::on_success_handler;
+    using join_on_exception_handler = wamp_async<uint64_t>::on_exception_handler;
+    using leave_on_success_handler = wamp_async<std::string>::on_success_handler;
+    using leave_on_exception_handler = wamp_async<std::string>::on_exception_handler;
+    using publish_on_success_handler = wamp_async<void>::on_success_handler;
+    using publish_on_exception_handler = wamp_async<void>::on_exception_handler;
+    using subscribe_on_success_handler = wamp_async<wamp_subscription>::on_success_handler;
+    using subscribe_on_exception_handler = wamp_async<wamp_subscription>::on_exception_handler;
+    using unsubscribe_on_success_handler = wamp_async<void>::on_success_handler;
+    using unsubscribe_on_exception_handler = wamp_async<void>::on_exception_handler;
+    using call_on_success_handler = wamp_async<wamp_call_result>::on_success_handler;
+    using call_on_exception_handler = wamp_async<wamp_call_result>::on_exception_handler;
+    using provide_on_success_handler = wamp_async<wamp_registration>::on_success_handler;
+    using provide_on_exception_handler = wamp_async<wamp_registration>::on_exception_handler;
+    using unprovide_on_success_handler = wamp_async<void>::on_success_handler;
+    using unprovide_on_exception_handler = wamp_async<void>::on_exception_handler;
+    using challenge_on_success_handler = wamp_async<wamp_authenticate>::on_success_handler;
+    using challenge_on_exception_handler = wamp_async<wamp_authenticate>::on_exception_handler;
+
+public:
+
     /*!
      * Create a new WAMP session.
      *
@@ -106,21 +134,46 @@ public:
     ~wamp_session();
 
     /*!
-     * Establishes a session with the router.
+     * Establishes a session with the router, using boost::future as asynchronus
+     * mechanism.
      *
      * \return A future that indicates if the session was successfully started.
      */
     boost::future<void> start();
 
     /*!
-     * Stops the session with the router.
+     * Establishes a session with the router, using handlers as asynchrous
+     * mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     *
+     * \return A future that indicates if the session was successfully started.
+     */
+    void start(
+            start_on_success_handler&& on_success,
+            start_on_exception_handler&& on_exception);
+
+    /*!
+     * Stops the session with the router, using boost::future as asynchronus
+     * mechanism.
      *
      * \return A future that indicates if the session was successfully stopped.
      */
     boost::future<void> stop();
 
     /*!
-     * Join a realm with the session.
+     * Stops the session with the router, using handlers as asynchrous
+     * mechanism.
+     *
+     * \return A future that indicates if the session was successfully stopped.
+     */
+    void stop(
+            stop_on_success_handler&& on_success,
+            stop_on_exception_handler&& on_exception);
+
+    /*!
+     * Join a realm with the session, using boost::future as asynchronus mechanism.
      *
      * \param realm The realm to join on the application router.
      * \param authmethods The authentication methods this instance support e.g. "wampcra","ticket"
@@ -133,7 +186,24 @@ public:
             const std::string& authid = "");
 
     /*!
-     * Leave the realm.
+     * Join a realm with the session, using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param realm The realm to join on the application router.
+     * \param authmethods The authentication methods this instance support e.g. "wampcra","ticket"
+     * \param authid The username or maybe an other identifier for the user to join.
+     * \return A future that resolves with the session ID when the realm was joined.
+     */
+    void join(
+            join_on_success_handler&& on_success,
+            join_on_exception_handler&& on_exception,
+            const std::string& realm,
+            const std::vector<std::string>& authmethods = std::vector<std::string>(),
+            const std::string& authid = "");
+
+    /*!
+     * Leave the realm, using boost::future as asynchronus mechanism.
      *
      * \param reason An optional WAMP URI providing a reason for leaving.
      * \return A future that resolves with the reason sent by the peer.
@@ -142,31 +212,82 @@ public:
             const std::string& reason = std::string("wamp.error.close_realm"));
 
     /*!
-     * \ingroup PUB
-     * Publish an event with empty payload to a topic.
+     * Leave the realm, using handlers as asynchrous mechanism.
      *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param reason An optional WAMP URI providing a reason for leaving.
+     * \return A future that resolves with the reason sent by the peer.
+     */
+    void leave(
+            leave_on_success_handler&& on_success,
+            leave_on_exception_handler&& on_exception,
+            const std::string& reason = std::string("wamp.error.close_realm"));
+
+    /*!
+     * \ingroup PUB
+     * Publish an event with empty payload to a topic, using boost::future as asynchronus
+     * mechanism.
      *
      * \param topic The URI of the topic to publish to.
      * \return A future that resolves once the the topic has been published to.
      */
-    boost::future<void> publish(const std::string& topic,
-                                const wamp_publish_options& options = wamp_publish_options());
+    boost::future<void> publish(
+            const std::string& topic,
+            const wamp_publish_options& options = wamp_publish_options());
 
     /*!
      * \ingroup PUB
-     * Publish an event with positional payload to a topic.
+     * Publish an event with empty payload to a topic, using handlers as asynchrous
+     * mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param topic The URI of the topic to publish to.
+     * \return A future that resolves once the the topic has been published to.
+     */
+    void publish(
+            publish_on_success_handler&& on_success,
+            publish_on_exception_handler&& on_exception,
+            const std::string& topic,
+            const wamp_publish_options& options = wamp_publish_options());
+
+    /*!
+     * \ingroup PUB
+     * Publish an event with positional payload to a topic, using boost::future as asynchronus
+     * mechanism.
      *
      * \param topic The URI of the topic to publish to.
      * \param arguments The positional payload for the event.
      * \return A future that resolves once the the topic has been published to.
      */
     template <typename List>
-    boost::future<void> publish(const std::string& topic, const List& arguments,
-                                const wamp_publish_options& options = wamp_publish_options());
+    boost::future<void> publish(
+            const std::string& topic, const List& arguments,
+            const wamp_publish_options& options = wamp_publish_options());
 
     /*!
      * \ingroup PUB
-     * Publish an event with both positional and keyword payload to a topic.
+     * Publish an event with positional payload to a topic, using handlers as asynchrous
+     * mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param topic The URI of the topic to publish to.
+     * \param arguments The positional payload for the event.
+     * \return A future that resolves once the the topic has been published to.
+     */
+    template <typename List>
+    void publish(
+            publish_on_success_handler&& on_success,
+            publish_on_exception_handler&& on_exception,
+            const std::string& topic, const List& arguments,
+            const wamp_publish_options& options = wamp_publish_options());
+
+    /*!
+     * \ingroup PUB
+     * Publish an event with both positional and keyword payload to a topic,
+     * using boost::future as asynchronus mechanism.
      *
      * \param topic The URI of the topic to publish to.
      * \param arguments The positional payload for the event.
@@ -181,7 +302,29 @@ public:
             const wamp_publish_options& options = wamp_publish_options());
 
     /*!
-     * Subscribe a handler to a topic to receive events.
+     * \ingroup PUB
+     * Publish an event with both positional and keyword payload to a topic,
+     * using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param topic The URI of the topic to publish to.
+     * \param arguments The positional payload for the event.
+     * \param kw_arguments The keyword payload for the event.
+     * \return A future that resolves once the the topic has been published to.
+     */
+    template <typename List, typename Map>
+    void publish(
+            publish_on_success_handler&& on_success,
+            publish_on_exception_handler&& on_exception,
+            const std::string& topic,
+            const List& arguments,
+            const Map& kw_arguments,
+            const wamp_publish_options& options = wamp_publish_options());
+
+    /*!
+     * Subscribe a handler to a topic to receive events,
+     * using boost::future as asynchronus mechanism.
      *
      * \param topic The URI of the topic to subscribe to.
      * \param handler The handler that will receive events under the subscription.
@@ -194,15 +337,50 @@ public:
             const wamp_subscribe_options& options = wamp_subscribe_options());
 
     /*!
-     * Unubscribe a handler to previously subscribed topic.
+     * Subscribe a handler to a topic to receive events,
+     * using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param topic The URI of the topic to subscribe to.
+     * \param handler The handler that will receive events under the subscription.
+     * \param options The options to pass in the subscribe request to the router.
+     * \return A future that resolves to the autobahn::subscription.
+     */
+    void subscribe(
+            subscribe_on_success_handler&& on_success,
+            subscribe_on_exception_handler&& on_exception,
+            const std::string& topic,
+            const wamp_event_handler& handler,
+            const wamp_subscribe_options& options = wamp_subscribe_options());
+
+    /*!
+     * Unubscribe a handler to previously subscribed topic,
+     * using boost::future as asynchronus mechanism.
      *
      * \param subscription The subscription to unsubscribe from.
      * \return A future that resolves to the unsubscribed response.
      */
-    boost::future<void> unsubscribe(const wamp_subscription& subscription);
+    boost::future<void> unsubscribe(
+            const wamp_subscription& subscription);
 
     /*!
-     * Calls a remote procedure with no arguments.
+     * Unubscribe a handler to previously subscribed topic,
+     * using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param subscription The subscription to unsubscribe from.
+     * \return A future that resolves to the unsubscribed response.
+     */
+    void unsubscribe(
+            unsubscribe_on_success_handler&& on_success,
+            unsubscribe_on_exception_handler&& on_exception,
+            const wamp_subscription& subscription);
+
+    /*!
+     * Calls a remote procedure with no arguments,
+     * using boost::future as asynchronus mechanism.
      *
      * \param procedure The URI of the remote procedure to call.
      * \param options The options to pass in the call to the router.
@@ -213,7 +391,24 @@ public:
             const wamp_call_options& options = wamp_call_options());
 
     /*!
-     * Calls a remote procedure with positional arguments.
+     * Calls a remote procedure with no arguments,
+     * using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param procedure The URI of the remote procedure to call.
+     * \param options The options to pass in the call to the router.
+     * \return A future that resolves to the result of the remote procedure call.
+     */
+    void call(
+            call_on_success_handler&& on_success,
+            call_on_exception_handler&& on_exception,
+            const std::string& procedure,
+            const wamp_call_options& options = wamp_call_options());
+
+    /*!
+     * Calls a remote procedure with positional arguments,
+     * using boost::future as asynchronus mechanism.
      *
      * \param procedure The URI of the remote procedure to call.
      * \param arguments The positional arguments for the call.
@@ -227,7 +422,27 @@ public:
             const wamp_call_options& options = wamp_call_options());
 
     /*!
-     * Calls a remote procedure with positional and keyword arguments.
+     * Calls a remote procedure with positional arguments,
+     * using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param procedure The URI of the remote procedure to call.
+     * \param arguments The positional arguments for the call.
+     * \param options The options to pass in the call to the router.
+     * \return A future that resolves to the result of the remote procedure call.
+     */
+    template <typename List>
+    void call(
+            call_on_success_handler&& on_success,
+            call_on_exception_handler&& on_exception,
+            const std::string& procedure,
+            const List& arguments,
+            const wamp_call_options& options = wamp_call_options());
+
+    /*!
+     * Calls a remote procedure with positional and keyword arguments,
+     * using boost::future as asynchronus mechanism.
      *
      * \param procedure The URI of the remote procedure to call.
      * \param arguments The positional arguments for the call.
@@ -242,7 +457,28 @@ public:
             const wamp_call_options& options = wamp_call_options());
 
     /*!
-     * Register a procedure that can be called remotely.
+     * Calls a remote procedure with positional and keyword arguments,
+     * using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param procedure The URI of the remote procedure to call.
+     * \param arguments The positional arguments for the call.
+     * \param kw_arguments The keyword arguments for the call.
+     * \param options The options to pass in the call to the router.
+     * \return A future that resolves to the result of the remote procedure call.
+     */
+    template<typename List, typename Map>
+    void call(
+            call_on_success_handler&& on_success,
+            call_on_exception_handler&& on_exception,
+            const std::string& procedure,
+            const List& arguments, const Map& kw_arguments,
+            const wamp_call_options& options = wamp_call_options());
+
+    /*!
+     * Register a procedure that can be called remotely,
+     * using boost::future as asynchronus mechanism.
      *
      * \param uri The URI associated with the procedure.
      * \param procedure The procedure to be exposed as a remotely callable procedure.
@@ -255,22 +491,74 @@ public:
             const provide_options& options = provide_options());
 
     /*!
-    * Unregister a handler to previosly registered service.
+     * Register a procedure that can be called remotely,
+     * using handlers as asynchrous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param uri The URI associated with the procedure.
+     * \param procedure The procedure to be exposed as a remotely callable procedure.
+     * \param options Options for registering the procedure.
+     * \return A future that resolves to a autobahn::registration
+     */
+    void provide(
+            provide_on_success_handler&& on_success,
+            provide_on_exception_handler&& on_exception,
+            const std::string& uri,
+            const wamp_procedure& procedure,
+            const provide_options& options = provide_options());
+
+    /*!
+    * Unregister a handler to previosly registered service,
+    * using boost::future as asynchronus mechanism.
     *
     * \param registration The registration to unregister.
     * \return A future that resolves to the unregistered response.
     */
-    boost::future<void> unprovide(const wamp_registration& registration);
+    boost::future<void> unprovide(
+            const wamp_registration& registration);
+
+    /*!
+    * Unregister a handler to previosly registered service,
+    * using handlers as asynchrous mechanism.
+    *
+    * \param on_success The success handler
+    * \param on_exception The exception handler
+    * \param registration The registration to unregister.
+    * \return A future that resolves to the unregistered response.
+    */
+    void unprovide(
+            unprovide_on_success_handler&& on_success,
+            unprovide_on_exception_handler&& on_exception,
+            const wamp_registration& registration);
 
     /*!
      * Function called by the session when authenticating. It always has to be
      * re-implemented (if authentication is part of the system).
+     * Uses boost::future as asynchronous mechanism.
      *
      * \param challenge The challenge from the router containing enough information
      *        for the system to prove membership.
      * \return A future that resolves to an authentication response.
      */
-    virtual boost::future<wamp_authenticate> on_challenge(const wamp_challenge& challenge);
+    virtual boost::future<wamp_authenticate> on_challenge(
+            const wamp_challenge& challenge);
+
+    /*!
+     * Function called by the session when authenticating. It always has to be
+     * re-implemented (if authentication is part of the system).
+     * Uses handlers as asynchronous mechanism.
+     *
+     * \param on_success The success handler
+     * \param on_exception The exception handler
+     * \param challenge The challenge from the router containing enough information
+     *        for the system to prove membership.
+     * \return A future that resolves to an authentication response.
+     */
+    virtual void on_challenge(
+            challenge_on_success_handler&& on_success,
+            challenge_on_exception_handler&& on_exception,
+            const wamp_challenge& challenge);
 
     /*!
     * Accessor method to WELCOME DETAILS dictionary containing router roles
@@ -312,6 +600,52 @@ private:
     virtual void on_detach(bool was_clean, const std::string& reason) override;
     virtual void on_message(wamp_message&& message) override;
 
+    // WAMP operations
+    void do_start();
+    void do_stop();
+    void do_join(const std::string& realm,
+                 const std::vector<std::string>& authmethods,
+                 const std::string& authid);
+    void do_leave(const std::string& reason);
+    void do_publish(const std::shared_ptr<wamp_async<void>>& result,
+                    const std::string& topic,
+                    const wamp_publish_options& options);
+    template <typename List>
+    void do_publish(const std::shared_ptr<wamp_async<void>>& result,
+                    const std::string& topic, const List& arguments,
+                    const wamp_publish_options& options);
+    template <typename List, typename Map>
+    void do_publish(const std::shared_ptr<wamp_async<void>>& result,
+                    const std::string& topic,
+                    const List& arguments,
+                    const Map& kw_arguments,
+                    const wamp_publish_options& options);
+    void do_subscribe(const std::shared_ptr<wamp_subscribe_request>& subscribe_request,
+                      const std::string& topic,
+                      const wamp_event_handler& handler,
+                      const wamp_subscribe_options& options);
+    void do_unsubscribe(const std::shared_ptr<wamp_unsubscribe_request>& unsubscribe_request,
+                        const wamp_subscription& subscription);
+    void do_call(const std::shared_ptr<wamp_call>& call,
+                 const std::string& procedure,
+                 const wamp_call_options& options);
+    template <typename List>
+    void do_call(const std::shared_ptr<wamp_call>& call,
+                 const std::string& procedure,
+                 const List& arguments,
+                 const wamp_call_options& options);
+    template<typename List, typename Map>
+    void do_call(const std::shared_ptr<wamp_call>& call,
+                 const std::string& procedure,
+                 const List& arguments, const Map& kw_arguments,
+                 const wamp_call_options& options);
+    void do_provide(const std::shared_ptr<wamp_register_request>& register_request,
+                    const std::string& uri,
+                    const wamp_procedure& procedure,
+                    const provide_options& options);
+    void do_unprovide(const std::shared_ptr<wamp_unregister_request>& unregister_request,
+                      const wamp_registration& registration);
+
     // WAMP message processing
     void process_error(wamp_message&& message);
     void process_welcome(wamp_message&& message);
@@ -349,21 +683,21 @@ private:
     uint64_t m_session_id;
 
     // Synchronization for dealing with starting the session.
-    boost::promise<void> m_session_start;
+    wamp_async<void> m_session_start;
 
     // Future to be fired when session was joined.
-    boost::promise<uint64_t> m_session_join;
+    wamp_async<uint64_t> m_session_join;
 
     // Whether or not we have already sent a goodbye when leaving the session.
     bool m_goodbye_sent;
 
-    boost::promise<std::string> m_session_leave;
+    wamp_async<std::string> m_session_leave;
 
     // Set to true when the session is stopped.
     bool m_running;
 
     // Synchronization for dealing with stopping the session
-    boost::promise<void> m_session_stop;
+    wamp_async<void> m_session_stop;
 
     //////////////////////////////////////////////////////////////////////////////////////
     // Caller

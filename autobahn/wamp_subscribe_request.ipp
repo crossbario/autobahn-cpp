@@ -36,9 +36,24 @@ inline wamp_subscribe_request::wamp_subscribe_request()
 {
 }
 
+inline wamp_subscribe_request::wamp_subscribe_request(on_success_handler&& on_success,
+                                                      on_exception_handler&& on_exception)
+    : m_handler()
+    , m_response(std::move(on_success), std::move(on_exception))
+{
+}
+
 inline wamp_subscribe_request::wamp_subscribe_request(const wamp_event_handler& handler)
     : m_handler(handler)
     , m_response()
+{
+}
+
+inline wamp_subscribe_request::wamp_subscribe_request(const wamp_event_handler& handler,
+                                                      on_success_handler&& on_success,
+                                                      on_exception_handler&& on_exception)
+    : m_handler(handler)
+    , m_response(std::move(on_success), std::move(on_exception))
 {
 }
 
@@ -47,7 +62,7 @@ inline const wamp_event_handler& wamp_subscribe_request::handler() const
     return m_handler;
 }
 
-inline boost::promise<wamp_subscription>& wamp_subscribe_request::response()
+inline wamp_async<wamp_subscription>& wamp_subscribe_request::response()
 {
     return m_response;
 }

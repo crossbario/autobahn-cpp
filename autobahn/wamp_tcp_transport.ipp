@@ -61,4 +61,19 @@ inline boost::future<void> wamp_tcp_transport::connect()
     );
 }
 
+inline void wamp_tcp_transport::connect(on_success_handler&& on_success,
+                                        on_exception_handler&& on_exception)
+{
+    wamp_rawsocket_transport<boost::asio::ip::tcp::socket>::connect(
+        [=]() {
+            on_success();
+            // Disable naggle for improved performance.
+            boost::asio::ip::tcp::no_delay option(true);
+            socket().set_option(option);     
+        },
+        [=](const boost::exception_ptr& eptr) {
+            on_exception(eptr);  
+        });
+}
+
 } // namespace autobahn

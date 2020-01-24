@@ -54,26 +54,57 @@ inline wamp_websocket_transport::wamp_websocket_transport(
 
 inline boost::future<void> wamp_websocket_transport::connect()
 {
+    m_connect = wamp_async<void>();
+
     if (is_open()) {
         m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
-        return m_connect.get_future();
+        return m_connect.promise().get_future();
     }
 
     async_connect(m_uri, m_connect);
 
-    return m_connect.get_future();
+    return m_connect.promise().get_future();
+}
+
+inline void wamp_websocket_transport::connect(on_success_handler&& on_success,
+                                              on_exception_handler&& on_exception)
+{
+    m_connect = wamp_async<void>(std::move(on_success), std::move(on_exception));
+
+    if (is_open()) {
+        m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
+        return;
+    }
+
+    async_connect(m_uri, m_connect);
 }
 
 inline boost::future<void> wamp_websocket_transport::disconnect()
 {
+    m_disconnect = wamp_async<void>();
+
     if (!is_open()) {
-        throw network_error("network transport already disconnected");
+        m_disconnect.set_exception(boost::copy_exception(network_error("network transport already disconnected")));
+        return m_disconnect.promise().get_future();
     }
 
     close();
 
-    m_disconnect.set_value();
-    return m_disconnect.get_future();
+    m_disconnect.promise().set_value();
+    return m_disconnect.promise().get_future();
+}
+
+inline void wamp_websocket_transport::disconnect(on_success_handler&& on_success,
+                                                 on_exception_handler&& on_exception)
+{
+    m_disconnect = wamp_async<void>(std::move(on_success), std::move(on_exception));
+
+    if (!is_open()) {
+        m_disconnect.set_exception(boost::copy_exception(network_error("network transport already disconnected")));
+        return;
+    }
+
+    close();
 }
 
 inline bool wamp_websocket_transport::is_connected() const

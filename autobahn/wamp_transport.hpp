@@ -32,6 +32,7 @@
 #define AUTOBAHN_WAMP_TRANSPORT_HPP
 
 #include "boost_config.hpp"
+#include "wamp_async.hpp"
 
 #include <memory>
 #include <string>
@@ -59,6 +60,16 @@ public:
      */
     using resume_handler = std::function<void()>;
 
+    /*!
+     * Asynchronous success handler.
+     */
+    using on_success_handler = wamp_async<void>::on_success_handler;
+
+    /*!
+     * Asynchronous exception handler.
+     */
+    using on_exception_handler = wamp_async<void>::on_exception_handler;
+
 public:
     /*!
      * Default virtual destructor.
@@ -69,7 +80,8 @@ public:
      * CONNECTION INTERFACE
      */
     /*!
-     * Attempts to connect the transport.
+     * Attempts to connect the transport, using boost::future as asynchronus
+     * mechanism.
      *
      * @return A future that will be satisfied when the connect attempt
      *         has been made.
@@ -77,12 +89,33 @@ public:
     virtual boost::future<void> connect() = 0;
 
     /*!
-     * Attempts to disconnect the transport.
+     * Attempts to connect the transport, using handlers as asynchrous
+     * mechanism.
+     *
+     * @param on_success The success handler
+     * @param on_exception The exception handler
+     */
+    virtual void connect(on_success_handler&& on_success,
+                         on_exception_handler&& on_exception) = 0;
+
+    /*!
+     * Attempts to disconnect the transport, using boost::future as asynchronus
+     * mechanism.
      *
      * @return A future that will be satisfied when the disconnect attempt
      *         has been made.
      */
     virtual boost::future<void> disconnect() = 0;
+
+    /*!
+     * Attempts to disconnect the transport, using handlers as asynchronus
+     * mechanism.
+     *
+     * @param on_success The success handler
+     * @param on_exception The exception handler
+     */
+    virtual void disconnect(on_success_handler&& on_success,
+                            on_exception_handler&& on_exception) = 0;
 
     /*!
      * Determines if the transport is connected.

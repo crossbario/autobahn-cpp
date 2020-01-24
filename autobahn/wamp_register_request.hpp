@@ -31,9 +31,10 @@
 #ifndef AUTOBAHN_WAMP_REGISTER_REQUEST_HPP
 #define AUTOBAHN_WAMP_REGISTER_REQUEST_HPP
 
+#include "boost_config.hpp"
+#include "wamp_async.hpp"
 #include "wamp_procedure.hpp"
 #include "wamp_registration.hpp"
-#include "boost_config.hpp"
 
 namespace autobahn {
 
@@ -41,18 +42,26 @@ namespace autobahn {
 class wamp_register_request
 {
 public:
+    using on_success_handler = wamp_async<wamp_registration>::on_success_handler;
+    using on_exception_handler = wamp_async<wamp_registration>::on_exception_handler;
+
     wamp_register_request();
+    wamp_register_request(on_success_handler&& on_success,
+                          on_exception_handler&& on_exception);
     wamp_register_request(const wamp_procedure& procedure);
+    wamp_register_request(const wamp_procedure& procedure,
+                          on_success_handler&& on_success,
+                          on_exception_handler&& on_exception);
     wamp_register_request(wamp_register_request&& other);
 
     const wamp_procedure& procedure() const;
-    boost::promise<wamp_registration>& response();
+    wamp_async<wamp_registration>& response();
     void set_procedure(wamp_procedure procedure) const;
     void set_response(const wamp_registration& registration);
 
 private:
     wamp_procedure m_procedure;
-    boost::promise<wamp_registration> m_response;
+    wamp_async<wamp_registration> m_response;
 };
 
 } // namespace autobahn

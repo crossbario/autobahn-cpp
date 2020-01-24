@@ -31,9 +31,10 @@
 #ifndef AUTOBAHN_WAMP_SUBSCRIBE_REQUEST_HPP
 #define AUTOBAHN_WAMP_SUBSCRIBE_REQUEST_HPP
 
+#include "boost_config.hpp"
+#include "wamp_async.hpp"
 #include "wamp_event_handler.hpp"
 #include "wamp_subscription.hpp"
-#include "boost_config.hpp"
 
 namespace autobahn {
 
@@ -41,17 +42,25 @@ namespace autobahn {
 class wamp_subscribe_request
 {
 public:
+    using on_success_handler = wamp_async<wamp_subscription>::on_success_handler;
+    using on_exception_handler = wamp_async<wamp_subscription>::on_exception_handler;
+
     wamp_subscribe_request();
+    wamp_subscribe_request(on_success_handler&& on_success,
+                           on_exception_handler&& on_exception);
     wamp_subscribe_request(const wamp_event_handler& handler);
+    wamp_subscribe_request(const wamp_event_handler& handler,
+                           on_success_handler&& on_success,
+                           on_exception_handler&& on_exception);
 
     const wamp_event_handler& handler() const;
-    boost::promise<wamp_subscription>& response();
+    wamp_async<wamp_subscription>& response();
     void set_handler(const wamp_event_handler& handler) const;
     void set_response(const wamp_subscription& subscription);
 
 private:
     wamp_event_handler m_handler;
-    boost::promise<wamp_subscription> m_response;
+    wamp_async<wamp_subscription> m_response;
 };
 
 } // namespace autobahn

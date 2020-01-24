@@ -71,14 +71,28 @@ namespace autobahn {
         * CONNECTION INTERFACE
         */
         /*!
-        * @copydoc wamp_transport::connect()
-        */
+         * @copydoc wamp_transport::connect()
+         */
         virtual boost::future<void> connect() override;
-
+    
         /*!
-        * @copydoc wamp_transport::disconnect()
-        */
+         * @copydoc wamp_transport::connect(on_success_handler&& on_success,
+                                            on_exception_handler&& on_exception)
+         */
+        virtual void connect(on_success_handler&& on_success,
+                             on_exception_handler&& on_exception) override;
+    
+        /*!
+         * @copydoc wamp_transport::disconnect()
+         */
         virtual boost::future<void> disconnect() override;
+    
+        /*!
+         * @copydoc wamp_transport::disconnect(on_success_handler&& on_success,
+                                               on_exception_handler&& on_exception)
+         */
+        virtual void disconnect(on_success_handler&& on_success,
+                                on_exception_handler&& on_exception) override;
 
         /*!
         * @copydoc wamp_transport::is_connected()
@@ -140,7 +154,7 @@ namespace autobahn {
         virtual bool is_open() const = 0;
 
 
-        virtual void async_connect(const std::string& m_uri, boost::promise<void>& connect_promise) = 0;
+        virtual void async_connect(const std::string& m_uri, wamp_async<void>& connect_async) = 0;
         virtual void close() = 0;
 
         virtual void write(void const * payload, size_t len) = 0;
@@ -148,14 +162,14 @@ namespace autobahn {
         void receive_message(const std::string& msg);
 
         /*!
-        * The promise that is fulfilled when the connect attempt is complete.
-        */
-        boost::promise<void> m_connect;
+         * The async operation that is fulfilled when the connect attempt is complete.
+         */
+        wamp_async<void> m_connect;
 
         /*!
-        * The promise that is fulfilled when the disconnect attempt is complete.
-        */
-        boost::promise<void> m_disconnect;
+         * The async operation that is fulfilled when the disconnect attempt is complete.
+         */
+        wamp_async<void> m_disconnect;
 
     private:
 

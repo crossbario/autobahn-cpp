@@ -20,6 +20,7 @@
 #define AUTOBAHN_WAMP_UNREGISTER_REQUEST_HPP
 
 #include "boost_config.hpp"
+#include "wamp_async.hpp"
 #include "wamp_registration.hpp"
 
 namespace autobahn {
@@ -28,15 +29,21 @@ namespace autobahn {
 class wamp_unregister_request
 {
 public:
-    wamp_unregister_request(const wamp_registration& registration);
+    using on_success_handler = wamp_async<void>::on_success_handler;
+    using on_exception_handler = wamp_async<void>::on_exception_handler;
 
-    boost::promise<void>& response();
+    wamp_unregister_request(const wamp_registration& registration);
+    wamp_unregister_request(const wamp_registration& registration,
+                            on_success_handler&& on_success,
+                            on_exception_handler&& on_exception);
+
+    wamp_async<void>& response();
     void set_response();
     wamp_registration& registration();
 
 private:
     wamp_registration m_registration;
-    boost::promise<void> m_response;
+    wamp_async<void> m_response;
 };
 
 } // namespace autobahn

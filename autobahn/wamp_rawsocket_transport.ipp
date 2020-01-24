@@ -59,13 +59,23 @@ wamp_rawsocket_transport<Socket>::wamp_rawsocket_transport(
 }
 
 template <class Socket>
-boost::future<void> wamp_rawsocket_transport<Socket>::connect()
+wamp_async<void>& wamp_rawsocket_transport<Socket>::connect_async() const
 {
-    m_connect =  boost::promise<void>();  // reset the promise
+    return m_connect;
+}
 
+template <class Socket>
+wamp_async<void>& wamp_rawsocket_transport<Socket>::disconnect_async() const
+{
+    return m_disconnect;
+}
+
+template <class Socket>
+void wamp_rawsocket_transport<Socket>::do_connect()
+{
     if (m_socket.is_open()) {
         m_connect.set_exception(boost::copy_exception(network_error("network transport already connected")));
-        return m_connect.get_future();
+        return;
     }
 
     std::weak_ptr<wamp_rawsocket_transport<Socket>> weak_self = this->shared_from_this();
@@ -77,8 +87,9 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
 
         if (error_code) {
             m_socket.close();  // async_connect will leave it open
-            m_connect.set_exception(boost::copy_exception(
-                            std::system_error(error_code.value(), std::system_category(), "connect")));
+            auto eptr = boost::copy_exception(
+                    std::system_error(error_code.value(), std::system_category(), "connect"));
+            m_connect.set_exception(eptr);
             return;
         }
 
@@ -113,26 +124,58 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
                     boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)),
                     handshake_reply);
         } catch (const std::exception& e) {
-            m_connect.set_exception(boost::copy_exception(e));
+            auto eptr = boost::copy_exception(e);
+            m_connect.set_exception(eptr);
         }
     };
 
     m_socket.async_connect(m_remote_endpoint, connect_handler);
-
-    return m_connect.get_future();
 }
 
 template <class Socket>
-boost::future<void> wamp_rawsocket_transport<Socket>::disconnect()
+boost::future<void> wamp_rawsocket_transport<Socket>::connect()
+{
+    m_connect = wamp_async<void>();
+    do_connect();
+    return m_connect.promise().get_future();
+}
+
+template <class Socket>
+void wamp_rawsocket_transport<Socket>::connect(on_success_handler&& on_success,
+                                               on_exception_handler&& on_exception)
+{
+    m_connect = wamp_async<void>(std::move(on_success), std::move(on_exception));
+    std::cout << m_connect.is_promise() << std::endl;
+    do_connect();
+}
+
+template <class Socket>
+void wamp_rawsocket_transport<Socket>::do_disconnect()
 {
     if (!m_socket.is_open()) {
-        throw network_error("network transport already disconnected");
+        m_disconnect.set_exception(boost::copy_exception(network_error("network transport already disconnected")));
+        return;
     }
 
     m_socket.close();
 
     m_disconnect.set_value();
-    return m_disconnect.get_future();
+}
+
+template <class Socket>
+boost::future<void> wamp_rawsocket_transport<Socket>::disconnect()
+{
+    m_disconnect = wamp_async<void>();
+    do_disconnect();
+    return m_disconnect.promise().get_future();
+}
+
+template <class Socket>
+void wamp_rawsocket_transport<Socket>::disconnect(on_success_handler&& on_success,
+                                                  on_exception_handler&& on_exception)
+{
+    m_disconnect = wamp_async<void>(std::move(on_success), std::move(on_exception));
+    do_connect();
 }
 
 template <class Socket>
