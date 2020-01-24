@@ -34,30 +34,30 @@
 
 namespace autobahn {
 
-inline wamp_event::wamp_event(msgpack::zone&& zone)
+inline wamp_event_impl::wamp_event_impl(msgpack::zone&& zone)
     : m_zone(std::move(zone))
     , m_arguments(EMPTY_ARGUMENTS)
     , m_kw_arguments(EMPTY_KW_ARGUMENTS)
 {
 }
 
-inline const std::string& wamp_event::uri() const
+inline const std::string& wamp_event_impl::uri() const
 {
     return m_uri;
 }
 
-inline std::size_t wamp_event::number_of_arguments() const
+inline std::size_t wamp_event_impl::number_of_arguments() const
 {
     return m_arguments.type == msgpack::type::ARRAY ? m_arguments.via.array.size : 0;
 }
 
-inline std::size_t wamp_event::number_of_kw_arguments() const
+inline std::size_t wamp_event_impl::number_of_kw_arguments() const
 {
     return m_kw_arguments.type == msgpack::type::MAP ? m_kw_arguments.via.map.size : 0;
 }
 
 template <typename T>
-inline T wamp_event::argument(std::size_t index) const
+inline T wamp_event_impl::argument(std::size_t index) const
 {
     if (m_arguments.type != msgpack::type::ARRAY || m_arguments.via.array.size <= index) {
         throw std::out_of_range("no argument at index " + boost::lexical_cast<std::string>(index));
@@ -66,26 +66,26 @@ inline T wamp_event::argument(std::size_t index) const
 }
 
 template <typename List>
-inline List wamp_event::arguments() const
+inline List wamp_event_impl::arguments() const
 {
     return m_arguments.as<List>();
 }
 
 template <typename List>
-inline void wamp_event::get_arguments(List& args) const
+inline void wamp_event_impl::get_arguments(List& args) const
 {
     m_arguments.convert(args);
 }
 
 template <typename... T>
-inline void wamp_event::get_each_argument(T&... args) const
+inline void wamp_event_impl::get_each_argument(T&... args) const
 {
     auto args_tuple = std::make_tuple(std::ref(args)...);
     m_arguments.convert(args_tuple);
 }
 
 template <typename T>
-inline T wamp_event::kw_argument(const std::string& key) const
+inline T wamp_event_impl::kw_argument(const std::string& key) const
 {
     if (m_kw_arguments.type != msgpack::type::MAP) {
         throw msgpack::type_error();
@@ -102,7 +102,7 @@ inline T wamp_event::kw_argument(const std::string& key) const
 }
 
 template <typename T>
-inline T wamp_event::kw_argument(const char* key) const
+inline T wamp_event_impl::kw_argument(const char* key) const
 {
     if (m_kw_arguments.type != msgpack::type::MAP) {
         throw msgpack::type_error();
@@ -120,7 +120,7 @@ inline T wamp_event::kw_argument(const char* key) const
 }
 
 template <typename T>
-inline T wamp_event::kw_argument_or(const std::string& key, const T& fallback) const
+inline T wamp_event_impl::kw_argument_or(const std::string& key, const T& fallback) const
 {
     if (m_kw_arguments.type != msgpack::type::MAP) {
         throw msgpack::type_error();
@@ -137,7 +137,7 @@ inline T wamp_event::kw_argument_or(const std::string& key, const T& fallback) c
 }
 
 template <typename T>
-inline T wamp_event::kw_argument_or(const char* key, const T& fallback) const
+inline T wamp_event_impl::kw_argument_or(const char* key, const T& fallback) const
 {
     if (m_kw_arguments.type != msgpack::type::MAP) {
         throw msgpack::type_error();
@@ -155,28 +155,28 @@ inline T wamp_event::kw_argument_or(const char* key, const T& fallback) const
 }
 
 template <typename Map>
-inline Map wamp_event::kw_arguments() const
+inline Map wamp_event_impl::kw_arguments() const
 {
     return m_kw_arguments.as<Map>();
 }
 
 template <typename Map>
-inline void wamp_event::get_kw_arguments(Map& kw_args) const
+inline void wamp_event_impl::get_kw_arguments(Map& kw_args) const
 {
     m_kw_arguments.convert(kw_args);
 }
 
-inline void wamp_event::set_arguments(const msgpack::object& arguments)
+inline void wamp_event_impl::set_arguments(const msgpack::object& arguments)
 {
     m_arguments = arguments;
 }
 
-inline void wamp_event::set_kw_arguments(const msgpack::object& kw_arguments)
+inline void wamp_event_impl::set_kw_arguments(const msgpack::object& kw_arguments)
 {
     m_kw_arguments = kw_arguments;
 }
 
-inline void wamp_event::set_details(const msgpack::object& details)
+inline void wamp_event_impl::set_details(const msgpack::object& details)
 {
     m_uri = value_for_key_or<std::string>(details, "topic", std::string());
 }
