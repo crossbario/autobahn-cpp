@@ -69,7 +69,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
     }
 
     std::weak_ptr<wamp_rawsocket_transport<Socket>> weak_self = this->shared_from_this();
-    auto connect_handler = [=, this](const boost::system::error_code& error_code) {
+    auto connect_handler = [this, weak_self](const boost::system::error_code& error_code) {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -97,7 +97,7 @@ boost::future<void> wamp_rawsocket_transport<Socket>::connect()
                 m_socket,
                 boost::asio::buffer(m_handshake_buffer, sizeof(m_handshake_buffer)));
 
-        auto handshake_reply = [=, this](
+        auto handshake_reply = [this, weak_self](
                 const boost::system::error_code& error,
                 std::size_t bytes_transferred) {
             auto shared_self = weak_self.lock();
