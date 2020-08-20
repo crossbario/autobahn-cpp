@@ -10,6 +10,10 @@
 # installations for the respective library. When an explicit library
 # root location hasn't been set, cmake will look in other places.
 
+if(POLICY CMP0054)
+    cmake_policy(SET CMP0054 NEW)
+endif()
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "-stdlib=libc++ -Wno-unused-local-typedefs -Wno-unknown-warning-option ${CMAKE_CXX_FLAGS}")
     if ("${CMAKE_GENERATOR}" STREQUAL "Ninja")
