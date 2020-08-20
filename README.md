@@ -446,7 +446,7 @@ oberstet@thinkpad-t430s:~/scm/crossbario/autobahn-cpp/build$
 To push a new release of the toolchain Docker image:
 
 ```console
-git tag -a v18.4.1 -m "tagged release"
+git tag -a v20.8.1 -m "tagged release"
 source docker/versions.sh
 make build_gcc
 make publish_gcc

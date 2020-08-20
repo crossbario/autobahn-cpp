@@ -3,7 +3,7 @@
 #
 # CHANGE FOR NEW RELEASES (these need to be proper Git tags in the respective repo):
 #
-export AUTOBAHN_CPP_VERSION='18.4.1'
+export AUTOBAHN_CPP_VERSION='20.8.1'
 #
 # END OF CONFIG
 #
