@@ -50,7 +50,7 @@ public:
 
     const std::string& match() const;
     void set_match(const std::string& match);
-    const bool is_match_set() const;
+    bool is_match_set() const;
 
 private:
     boost::optional<std::string> m_match;

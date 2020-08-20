@@ -47,6 +47,8 @@ public:
 
     wamp_challenge( const wamp_challenge & );
 
+    wamp_challenge & operator=( const wamp_challenge & ) = default;
+
     const std::string & challenge() const;
     const std::string & authmethod() const;
     const std::string & salt() const;
