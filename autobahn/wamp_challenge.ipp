@@ -43,16 +43,6 @@ inline wamp_challenge::wamp_challenge(
 , m_keylen( keylen )
 {}
 
-inline wamp_challenge::wamp_challenge( const wamp_challenge & ch )
-{
-    m_authmethod = ch.authmethod();
-    m_challenge = ch.challenge();
-    m_salt = ch.salt();
-    m_iterations = ch.iterations();
-    m_keylen = ch.keylen();
-}
-
-
 inline const std::string & wamp_challenge::authmethod() const { return m_authmethod; }
 inline const std::string & wamp_challenge::challenge() const { return m_challenge; }
 inline const std::string & wamp_challenge::salt() const { return m_salt; }
