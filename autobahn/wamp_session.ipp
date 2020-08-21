@@ -553,7 +553,7 @@ inline boost::future<void> wamp_session::unprovide(const wamp_registration& regi
 	return unregister_request->response().get_future();
 }
 
-inline boost::future<wamp_authenticate> wamp_session::on_challenge(const wamp_challenge& challenge)
+inline boost::future<wamp_authenticate> wamp_session::on_challenge(const wamp_challenge& /*challenge*/)
 {
     // a dummy implementation
     boost::promise<wamp_authenticate> dummy;
@@ -579,7 +579,7 @@ inline void wamp_session::on_attach(const std::shared_ptr<wamp_transport>& trans
     m_transport = transport;
 }
 
-inline void wamp_session::on_detach(bool was_clean, const std::string& reason)
+inline void wamp_session::on_detach(bool /*was_clean*/, const std::string& /*reason*/)
 {
     // FIXME: We should be deferring this operation to the io service. This
     //        will almost certainly require us to return a future here to

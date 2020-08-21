@@ -45,15 +45,11 @@ public:
         int keylen = -1
        );
 
-    wamp_challenge( const wamp_challenge & );
-
     const std::string & challenge() const;
     const std::string & authmethod() const;
     const std::string & salt() const;
     int iterations() const;
     int keylen() const;
-
-
 
 private:
     // authmethod

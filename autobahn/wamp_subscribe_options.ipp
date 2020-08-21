@@ -51,7 +51,7 @@ inline const std::string& wamp_subscribe_options::match() const
     return *m_match;
 }
 
-inline const bool wamp_subscribe_options::is_match_set() const
+inline bool wamp_subscribe_options::is_match_set() const
 {
     return m_match.is_initialized();
 }
@@ -76,7 +76,7 @@ struct convert<autobahn::wamp_subscribe_options>
 {
     msgpack::object const& operator()(
             msgpack::object const& object,
-            autobahn::wamp_subscribe_options& options) const
+            autobahn::wamp_subscribe_options& /*options*/) const
     {
         return object;
     }
