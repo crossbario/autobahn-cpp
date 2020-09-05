@@ -6,7 +6,7 @@ add_library(examples_parameters ${PARAMETERS_SOURCES} ${PARAMETERS_HEADERS})
 
 set(CALLER_SOURCES caller.cpp)
 set(CALLEE_SOURCES callee.cpp)
-set(PROVIDE_PREFIX_SOURCES callee.cpp)
+set(PROVIDE_PREFIX_SOURCES provide_prefix.cpp)
 set(PUBLISHER_SOURCES publisher.cpp)
 set(SUBSCRIBER_SOURCES subscriber.cpp)
 set(WAMPCRA_SOURCES wampcra.cpp)
