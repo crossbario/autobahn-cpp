@@ -127,7 +127,8 @@ int main(int argc, char** argv)
                         io.stop();
                         return;
                     }
-                    provide_future = session->provide(PREFIX, &calculator, { { "match", msgpack::object("prefix") } }).then(
+                    msgpack::zone z;
+                    provide_future = session->provide(PREFIX, &calculator, { { "match", msgpack::object("prefix", z) } }).then(
                         [&](boost::future<autobahn::wamp_registration> registration) {
                         try {
                             std::cerr << "registered procedure:" << registration.get().id() << std::endl;
