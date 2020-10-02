@@ -149,7 +149,7 @@ void wamp_rawsocket_transport<Socket>::send_message(wamp_message&& message)
     packer.pack(message.fields());
 
     // Write the length prefix as the message header.
-    uint32_t length = htonl(buffer->size());
+    uint32_t length = htonl((uint32_t) buffer->size());
     boost::asio::write(m_socket, boost::asio::buffer(&length, sizeof(length)));
 
     // Write actual serialized message.

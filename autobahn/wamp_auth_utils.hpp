@@ -81,7 +81,7 @@ inline std::string base_64_encode(const std::string & data )
 
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
 
-    BIO_write(bio, (const unsigned char *) data.c_str(), data.size());
+    BIO_write(bio, (const unsigned char *) data.c_str(), (int) data.size());
     (void)BIO_flush(bio);
     
     BIO_get_mem_ptr(bio, &pBuf);
@@ -113,10 +113,10 @@ inline std::string derive_key(
         )
 {
 
-    int passwdLen = passwd.size();
+    int passwdLen = (int) passwd.size();
     const char * pwd = passwd.c_str();
 
-    int saltLen = salt.size();
+    int saltLen = (int) salt.size();
     unsigned char * salt_value = (unsigned char * ) salt.c_str();
 
     std::string str_out;
@@ -169,7 +169,7 @@ inline std::string compute_wcs(
     HMAC_CTX *hmac = HMAC_CTX_new();
     if (!hmac)
         return "";
-    HMAC_Init_ex(hmac, key.data(), key.length(), EVP_sha256(), NULL);
+    HMAC_Init_ex(hmac, key.data(), (int) key.length(), EVP_sha256(), NULL);
     HMAC_Update(hmac, ( unsigned char* ) challenge.data(), challenge.length());
     HMAC_Final(hmac, hash, &len);
     HMAC_CTX_free(hmac);
