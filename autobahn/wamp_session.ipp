@@ -790,7 +790,7 @@ inline void wamp_session::process_challenge(wamp_message&& message)
             });
 
             // make sure the context_response is copied into this lambda...
-            context_response.get();
+            (void)context_response.get();
         } catch (const std::exception&) {
             if (m_debug_enabled) {
                 std::cerr << "failed to handle authentication" << std::endl;
