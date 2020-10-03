@@ -53,18 +53,18 @@ endif()
 
 find_package(Boost REQUIRED COMPONENTS program_options system thread random)
 
-find_package(Msgpack REQUIRED)
-find_package(Websocketpp REQUIRED)
+find_package(msgpack REQUIRED)
+find_package(websocketpp REQUIRED)
 
 MESSAGE( STATUS "AUTOBAHN_BUILD_EXAMPLES:  " ${AUTOBAHN_BUILD_EXAMPLES} )
 MESSAGE( STATUS "CMAKE_ROOT:               " ${CMAKE_ROOT} )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX:     " ${CMAKE_INSTALL_PREFIX} )
 MESSAGE( STATUS "Boost_INCLUDE_DIRS:       " ${Boost_INCLUDE_DIRS} )
 MESSAGE( STATUS "Boost_LIBRARIES:          " ${Boost_LIBRARIES} )
-MESSAGE( STATUS "Msgpack_INCLUDE_DIRS:     " ${Msgpack_INCLUDE_DIRS} )
-MESSAGE( STATUS "Msgpack_LIBRARIES:        " ${Msgpack_LIBRARIES} )
-MESSAGE( STATUS "Websocketpp_INCLUDE_DIRS: " ${Websocketpp_INCLUDE_DIRS} )
-MESSAGE( STATUS "Websocketpp_LIBRARIES:    " ${Websocketpp_LIBRARIES} )
+MESSAGE( STATUS "msgpack_INCLUDE_DIRS:     " ${msgpack_INCLUDE_DIRS} )
+MESSAGE( STATUS "msgpack_LIBRARIES:        " ${msgpack_LIBRARIES} )
+MESSAGE( STATUS "websocketpp_INCLUDE_DIRS: " ${websocketpp_INCLUDE_DIRS} )
+MESSAGE( STATUS "websocketpp_LIBRARIES:    " ${websocketpp_LIBRARIES} )
 
 set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/autobahn.hpp
@@ -133,12 +133,14 @@ target_include_directories(autobahn_cpp INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
-    ${Websocketpp_INCLUDE_DIRS}
-    ${Msgpack_INCLUDE_DIRS})
+    ${websocketpp_INCLUDE_DIRS}
+    ${msgpack_INCLUDE_DIRS})
 
 target_link_libraries(autobahn_cpp INTERFACE
     ${Boost_LIBRARIES}
     ${OPENSSL_LIBRARIES}
+    ${websocketpp_LIBRARIES}
+    ${msgpack_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS})
 

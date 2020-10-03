@@ -1,0 +1,7 @@
+[requires]
+boost/1.73.0
+msgpack/3.2.1
+websocketpp/0.8.2
+
+[generators]
+cmake_find_package
