@@ -2,7 +2,10 @@
 
 WAMP for C++ on Boost/ASIO.
 
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://crossbario.github.io/autobahn-cpp-docs/) [![Docker toolchain image](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/crossbario/autobahn-cpp/)
+[![Linux CI](https://github.com/crossbario/autobahn-cpp/workflows/Linux%20CI/badge.svg)](https://github.com/crossbario/autobahn-cpp/actions?query=workflow%3A%22Linux+CI%22)
+[![Windows CI](https://github.com/crossbario/autobahn-cpp/workflows/Windows%20CI/badge.svg)](https://github.com/crossbario/autobahn-cpp/actions?query=workflow%3A%22Windows+CI%22)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://crossbario.github.io/autobahn-cpp-docs/)
+[![Docker toolchain image](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/crossbario/autobahn-cpp/)
 
 ---
 
