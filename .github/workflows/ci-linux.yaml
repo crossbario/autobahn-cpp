@@ -31,13 +31,14 @@ jobs:
             os: ubuntu-20.04
             compiler: clang
             version: "10"
+            cmake-args: -DAUTOBAHN_USE_LIBCXX=NO
 
           - name: ubuntu-20.04-clang-10-conan
             os: ubuntu-20.04
             compiler: clang
             version: "10"
             conan: true
-            cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build
+            cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build -DAUTOBAHN_USE_LIBCXX=NO
 
     steps:
       - uses: actions/checkout@v2
