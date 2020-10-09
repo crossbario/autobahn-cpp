@@ -27,6 +27,19 @@ jobs:
             conan: true
             cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build
 
+          - name: ubuntu-20.04-clang-10
+            os: ubuntu-20.04
+            compiler: clang
+            version: "10"
+            cmake-args: -DAUTOBAHN_USE_LIBCXX=NO
+
+          - name: ubuntu-20.04-clang-10-conan
+            os: ubuntu-20.04
+            compiler: clang
+            version: "10"
+            conan: true
+            cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build -DAUTOBAHN_USE_LIBCXX=NO
+
     steps:
       - uses: actions/checkout@v2
 
@@ -37,10 +50,20 @@ jobs:
       - name: Install
         run: |
           python -m pip install cmake==3.17.3 conan==1.28.1 --upgrade
+
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-10 main' -y
           sudo apt update
-          sudo apt-get install -y g++-${{ matrix.version }} g++-${{ matrix.version }}-multilib
-          echo "::set-env name=CC::gcc-${{ matrix.version }}"
-          echo "::set-env name=CXX::g++-${{ matrix.version }}"
+
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            sudo apt-get install -y g++-${{ matrix.version }} g++-${{ matrix.version }}-multilib
+            echo "::set-env name=CC::gcc-${{ matrix.version }}"
+            echo "::set-env name=CXX::g++-${{ matrix.version }}"
+          else
+            sudo apt-get install -y clang-${{ matrix.version }} clang-tidy-${{ matrix.version }} g++-multilib
+            echo "::set-env name=CC::clang-${{ matrix.version }}"
+            echo "::set-env name=CXX::clang++-${{ matrix.version }}"
+          fi
 
       - name: Install dependencies (system)
         run: sudo apt-get install -y libboost-all-dev libmsgpack-dev libwebsocketpp-dev
