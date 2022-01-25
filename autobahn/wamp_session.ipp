@@ -121,7 +121,7 @@ inline boost::future<void> wamp_session::stop()
         }
 
         if (!m_transport) {
-            m_session_start.set_exception(boost::copy_exception(no_transport_error()));
+            m_session_stop.set_exception(boost::copy_exception(no_transport_error()));
             return;
         }
 
