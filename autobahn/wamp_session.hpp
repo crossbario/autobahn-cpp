@@ -130,7 +130,8 @@ public:
     boost::future<uint64_t> join(
             const std::string& realm,
             const std::vector<std::string>& authmethods = std::vector<std::string>(),
-            const std::string& authid = "");
+            const std::string& authid = "",
+            const std::map<std::string, std::string>& authentication_extra = {});
 
     /*!
      * Leave the realm.
