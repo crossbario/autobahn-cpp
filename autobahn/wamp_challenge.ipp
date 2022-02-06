@@ -48,6 +48,8 @@ inline const std::string & wamp_challenge::challenge() const { return m_challeng
 inline const std::string & wamp_challenge::salt() const { return m_salt; }
 inline int wamp_challenge::iterations() const { return m_iterations; }
 inline int wamp_challenge::keylen() const { return m_keylen; }
+inline void wamp_challenge::set_channel_id(std::string channel_id) { m_channel_id = std::move(channel_id); }
+inline const std::string & wamp_challenge::channel_id() const { return m_channel_id; }
 
 
 } // namespace autobahn

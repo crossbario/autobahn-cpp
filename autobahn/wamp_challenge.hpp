@@ -51,6 +51,9 @@ public:
     int iterations() const;
     int keylen() const;
 
+    void set_channel_id(std::string channel_id);
+    const std::string & channel_id() const;
+
 private:
     // authmethod
     std::string m_authmethod;
@@ -65,6 +68,9 @@ private:
     std::string m_salt;
     int m_iterations;
     int m_keylen;
+
+    // if authmethod is "cryptosign"
+    std::string m_channel_id;
 };
 
 } // namespace autobahn

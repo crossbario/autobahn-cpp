@@ -140,7 +140,8 @@ inline boost::future<void> wamp_session::stop()
 inline boost::future<uint64_t> wamp_session::join(
         const std::string& realm,
         const std::vector<std::string>& authentication_methods,
-        const std::string& authentication_id)
+        const std::string& authentication_id,
+        const std::map<std::string, std::string>& authentication_extra)
 {
     msgpack::zone zone;
     std::unordered_map<std::string, msgpack::object> roles;
@@ -167,6 +168,14 @@ inline boost::future<uint64_t> wamp_session::join(
     details["roles"] = msgpack::object(roles, zone);
     details["authmethods"] = msgpack::object(authentication_methods, zone);
     details["authid"] = msgpack::object(authentication_id, zone);
+
+    if (!authentication_extra.empty()) {
+      std::unordered_map<std::string, msgpack::object> authextra;
+      for (auto const &a : authentication_extra) {
+        authextra[a.first] = msgpack::object(a.second, zone);
+      }
+      details["authextra"] = msgpack::object(authextra, zone);
+    }
 
     auto message = std::make_shared<wamp_message>(3, std::move(zone));
     message->set_field(0, static_cast<int>(message_type::HELLO));
@@ -744,16 +753,52 @@ inline void wamp_session::process_challenge(wamp_message&& message)
                 std::cerr << "failed to parse challenge details" << std::endl;
             }
             throw protocol_error("wampcra authentication: Failed parse challange details");
-        };
+        }
     /////////////////////////////////////////
     // ticket authentication
     /////////////////////////////////////////
     } else if ( whatAuth == "ticket" ) {
         // make the challenge object
         challenge_object = wamp_challenge("ticket");
-    }
-    else {
-        throw protocol_error("not supported challenge type - can now only handle 'wampcra' and 'ticket'");
+    /////////////////////////////////////////
+    // cryptosign authentication
+    /////////////////////////////////////////
+    } else if (whatAuth == "cryptosign") {
+        if (!message.is_field_type(2, msgpack::type::MAP)) {
+            throw protocol_error("CHALLENGE - Details must be a dictionary");
+        }
+
+        std::string challenge, channel_id;
+        // parse the details, and fill variables above
+        try {
+            std::unordered_map<std::string, msgpack::object> details;
+            message.field(2).convert(details);
+            auto itr = details.find("challenge");
+            if (itr != details.end()) {
+                challenge = itr->second.as<std::string>();
+            } else {
+                throw protocol_error(
+                  "cryptosign must always introduce a challenge ( in details )");
+            }
+            itr = details.find("channel_id");
+            if (itr != details.end()) {
+                channel_id = itr->second.as<std::string>();
+            }
+
+            // make the challenge object
+            challenge_object = wamp_challenge("cryptosign", challenge);
+            if (!channel_id.empty()) {
+                challenge_object.set_channel_id(channel_id);
+            }
+        } catch (const std::exception &) {
+            if (m_debug_enabled) {
+                std::cerr << "failed to parse challenge details" << std::endl;
+            }
+            throw protocol_error("cryptosign authentication: Failed parse challenge details");
+        }
+    } else {
+        throw protocol_error("not supported challenge type - can now only handle "
+                             "'wampcra', 'ticket' and 'cryptosign'");
     }
 
     // I am not sure if this is neccesary. Looking at other
