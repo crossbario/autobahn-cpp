@@ -54,7 +54,7 @@ else()
     set(Boost_USE_STATIC_LIBS ON )
 endif()
 
-find_package(Boost REQUIRED COMPONENTS program_options system thread random)
+find_package(Boost REQUIRED COMPONENTS program_options filesystem system thread random)
 
 find_package(msgpack REQUIRED)
 find_package(websocketpp REQUIRED)
