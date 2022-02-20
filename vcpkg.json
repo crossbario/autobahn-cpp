@@ -1,6 +1,6 @@
 {
   "name": "autobahn",
-  "version-string": "0.1.0",
+  "version-string": "0.0.1",
   "port-version": 1,
   "description": "WAMP for C++ in Boost/Asio",
   "homepage": "https://crossbar.io/autobahn",
@@ -10,10 +10,9 @@
     "boost-random",
     "boost-asio",
     "boost-thread",
-    "msgpack",
-    "websocketpp",
     "botan",
+    "msgpack",
     "openssl",
-    "catch2"
+    "websocketpp"
   ]
 }
