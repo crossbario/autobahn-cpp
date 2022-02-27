@@ -7,7 +7,7 @@ class autobahn_cppConan(ConanFile):
     author = "Crossbar.io Technologies GmbH and contributors"
     description = "WAMP for C++ on Boost/ASIO"
     url = "https://github.com/crossbario/autobahn-cpp"
-    requires = "boost/1.77.0", "msgpack-cxx/4.0.3", "websocketpp/0.8.2", "openssl/3.0.1", "botan/2.19.1"
+    requires = "boost/1.77.0", "msgpack-cxx/4.0.3", "websocketpp/0.8.2", "openssl/3.0.1", "botan/2.19.1", "catch2/2.13.8"
     generators = "cmake"
     scm = {
         "type": "git",
