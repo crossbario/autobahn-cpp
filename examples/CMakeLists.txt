@@ -1,5 +1,5 @@
 add_library(examples_parameters parameters.cpp parameters.hpp)
-target_link_libraries(examples_parameters PRIVATE Boost::boost Boost::thread Boost::program_options)
+target_link_libraries(examples_parameters PRIVATE CONAN_PKG::boost)
 
 function(make_example name src)
     add_executable(${name} ${src} ${PUBLIC_HEADERS})

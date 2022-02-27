@@ -1,27 +1,3 @@
-find_package(Threads REQUIRED)
-find_package(OpenSSL REQUIRED)
-
-set(Boost_NO_WARN_NEW_VERSIONS ON)
-find_package(Boost REQUIRED COMPONENTS program_options filesystem system thread random)
-
-find_package(msgpack CONFIG REQUIRED)
-find_package(websocketpp CONFIG REQUIRED)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(BOTAN2 botan-2 REQUIRED)
-
-MESSAGE(STATUS "AUTOBAHN_BUILD_EXAMPLES:  " ${AUTOBAHN_BUILD_EXAMPLES})
-MESSAGE(STATUS "AUTOBAHN_USE_LIBCXX:      " ${AUTOBAHN_USE_LIBCXX})
-MESSAGE(STATUS "CMAKE_ROOT:               " ${CMAKE_ROOT})
-MESSAGE(STATUS "CMAKE_INSTALL_PREFIX:     " ${CMAKE_INSTALL_PREFIX})
-MESSAGE(STATUS "Boost_INCLUDE_DIRS:       " ${Boost_INCLUDE_DIRS})
-MESSAGE(STATUS "Boost_LIBRARIES:          " ${Boost_LIBRARIES})
-get_target_property(MSGPACKC_INCLUDE_DIR msgpackc INTERFACE_INCLUDE_DIRECTORIES)
-get_target_property(MSGPACKC_LIBRARIES msgpackc IMPORTED_LOCATION_RELEASE)
-MESSAGE(STATUS "MSGPACKC_INCLUDE_DIR:     " ${MSGPACKC_INCLUDE_DIR})
-MESSAGE(STATUS "MSGPACKC_LIBRARIES:        " ${MSGPACKC_LIBRARIES})
-MESSAGE(STATUS "WEBSOCKETPP_INCLUDE_DIR: " ${WEBSOCKETPP_INCLUDE_DIR})
-
 set(PUBLIC_HEADERS
         ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/autobahn.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/autobahn/boost_config.hpp
@@ -87,24 +63,25 @@ add_library(autobahn_cpp INTERFACE)
 
 target_include_directories(autobahn_cpp INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${OPENSSL_INCLUDE_DIR}
-        ${BOTAN2_INCLUDE_DIRS}
-        ${WEBSOCKETPP_INCLUDE_DIR}
-        ${MSGPACKC_INCLUDE_DIR})
+        CONAN_PKG::openssl
+        CONAN_PKG::boost
+        CONAN_PKG::msgpack-cxx
+        CONAN_PKG::websocketpp
+        CONAN_PKG::botan
+        )
 
 target_link_libraries(autobahn_cpp INTERFACE
-        Boost::boost Boost::thread
-        websocketpp::websocketpp
-        msgpackc msgpackc-cxx
-        OpenSSL::SSL OpenSSL::Crypto
-        ${BOTAN2_LINK_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${CMAKE_DL_LIBS})
+        CONAN_PKG::openssl
+        CONAN_PKG::boost
+        CONAN_PKG::msgpack-cxx
+        CONAN_PKG::websocketpp
+        CONAN_PKG::botan
+        )
 
-foreach(h ${PUBLIC_HEADERS})
+foreach (h ${PUBLIC_HEADERS})
     string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "include/" include "${h}")
     get_filename_component(HEADER_INCLUDE_DIRECTORY ${include} DIRECTORY)
     install(FILES ${h}
-        DESTINATION ${HEADER_INCLUDE_DIRECTORY}
-        COMPONENT "headers")
-endforeach()
+            DESTINATION ${HEADER_INCLUDE_DIRECTORY}
+            COMPONENT "headers")
+endforeach ()

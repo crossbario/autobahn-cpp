@@ -1,13 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 
-set(vcpkg "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
-if (NOT CMAKE_TOOLCHAIN_FILE AND EXISTS "${vcpkg}")
-    set(CMAKE_TOOLCHAIN_FILE "${vcpkg}"
-            CACHE FILEPATH "CMake toolchain file")
-    message(STATUS "vcpkg toolchain found: ${CMAKE_TOOLCHAIN_FILE}")
-endif ()
-
 project(autobahn-cpp)
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup(TARGETS)
 
 set(CMAKE_CXX_STANDARD 20)
 
