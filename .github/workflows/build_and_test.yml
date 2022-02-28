@@ -39,7 +39,7 @@ jobs:
         shell: bash
 
       - uses: msys2/setup-msys2@v2
-      - if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest'
 
       - name: Restore Dependency Cache.
         uses: actions/cache@v2
