@@ -31,23 +31,25 @@
 #include "test/wamp_test.hpp"
 #include <catch2/catch.hpp>
 
-struct Config
-{
-    std::string realm{"realm1"};
-    std::string uri{"ws://127.0.0.1:8080/ws"};
-    bool debug{false};
+struct Config {
+  std::string realm{"realm1"};
+  std::string uri{"ws://127.0.0.1:8080/ws"};
+  bool debug{false};
 };
 
-TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.calls.simple")
-{
-    bool joined_realm_with_success = join_realm(
-        "client1",
-        wamp_test::Ticket("ticket"),
-        [&](Transport& transport, Session& session)
-        {
-            REQUIRE(3 == call<int>("com.example.add2", std::tuple<int, int>(1, 2)).get());
-            REQUIRE(5 == call<int>("com.example.add2", std::tuple<int, int>(2, 3)).get());
-            REQUIRE(!call<int>("com.example.unknown", std::tuple<int, int, int>(3, 4, 5)).has_value());
-        });
-    REQUIRE(true == joined_realm_with_success);
+TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.calls.simple") {
+  bool joined_realm_with_success = join_realm(
+      "client1", wamp_test::Ticket("ticket"),
+      [&](Transport &transport, Session &session) {
+        REQUIRE(
+            3 ==
+            call<int>("com.example.add2", std::tuple<int, int>(1, 2)).get());
+        REQUIRE(
+            5 ==
+            call<int>("com.example.add2", std::tuple<int, int>(2, 3)).get());
+        REQUIRE(!call<int>("com.example.unknown",
+                           std::tuple<int, int, int>(3, 4, 5))
+                     .has_value());
+      });
+  REQUIRE(true == joined_realm_with_success);
 }

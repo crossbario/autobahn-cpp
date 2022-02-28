@@ -1,5 +1,6 @@
 from conans import ConanFile, CMake, tools
 
+
 class autobahn_cppConan(ConanFile):
     name = "autobahn-cpp"
     version = "v20.8.1"
@@ -7,7 +8,7 @@ class autobahn_cppConan(ConanFile):
     author = "Crossbar.io Technologies GmbH and contributors"
     description = "WAMP for C++ on Boost/ASIO"
     url = "https://github.com/crossbario/autobahn-cpp"
-    requires = "boost/1.77.0", "msgpack-cxx/4.0.3", "websocketpp/0.8.2", "openssl/3.0.1", "botan/2.19.1", "catch2/2.13.8"
+    requires = "openssl/3.0.1", "botan/2.19.1", "boost/1.78.0", "msgpack-cxx/4.0.3", "websocketpp/0.8.2", "catch2/2.13.8"
     generators = "cmake"
     scm = {
         "type": "git",
@@ -23,4 +24,3 @@ class autobahn_cppConan(ConanFile):
 
     def package_id(self):
         self.info.header_only()
-

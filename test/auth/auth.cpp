@@ -31,100 +31,88 @@
 #include "test/wamp_test.hpp"
 #include <catch2/catch.hpp>
 
-struct Config
-{
-    std::string realm{"realm1"};
-    std::string uri{"ws://127.0.0.1:8080/ws"};
-    bool debug{false};
+struct Config {
+  std::string realm{"realm1"};
+  std::string uri{"ws://127.0.0.1:8080/ws"};
+  bool debug{false};
 };
 
-TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.auth.cra")
-{
-    bool joined_realm_with_success = join_realm(
-        "client1_cra",
-        wamp_test::Secret("client1_secret"),
-        [&](Transport& transport, Session& session)
-        {
-            auto welcome_details = session.welcome_details();
-            REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
-            REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
-            REQUIRE(welcome_details["authid"].as<std::string>() == "client1_cra");
-            REQUIRE(welcome_details["authrole"].as<std::string>() == "frontend");
-        });
-    REQUIRE(true == joined_realm_with_success);
-    joined_realm_with_success = join_realm(
-        "client2_cra",
-        wamp_test::Secret("client2_secret"),
-        [&](Transport& transport, Session& session)
-        {
-            auto welcome_details = session.welcome_details();
-            REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
-            REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
-            REQUIRE(welcome_details["authid"].as<std::string>() == "client2_cra");
-            REQUIRE(welcome_details["authrole"].as<std::string>() == "backend");
-        });
-    REQUIRE(true == joined_realm_with_success);
-    REQUIRE(false == join_realm("client3", wamp_test::Secret("unknown")));
+TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.auth.cra") {
+  bool joined_realm_with_success = join_realm(
+      "client1_cra", wamp_test::Secret("client1_secret"),
+      [&](Transport &transport, Session &session) {
+        auto welcome_details = session.welcome_details();
+        REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
+        REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
+        REQUIRE(welcome_details["authid"].as<std::string>() == "client1_cra");
+        REQUIRE(welcome_details["authrole"].as<std::string>() == "frontend");
+      });
+  REQUIRE(true == joined_realm_with_success);
+  joined_realm_with_success = join_realm(
+      "client2_cra", wamp_test::Secret("client2_secret"),
+      [&](Transport &transport, Session &session) {
+        auto welcome_details = session.welcome_details();
+        REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
+        REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
+        REQUIRE(welcome_details["authid"].as<std::string>() == "client2_cra");
+        REQUIRE(welcome_details["authrole"].as<std::string>() == "backend");
+      });
+  REQUIRE(true == joined_realm_with_success);
+  REQUIRE(false == join_realm("client3", wamp_test::Secret("unknown")));
 }
 
-TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.auth.ticket")
-{
-    bool joined_realm_with_success = join_realm(
-        "client1",
-        wamp_test::Ticket("client1_ticket"),
-        [&](Transport& transport, Session& session)
-        {
-          auto welcome_details = session.welcome_details();
-          REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
-          REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
-          REQUIRE(welcome_details["authid"].as<std::string>() == "client1");
-          REQUIRE(welcome_details["authrole"].as<std::string>() == "frontend");
-        });
-    REQUIRE(true == joined_realm_with_success);
-    joined_realm_with_success = join_realm(
-        "client2",
-        wamp_test::Ticket("client2_ticket"),
-        [&](Transport& transport, Session& session)
-        {
-            auto welcome_details = session.welcome_details();
-            REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
-            REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
-            REQUIRE(welcome_details["authid"].as<std::string>() == "client2");
-            REQUIRE(welcome_details["authrole"].as<std::string>() == "backend");
-        });
-    REQUIRE(true == joined_realm_with_success);
-    REQUIRE(false == join_realm("client3", wamp_test::Ticket("unknown")));
+TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.auth.ticket") {
+  bool joined_realm_with_success = join_realm(
+      "client1", wamp_test::Ticket("client1_ticket"),
+      [&](Transport &transport, Session &session) {
+        auto welcome_details = session.welcome_details();
+        REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
+        REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
+        REQUIRE(welcome_details["authid"].as<std::string>() == "client1");
+        REQUIRE(welcome_details["authrole"].as<std::string>() == "frontend");
+      });
+  REQUIRE(true == joined_realm_with_success);
+  joined_realm_with_success = join_realm(
+      "client2", wamp_test::Ticket("client2_ticket"),
+      [&](Transport &transport, Session &session) {
+        auto welcome_details = session.welcome_details();
+        REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
+        REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
+        REQUIRE(welcome_details["authid"].as<std::string>() == "client2");
+        REQUIRE(welcome_details["authrole"].as<std::string>() == "backend");
+      });
+  REQUIRE(true == joined_realm_with_success);
+  REQUIRE(false == join_realm("client3", wamp_test::Ticket("unknown")));
 }
 
-TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.auth.cryptosign")
-{
-    bool joined_realm_with_success = join_realm(
-        "3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29",
-        wamp_test::Cryptosign(Botan::secure_vector<uint8_t>(32, 0)),
-        [&](Transport& transport, Session& session)
-        {
-            auto welcome_details = session.welcome_details();
-            REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
-            REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
-            REQUIRE(
-                welcome_details["authid"].as<std::string>()
-                == "3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29");
-            REQUIRE(welcome_details["authrole"].as<std::string>() == "frontend");
-        });
-    REQUIRE(true == joined_realm_with_success);
-    joined_realm_with_success = join_realm(
-        "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
-        wamp_test::Cryptosign(Botan::secure_vector<uint8_t>(32, 1)),
-        [&](Transport& transport, Session& session)
-        {
-            auto welcome_details = session.welcome_details();
-            REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
-            REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
-            REQUIRE(
-                welcome_details["authid"].as<std::string>()
-                == "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c");
-            REQUIRE(welcome_details["authrole"].as<std::string>() == "backend");
-        });
-    REQUIRE(true == joined_realm_with_success);
-    REQUIRE(false == join_realm("unknown", wamp_test::Cryptosign(Botan::secure_vector<uint8_t>(32, 3))));
+TEST_CASE_METHOD(wamp_test::fixture<Config>, "wamp.auth.cryptosign") {
+  bool joined_realm_with_success = join_realm(
+      "3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29",
+      wamp_test::Cryptosign(Botan::secure_vector<uint8_t>(32, 0)),
+      [&](Transport &transport, Session &session) {
+        auto welcome_details = session.welcome_details();
+        REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
+        REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
+        REQUIRE(
+            welcome_details["authid"].as<std::string>() ==
+            "3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29");
+        REQUIRE(welcome_details["authrole"].as<std::string>() == "frontend");
+      });
+  REQUIRE(true == joined_realm_with_success);
+  joined_realm_with_success = join_realm(
+      "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      wamp_test::Cryptosign(Botan::secure_vector<uint8_t>(32, 1)),
+      [&](Transport &transport, Session &session) {
+        auto welcome_details = session.welcome_details();
+        REQUIRE(welcome_details["authprovider"].as<std::string>() == "static");
+        REQUIRE(welcome_details["realm"].as<std::string>() == "realm1");
+        REQUIRE(
+            welcome_details["authid"].as<std::string>() ==
+            "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c");
+        REQUIRE(welcome_details["authrole"].as<std::string>() == "backend");
+      });
+  REQUIRE(true == joined_realm_with_success);
+  REQUIRE(false ==
+          join_realm("unknown", wamp_test::Cryptosign(
+                                    Botan::secure_vector<uint8_t>(32, 3))));
 }
