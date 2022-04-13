@@ -11,7 +11,7 @@ WAMP for C++ on Boost/ASIO.
 
 **[See here](https://crossbario.github.io/autobahn-cpp-docs/) for the Autobahn C++ reference documentation.**
 
-Get in touch on IRC `#autobahn` on `chat.freenode.net`, follow us on [Twitter](https://twitter.com/autobahnws) or join the [mailing list](http://groups.google.com/group/autobahnws).
+Get in touch on our [user forum](https://crossbar.discourse.group/).
 
 ---
 
