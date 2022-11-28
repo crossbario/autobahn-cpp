@@ -62,10 +62,10 @@
 namespace autobahn {
 
 inline wamp_session::wamp_session(
-        boost::asio::io_service& io_service,
+        boost::asio::io_context& io_context,
         bool debug_enabled)
     : m_debug_enabled(debug_enabled)
-    , m_io_service(io_service)
+    , m_io_context(io_context)
     , m_transport()
     , m_request_id(0)
     , m_session_id(0)
@@ -82,7 +82,7 @@ inline boost::future<void> wamp_session::start()
 {
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io_service.dispatch([this, weak_self]() {
+    boost::asio::post(m_io_context, [this, weak_self]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -109,7 +109,7 @@ inline boost::future<void> wamp_session::stop()
 {
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io_service.dispatch([this, weak_self]() {
+    boost::asio::post(m_io_context, [this, weak_self]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -184,7 +184,7 @@ inline boost::future<uint64_t> wamp_session::join(
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io_service.dispatch([this, weak_self, message]() {
+    boost::asio::post(m_io_context, [this, weak_self, message]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -214,7 +214,7 @@ inline boost::future<std::string> wamp_session::leave(const std::string& reason)
 
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io_service.dispatch([this, weak_self, message]() {
+    boost::asio::post(m_io_context, [this, weak_self, message]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -250,7 +250,7 @@ inline boost::future<void> wamp_session::publish(const std::string& topic,const 
     auto result = std::make_shared<boost::promise<void>>();
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io_service.dispatch([this, weak_self, message, result]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, result]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -282,7 +282,7 @@ inline boost::future<void> wamp_session::publish(const std::string& topic, const
     auto result = std::make_shared<boost::promise<void>>();
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io_service.dispatch([this, weak_self, message, result]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, result]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -316,7 +316,7 @@ inline boost::future<void> wamp_session::publish(
     auto result = std::make_shared<boost::promise<void>>();
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 
-    m_io_service.dispatch([this, weak_self, message, result]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, result]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -349,7 +349,7 @@ inline boost::future<wamp_subscription> wamp_session::subscribe(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto subscribe_request = std::make_shared<wamp_subscribe_request>(handler);
 
-    m_io_service.dispatch([this, weak_self, message, request_id, subscribe_request]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, request_id, subscribe_request]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -378,7 +378,7 @@ inline boost::future<void> wamp_session::unsubscribe(const wamp_subscription& su
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto unsubscribe_request = std::make_shared<wamp_unsubscribe_request>(subscription);
 
-    m_io_service.dispatch([this, weak_self, message, request_id, unsubscribe_request]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, request_id, unsubscribe_request]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -410,7 +410,7 @@ inline boost::future<wamp_call_result> wamp_session::call(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto call = std::make_shared<wamp_call>();
 
-    m_io_service.dispatch([this, weak_self, message, request_id, call]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, request_id, call]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -445,7 +445,7 @@ inline boost::future<wamp_call_result> wamp_session::call(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto call = std::make_shared<wamp_call>();
 
-    m_io_service.dispatch([this, weak_self, message, request_id, call]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, request_id, call]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -482,7 +482,7 @@ inline boost::future<wamp_call_result> wamp_session::call(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto call = std::make_shared<wamp_call>();
 
-    m_io_service.dispatch([this, weak_self, message, request_id, call]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, request_id, call]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -515,7 +515,7 @@ inline boost::future<wamp_registration> wamp_session::provide(
     auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
     auto register_request = std::make_shared<wamp_register_request>(procedure);
 
-    m_io_service.dispatch([this, weak_self, message, request_id, register_request]() {
+    boost::asio::post(m_io_context, [this, weak_self, message, request_id, register_request]() {
         auto shared_self = weak_self.lock();
         if (!shared_self) {
             return;
@@ -544,7 +544,7 @@ inline boost::future<void> wamp_session::unprovide(const wamp_registration& regi
 	auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
 	auto unregister_request = std::make_shared<wamp_unregister_request>(registration);
 
-	m_io_service.dispatch([this, weak_self, message, request_id, unregister_request]() {
+	boost::asio::post(m_io_context, [this, weak_self, message, request_id, unregister_request]() {
 		auto shared_self = weak_self.lock();
 		if (!shared_self) {
 			return;
@@ -572,7 +572,7 @@ inline boost::future<wamp_authenticate> wamp_session::on_challenge(const wamp_ch
 
 inline void wamp_session::on_attach(const std::shared_ptr<wamp_transport>& transport)
 {
-    // FIXME: We should be deferring this operation to the io service. This
+    // FIXME: We should be deferring this operation to the io context. This
     //        will almost certainly require us to return a future here to
     //        all the caller to sync up with the actual attaching of the
     //        transport.
@@ -590,7 +590,7 @@ inline void wamp_session::on_attach(const std::shared_ptr<wamp_transport>& trans
 
 inline void wamp_session::on_detach(bool /*was_clean*/, const std::string& /*reason*/)
 {
-    // FIXME: We should be deferring this operation to the io service. This
+    // FIXME: We should be deferring this operation to the io context. This
     //        will almost certainly require us to return a future here to
     //        all the caller to sync up with the actual detaching of the
     //        transport.
@@ -818,7 +818,7 @@ inline void wamp_session::process_challenge(wamp_message&& message)
             message->set_field(2, std::unordered_map<int, int>() /* No Extra/Dict */);
 
             auto weak_self = std::weak_ptr<wamp_session>(this->shared_from_this());
-            m_io_service.dispatch([this, weak_self, message, context_response]() {
+            boost::asio::post(m_io_context, [this, weak_self, message, context_response]() {
                 auto shared_self = weak_self.lock();
                 if (!shared_self) {
                     return;
@@ -1013,7 +1013,7 @@ inline void wamp_session::process_error(wamp_message&& message)
             {
                 //TODO: there's currently no way to get to the future returned by the publish function
                 // but there needs to be something more sensibly then just propagating the error to the
-                // function running the io_service
+                // function running the io_context
                 throw protocol_error("Received ERROR for a PUBLISH request: " + error);
             }
             break;
@@ -1103,8 +1103,8 @@ inline void wamp_session::process_invocation(wamp_message&& message)
                 return; // FIXME: or throw exception?
             }
 
-            // Send to the io_service thread, and make sure the session still exists (again).
-            shared_this->m_io_service.dispatch([weak_this, message] {
+            // Send to the io_context thread, and make sure the session still exists (again).
+            boost::asio::post(shared_this->m_io_context, [weak_this, message] {
                 auto shared_this = weak_this.lock();
                 if (!shared_this) {
                     return; // FIXME: or throw exception?

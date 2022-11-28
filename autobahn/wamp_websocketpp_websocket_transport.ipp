@@ -135,7 +135,7 @@ namespace autobahn {
         m_hdl = con->get_handle();
 
         // Queue the connection. No DNS queries or network connections will be
-        // made until the io_service event loop is run.
+        // made until the io_context event loop is run.
         m_client.connect(con);
     }
 

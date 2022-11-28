@@ -34,7 +34,7 @@
 #include "boost_config.hpp"
 #include "wamp_rawsocket_transport.hpp"
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
 namespace autobahn {
@@ -47,7 +47,7 @@ class wamp_tcp_transport :
 {
 public:
     wamp_tcp_transport(
-            boost::asio::io_service& io_service,
+            boost::asio::io_context& io_context,
             const boost::asio::ip::tcp::endpoint& remote_endpoint,
             bool debug_enabled=false);
     virtual ~wamp_tcp_transport() override;

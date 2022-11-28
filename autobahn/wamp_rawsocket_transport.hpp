@@ -34,7 +34,7 @@
 #include "boost_config.hpp"
 #include "wamp_transport.hpp"
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <cstddef>
 #include <memory>
 #include <msgpack/unpack.hpp>
@@ -71,11 +71,11 @@ public:
     /*!
      * Constructs a rawsocket transport.
      *
-     * @param io_service The io service to use for asynchronous operations.
+     * @param io_context The io context to use for asynchronous operations.
      * @param remote_endpoint The remote endpoint to connect to.
      */
     wamp_rawsocket_transport(
-            boost::asio::io_service& io_service,
+            boost::asio::io_context& io_context,
             const endpoint_type& remote_endpoint,
             bool debug_enabled=false);
 

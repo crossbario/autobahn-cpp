@@ -96,11 +96,11 @@ public:
     /*!
      * Create a new WAMP session.
      *
-     * \param io_service The io service to drive event dispatching.
+     * \param io_context The io context to drive event dispatching.
      * \param debug_enabled Whether or not to run in debug mode.
      */
     wamp_session(
-            boost::asio::io_service& io_service,
+            boost::asio::io_context& io_context,
             bool debug_enabled = false);
 
     ~wamp_session();
@@ -338,7 +338,7 @@ private:
 
     bool m_debug_enabled;
 
-    boost::asio::io_service& m_io_service;
+    boost::asio::io_context& m_io_context;
 
     // The transport this session runs on.
     std::shared_ptr<wamp_transport> m_transport;
