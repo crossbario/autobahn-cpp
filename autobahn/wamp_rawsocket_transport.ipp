@@ -41,12 +41,13 @@
 namespace autobahn {
 
 template <class Socket>
+template <typename ExecutionContext>
 wamp_rawsocket_transport<Socket>::wamp_rawsocket_transport(
-            boost::asio::io_context& io_context,
+            ExecutionContext& execution_context,
             const endpoint_type& remote_endpoint,
             bool debug_enabled)
     : wamp_transport()
-    , m_socket(io_context)
+    , m_socket(execution_context)
     , m_remote_endpoint(remote_endpoint)
     , m_connect()
     , m_disconnect()

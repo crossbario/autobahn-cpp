@@ -71,11 +71,12 @@ public:
     /*!
      * Constructs a rawsocket transport.
      *
-     * @param io_context The io context to use for asynchronous operations.
+     * @param execution_context The io context to use for asynchronous operations.
      * @param remote_endpoint The remote endpoint to connect to.
      */
+    template <typename ExecutionContext>
     wamp_rawsocket_transport(
-            boost::asio::io_context& io_context,
+            ExecutionContext& execution_context,
             const endpoint_type& remote_endpoint,
             bool debug_enabled=false);
 

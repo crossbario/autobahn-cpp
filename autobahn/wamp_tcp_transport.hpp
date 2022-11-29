@@ -46,8 +46,9 @@ class wamp_tcp_transport :
         public wamp_rawsocket_transport<boost::asio::ip::tcp::socket>
 {
 public:
+    template <typename ExecutionContext>
     wamp_tcp_transport(
-            boost::asio::io_context& io_context,
+            ExecutionContext& execution_context,
             const boost::asio::ip::tcp::endpoint& remote_endpoint,
             bool debug_enabled=false);
     virtual ~wamp_tcp_transport() override;

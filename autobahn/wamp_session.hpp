@@ -87,9 +87,10 @@ authorized subscribes to the topic.
  */
 
 /// Representation of a WAMP session.
+template <typename ExecutionContext>
 class wamp_session :
         public wamp_transport_handler,
-        public std::enable_shared_from_this<wamp_session>
+        public std::enable_shared_from_this<wamp_session<ExecutionContext>>
 {
 public:
 
@@ -100,7 +101,7 @@ public:
      * \param debug_enabled Whether or not to run in debug mode.
      */
     wamp_session(
-            boost::asio::io_context& io_context,
+            ExecutionContext& io_context,
             bool debug_enabled = false);
 
     ~wamp_session();
@@ -338,7 +339,7 @@ private:
 
     bool m_debug_enabled;
 
-    boost::asio::io_context& m_io_context;
+    ExecutionContext& m_io_context;
 
     // The transport this session runs on.
     std::shared_ptr<wamp_transport> m_transport;
