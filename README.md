@@ -95,7 +95,7 @@ auto s1 = session.subscribe("com.myapp.topic1",
 ```
 
 
-Here is JavaScript running in Chrome call into C++ running on command line. Both are connected via a WAMP router, in this case [**Autobahn**|Python](http://autobahn.ws/python) based.
+Here is JavaScript running in Chrome call into C++ running on command line. Both are connected via a WAMP router, in this case [**Autobahn**|Python]([http://autobahn.ws/python](https://github.com/crossbario/autobahn-python)) based.
 
 ![](doc/_static/cpp_from_js.png)
 
