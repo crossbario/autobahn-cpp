@@ -9,15 +9,9 @@ WAMP for C++ on Boost/ASIO.
 
 ---
 
-**[See here](https://crossbario.github.io/autobahn-cpp-docs/) for the Autobahn C++ reference documentation.**
-
-Get in touch on our [user forum](https://crossbar.discourse.group/).
-
----
-
 ## Introduction
 
-AutobahnC++ is a subproject of [Autobahn](http://autobahn.ws/) which provides a C++ [WAMP](http://wamp.ws/) implementation that is able to talk WAMP over `stdio` pipes.
+AutobahnC++ is a subproject of **Autobahn** which provides a C++ [WAMP]([http://wamp.ws/](https://wamp-proto.org/)) implementation that is able to talk WAMP over `stdio` pipes.
 
  * **Caller**
  * **Callee**
