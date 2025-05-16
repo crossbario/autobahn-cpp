@@ -1,0 +1,65 @@
+name: build-and-test
+on: [ push, workflow_dispatch ]
+
+jobs:
+  job:
+    name: ${{ matrix.os }}-${{ github.workflow }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        include:
+          - os: windows-latest
+            triplet: x64-windows
+          - os: ubuntu-latest
+            triplet: x64-linux
+          - os: macos-latest
+            triplet: x64-osx
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+
+      - name: Prepare Docker.
+        uses: docker-practice/actions-setup-docker@master
+
+      - name: Prepare Tools.
+        run: |
+          pip install conan
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            docker pull crossbario/crossbar
+          fi
+        shell: bash
+
+      - uses: msys2/setup-msys2@v2
+        if: matrix.os == 'windows-latest'
+
+      - name: Restore Dependency Cache.
+        uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/.conan/data
+          # The key is composed in a way that it gets properly invalidated: this must happen whenever vcpkg's Git commit id changes, or the list of packages changes. In this case a cache miss must happen and a new entry with a new key with be pushed to GitHub the cache service.
+          # The key includes: hash of the vcpkg.json file, the hash of the vcpkg Git commit id, and the used vcpkg's triplet. The vcpkg's commit id would suffice, but computing an hash out it does not harm.
+          # Note: given a key, the cache content is immutable. If a cache entry has been created improperly, in order the recreate the right content the key must be changed as well, and it must be brand new (i.e. not existing already).
+          key: |
+            ${{ hashFiles( 'conanfile.py' ) }}-${{ matrix.triplet }}
+
+      # Run CMake to generate Ninja project files, using the vcpkg's toolchain file to resolve and install the dependencies as specified in vcpkg.json.
+      - name: Build and Test.
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            ctest
+          fi
+        shell: bash

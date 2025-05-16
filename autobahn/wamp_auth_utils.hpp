@@ -166,13 +166,7 @@ inline std::string compute_wcs(
     HMAC_Final(&hmac, hash, &len);
     HMAC_CTX_cleanup(&hmac);
 #else
-    HMAC_CTX *hmac = HMAC_CTX_new();
-    if (!hmac)
-        return "";
-    HMAC_Init_ex(hmac, key.data(), (int) key.length(), EVP_sha256(), NULL);
-    HMAC_Update(hmac, ( unsigned char* ) challenge.data(), challenge.length());
-    HMAC_Final(hmac, hash, &len);
-    HMAC_CTX_free(hmac);
+    HMAC(EVP_sha256(), key.data(), static_cast<int>(key.length()), reinterpret_cast<const unsigned char *>(challenge.data()), challenge.length(), hash, &len);
 #endif
 
     std::string str_out;
