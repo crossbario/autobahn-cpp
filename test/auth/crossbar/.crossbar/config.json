@@ -1,0 +1,204 @@
+{
+    "version": 2,
+    "workers": [
+        {
+            "type": "router",
+            "options": {
+                "pythonpath": [
+                    ".."
+                ]
+            },
+            "realms": [
+                {
+                    "name": "realm1",
+                    "roles": [
+                        {
+                            "name": "backend",
+                            "permissions": [
+                                {
+                                    "uri": "",
+                                    "match": "prefix",
+                                    "allow": {
+                                        "call": true,
+                                        "register": true,
+                                        "publish": true,
+                                        "subscribe": true
+                                    },
+                                    "disclose": {
+                                        "caller": false,
+                                        "publisher": false
+                                    },
+                                    "cache": true
+                                },
+                                {
+                                    "uri": "com.example.topic2",
+                                    "match": "exact",
+                                    "allow": {
+                                        "call": false,
+                                        "register": false,
+                                        "publish": false,
+                                        "subscribe": false
+                                    },
+                                    "disclose": {
+                                        "caller": false,
+                                        "publisher": false
+                                    },
+                                    "cache": true
+                                }
+                            ]
+                        },
+                        {
+                            "name": "frontend",
+                            "permissions": [
+                                {
+                                    "uri": "com.example.shutdown",
+                                    "match": "exact",
+                                    "allow": {
+                                        "call": true,
+                                        "register": false,
+                                        "publish": false,
+                                        "subscribe": false
+                                    },
+                                    "disclose": {
+                                        "caller": false,
+                                        "publisher": false
+                                    },
+                                    "cache": true
+                                },
+                                {
+                                    "uri": "com.example.add2",
+                                    "match": "exact",
+                                    "allow": {
+                                        "call": true,
+                                        "register": false,
+                                        "publish": false,
+                                        "subscribe": false
+                                    },
+                                    "disclose": {
+                                        "caller": false,
+                                        "publisher": false
+                                    },
+                                    "cache": true
+                                },
+                                {
+                                    "uri": "com.example.",
+                                    "match": "prefix",
+                                    "allow": {
+                                        "call": false,
+                                        "register": false,
+                                        "publish": true,
+                                        "subscribe": false
+                                    },
+                                    "disclose": {
+                                        "caller": false,
+                                        "publisher": false
+                                    },
+                                    "cache": true
+                                },
+                                {
+                                    "uri": "com.example.topic2",
+                                    "match": "exact",
+                                    "allow": {
+                                        "call": false,
+                                        "register": false,
+                                        "publish": false,
+                                        "subscribe": false
+                                    },
+                                    "disclose": {
+                                        "caller": false,
+                                        "publisher": false
+                                    },
+                                    "cache": true
+                                },
+                                {
+                                    "uri": "com.foobar.topic1",
+                                    "match": "exact",
+                                    "allow": {
+                                        "call": false,
+                                        "register": false,
+                                        "publish": true,
+                                        "subscribe": false
+                                    },
+                                    "disclose": {
+                                        "caller": false,
+                                        "publisher": false
+                                    },
+                                    "cache": true
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "transports": [
+                {
+                    "type": "web",
+                    "endpoint": {
+                        "type": "tcp",
+                        "port": 8080
+                    },
+                    "paths": {
+                        "/": {
+                            "type": "static",
+                            "directory": "../web"
+                        },
+                        "shared": {
+                            "type": "static",
+                            "directory": "../../../../_shared-web-resources"
+                        },
+                        "ws": {
+                            "type": "websocket",
+                            "auth": {
+                                "cryptosign": {
+                                    "type": "static",
+                                    "principals": {
+                                        "3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29": {
+                                            "role": "frontend",
+                                            "authorized_keys": [
+                                                "3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29"
+                                            ]
+                                        },
+                                        "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": {
+                                            "role": "backend",
+                                            "authorized_keys": [
+                                                "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "ticket": {
+                                    "type": "static",
+                                    "principals": {
+                                        "client1": {
+                                            "ticket": "client1_ticket",
+                                            "role": "frontend"
+                                        },
+                                        "client2": {
+                                            "ticket": "client2_ticket",
+                                            "role": "backend"
+                                        }
+                                    }
+                                },
+                                "wampcra": {
+                                    "type": "static",
+                                    "users": {
+                                        "client1_cra": {
+                                            "secret": "client1_secret",
+                                            "role": "frontend"
+                                        },
+                                        "client2_cra": {
+                                            "secret": "client2_secret",
+                                            "role": "backend"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "components": [
+            ]
+        }
+    ]
+}
