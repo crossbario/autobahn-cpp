@@ -57,6 +57,9 @@ endif()
 find_package(Boost REQUIRED COMPONENTS program_options system thread random)
 
 find_package(msgpack REQUIRED)
+# https://github.com/crossbario/autobahn-cpp/issues/95
+add_compile_definitions(MSGPACK_DEFAULT_API_VERSION=1)
+
 find_package(websocketpp REQUIRED)
 
 MESSAGE( STATUS "AUTOBAHN_BUILD_EXAMPLES:  " ${AUTOBAHN_BUILD_EXAMPLES} )

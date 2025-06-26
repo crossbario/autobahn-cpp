@@ -25,7 +25,7 @@ jobs:
             compiler: gcc
             version: "10"
             conan: true
-            cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build
+            cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build -DMSGPACK_DEFAULT_API_VERSION=1
 
           - name: ubuntu-20.04-clang-10
             os: ubuntu-20.04
@@ -38,7 +38,7 @@ jobs:
             compiler: clang
             version: "10"
             conan: true
-            cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build -DAUTOBAHN_USE_LIBCXX=NO
+            cmake-args: -DCMAKE_PREFIX_PATH=`pwd`/build -DCMAKE_MODULE_PATH=`pwd`/build -DAUTOBAHN_USE_LIBCXX=NO -DMSGPACK_DEFAULT_API_VERSION=1
 
     steps:
       - uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
 
       - name: Install
         run: |
-          python -m pip install cmake==3.22.2 conan==1.44.1 --upgrade
+          python -m pip install cmake==3.22.2 conan>=1.52.0 --upgrade
 
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
           sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-10 main' -y
